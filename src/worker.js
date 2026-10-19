@@ -486,7 +486,11 @@ async function processCustomerInput(env, cust, text, mediaUrl) {
   await env.DB.prepare("UPDATE customers SET state = 'CONFIRM_REQ', temp_data = ? WHERE id = ?")
     .bind(JSON.stringify(mem), cust.id).run();
 
-  let itemLines = parsed.items.map((it, idx) => `${idx + 1}. *${it.brand} ${it.model}* -${it.part_name} (${it.variant \vert{}\vert{} "Std"}) × *${it.qty} pcs*`).join("\n");
+  let itemLines = parsed.items
+  .map((it, idx) =>
+    `${idx + 1}. *${it.brand} ${it.model}* - ${it.part_name} (${it.variant || "Std"}) × *${it.qty} pcs*`
+  )
+  .join("\n");
   await notifyCustomer(
     env, cust,
     `📋 *Order Summary:*\n\n${itemLines}\n\n${parsed.summary_text || ""}\n\nKya hum iska best wholesale rate nikaalein? *(Ya kuch aur add/change karna hai toh seedha likh kar bhejein)*`,
@@ -867,7 +871,7 @@ async function sendAdminPanel(env, chatId, editMsgId = null) {
   const margin = await getSetting(env.DB, "margin_percent", "20");
   const deliv = await getSetting(env.DB, "delivery_charge", "100");
 
-  const text = `🎛️ *AD PARTSOL - Master Control Panel*\n\n📊 Margin: *${margin}\%* \vert{} 🚚 Delivery: *₹${deliv}*\n\nCommands:\n\`/margin 25\`\n\`/delivery 120\`\n\`/newsupplier Raju Electronics\`\n\`/addstaff payment 9876543210\``;
+const text = `🎛️ *AD PARTSOL - Master Control Panel*\n\n📊 Margin: *${margin}%* | 🚚 Delivery: *₹${deliv}*\n\nCommands:\n\`/margin 25\`\n\`/delivery 120\`\n\`/newsupplier Raju Electronics\`\n\`/addstaff payment 9876543210\``;
   const reply_markup = {
     inline_keyboard: [
       [{ text: `Telegram: ${tg === "1" ? "🟢 ON" : "🔴 OFF"}`, callback_data: "toggle_tg_enabled" }],
@@ -932,7 +936,7 @@ async function handleWhatsAppUpdate(body, env) {
     if (msg.type === "image") {
       const buf = await mediaBin.arrayBuffer();
       const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
-      const dataUri = `data:${metaJson.mime_type \vert{}\vert{} "image/jpeg"};base64,${b64}`;
+      const dataUri = `data:${metaJson.mime_type || "image/jpeg"};base64,${b64}`;
       return await processCustomerInput(env, cust, msg.image.caption || "", dataUri);
     } else {
       const text = await transcribeVoice(env, await mediaBin.arrayBuffer(), "wa_voice.ogg");
