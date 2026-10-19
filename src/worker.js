@@ -862,6 +862,12 @@ async function handleAdminBot(update, env) {
       parse_mode: "Markdown"
     });
   }
+  if (text === "/forceclose") {
+    await env.DB.prepare("UPDATE orders SET bidding_ends_at = 0 WHERE status = 'BIDDING'").run();
+    await runAutomatedEngine(env);
+    return await tgCall(env.BOT_TOKEN_ADMIN, "sendMessage", { chat_id: chatId, text: "⚡ All active bidding windows force-closed & quotations sent!" });
+  }
+
 }
 
 async function sendAdminPanel(env, chatId, editMsgId = null) {
