@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AD PARTSOL - Packing & Dispatch</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-white min-h-screen p-4">
+  <div id="loginBox" class="max-w-md mx-auto mt-20 bg-slate-900 p-6 rounded-xl border border-slate-800">
+    <h1 class="text-xl font-bold mb-4 text-sky-400">📦 Packing & Delivery Login</h1>
+    <input id="phone" placeholder="Staff Phone Number" class="w-full p-3 mb-3 bg-slate-950 rounded border border-slate-700">
+    <input id="token" type="password" placeholder="Access Token (ADP-...)" class="w-full p-3 mb-4 bg-slate-950 rounded border border-slate-700">
+    <button onclick="login()" class="w-full bg-sky-500 text-black font-bold py-3 rounded">Login</button>
+  </div>
+
+  <div id="app" class="hidden max-w-5xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold text-sky-400">📦 Collection, Packing & Dispatch</h1>
+      <button onclick="loadPacking()" class="bg-slate-800 px-4 py-2 rounded text-sm">🔄 Refresh</button>
+    </div>
+    <div id="packList" class="space-y-4"></div>
+  </div>
+
+  <script>
+    let creds = JSON.parse(localStorage.getItem('adp_pack') || 'null');
+    if (creds) loadPacking();
+
+    async function login() {
+      creds = { phone: document.getElementById('phone').value.trim(), token: document.getElementById('token').value.trim() };
+      localStorage.setItem('adp_pack', JSON.stringify(creds));
+      await loadPacking();
+    }
+
+    async function loadPacking() {
+      const res = await fetch('/api/panel/dashboard', { headers: { 'x-staff-phone': creds.phone, 'x-staff-token': creds.token } });
+      const data = await res.json();
+      if (!data.ok) { alert(data.error); localStorage.removeItem('adp_pack'); return; }
+      document.getElementById('loginBox').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+
+      const active = data.orders.filter(o => ['COLLECTING', 'PACKING', 'READY_TO_SHIP'].includes(o.status));
+      if (!active.length) {
+        document.getElementById('packList').innerHTML = `<div class="text-center py-12 text-slate-400">No active orders waiting for collection or shipping.</div>`;
+        return;
+      }
+
+      document.getElementById('packList').innerHTML = active.map(o => {
+        const ordItems = data.items.filter(i => i.order_id === o.id);
+        const itemHtml = ordItems.map(it => {
+          const alloc = JSON.parse(it.allocated_json || '[]').map(a => `${a.name} (${a.qty} pcs)`).join(', ');
+          return `<li class="text-sm">• <b>${it.brand} ${it.model} - ${it.part_name}</b> (${it.fulfilled_qty} pcs) 👉 <span class="text-amber-300">Collect from: ${alloc}</span></li>`;
+        }).join('');
+
+        return `
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-lg font-bold">Order #${o.id}</span>
+              <span class="px-2 py-1 text-xs bg-sky-500/20 text-sky-300 rounded font-bold">${o.status}</span>
+            </div>
+            <ul class="mb-4 space-y-1 text-slate-300">${itemHtml}</ul>
+            ${o.status === 'READY_TO_SHIP' ? `
+              <div class="flex gap-2">
+                <input id="trk_${o.id}" placeholder="Enter Courier & Tracking ID..." class="flex-1 p-2 bg-slate-950 rounded border border-slate-700">
+                <button onclick="shipOrder(${o.id})" class="bg-emerald-500 text-black font-bold px-4 py-2 rounded">🚚 Ship Now</button>
+              </div>
+            ` : `<div class="text-xs text-amber-400">📹 Upload Packing Video in Telegram Packing Group (@delivery_adpartsolbot) to trigger 80% QR automatically.</div>`}
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function shipOrder(orderId) {
+      const tracking_id = document.getElementById('trk_' + orderId).value.trim();
+      if (!tracking_id) return alert('Tracking ID daalo!');
+      await fetch('/api/panel/ship-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-staff-phone': creds.phone, 'x-staff-token': creds.token },
+        body: JSON.stringify({ order_id: orderId, tracking_id })
+      });
+      await loadPacking();
+    }
+  </script>
+</body>
+</html>
