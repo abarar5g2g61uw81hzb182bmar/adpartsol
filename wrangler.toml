@@ -11,7 +11,7 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "adpartsol-db"
-database_id = "YAHAN_APNA_D1_DATABASE_ID_DAAL"
+database_id = "d0735e87-1b20-4dad-88fa-ae438bab0266"
 
 # 1-Minute Cron Trigger (For 30-Min Bidding Engine & 22h Free WhatsApp Window Alert)
 [triggers]
