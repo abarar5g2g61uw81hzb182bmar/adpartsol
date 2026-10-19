@@ -2,11 +2,11 @@ name = "adpartsol"
 main = "src/worker.js"
 compatibility_date = "2025-01-01"
 
-
 [assets]
 directory = "./public"
 binding = "ASSETS"
-run_worker_first = ["/api/*", "/webhook/*"]
+run_worker_first = true
+not_found_handling = "none"
 
 [[d1_databases]]
 binding = "DB"
