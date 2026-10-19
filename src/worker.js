@@ -1,19 +1,16 @@
 export default {
-  // ==========================================
-  // 1. HTTP & WEBHOOK ROUTER
-  // ==========================================
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
 
     try {
-      // Auto-initialize tables if not exists (Safety Backup)
+      // 1. Database Init Route
       if (path === "/api/init-db") {
         await initDB(env.DB);
         return jsonRes({ ok: true, msg: "Database tables initialized & verified!" });
       }
 
-      // Auto-register all 6 Telegram Bot Webhooks in 1 click!
+      // 2. Setup All 6 Telegram Webhooks
       if (path === "/api/setup-webhooks") {
         const base = `${url.protocol}//${url.host}`;
         const results = {
@@ -27,7 +24,7 @@ export default {
         return jsonRes({ ok: true, webhooks: results });
       }
 
-      // Telegram Webhooks (6 Dedicated Bots)
+      // 3. Telegram Webhooks
       if (path.startsWith("/webhook/tg/") && request.method === "POST") {
         const botType = path.split("/").pop();
         const update = await request.json();
@@ -35,7 +32,7 @@ export default {
         return new Response("OK", { status: 200 });
       }
 
-      // Meta WhatsApp Webhook Verification (GET)
+      // 4. Meta WhatsApp Webhook Verification (GET)
       if (path === "/webhook/whatsapp" && request.method === "GET") {
         const mode = url.searchParams.get("hub.mode");
         const token = url.searchParams.get("hub.verify_token");
@@ -43,22 +40,22 @@ export default {
         if (mode === "subscribe" && token === env.WA_VERIFY_TOKEN) {
           return new Response(challenge, { status: 200 });
         }
-        return new Response("Forbidden", { status: 403 });
+        return new Response("WhatsApp Webhook Active (Forbidden Token)", { status: 403 });
       }
 
-      // Meta WhatsApp Webhook Events (POST)
+      // 5. Meta WhatsApp Webhook Events (POST)
       if (path === "/webhook/whatsapp" && request.method === "POST") {
         const body = await request.json();
         ctx.waitUntil(handleWhatsAppUpdate(body, env));
         return new Response("OK", { status: 200 });
       }
 
-      // Staff & Customer Web Panel REST APIs
+      // 6. Staff & Customer Web Panel REST APIs
       if (path.startsWith("/api/panel/")) {
         return await handlePanelAPI(request, url, env);
       }
 
-      // Serve Static Website & Staff Panels (/a, /pay, /p, /c)
+      // 7. Serve Static Website & Staff Panels (/a, /pay, /p, /c)
       if (env.ASSETS) {
         return await env.ASSETS.fetch(request);
       }
@@ -70,17 +67,11 @@ export default {
     }
   },
 
-  // ==========================================
-  // 2. CRON ENGINE (Runs Every 1 Minute)
-  // ==========================================
   async scheduled(event, env, ctx) {
     ctx.waitUntil(runAutomatedEngine(env));
   }
 };
 
-// ==========================================
-// HELPER: JSON & LOGGING
-// ==========================================
 function jsonRes(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -105,26 +96,48 @@ async function getSetting(DB, key, fallback = "") {
 }
 
 // ==========================================
-// 3. OPENAI 4-MODEL ROUTER
+// COMPACT ROLLING MEMORY HELPER (MAX 6 MSGS)
 // ==========================================
-// Models allowed: gpt-6-luna (Vision/Complex), gpt-5.6-luna (Fast Text), gpt-4o-mini-transcribe & gpt-transcribe (Audio)
+function parseSessionMemory(tempDataStr) {
+  try {
+    const parsed = JSON.parse(tempDataStr || "{}");
+    if (Array.isArray(parsed)) return { items: parsed, history: [] };
+    return { items: parsed.items || [], history: parsed.history || [] };
+  } catch (_) {
+    return { items: [], history: [] };
+  }
+}
 
-async function analyzeCustomerRequirement(env, textInput, imageUrl = null, lang = "hinglish") {
+// ==========================================
+// OPENAI 4-MODEL ROUTER WITH CONTEXT MEMORY
+// ==========================================
+async function analyzeCustomerRequirement(env, textInput, imageUrl = null, lang = "hinglish", memoryObj = { items: [], history: [] }) {
   const aiEnabled = await getSetting(env.DB, "ai_enabled", "1");
   if (aiEnabled !== "1") return { valid: false, clarify_msg: "System maintenance: AI is paused by Admin." };
 
   const model = imageUrl ? "gpt-6-luna" : "gpt-5.6-luna";
-  const sysPrompt = `You are AD PARTSOL's B2B Mobile Spare Parts AI Parser.
-Extract mobile spare parts requirements strictly into JSON.
-Supported customer language: ${lang}.
- Output strictly JSON format:
+  const prevHistory = memoryObj.history.slice(-6).map(h => `${h.r}:${h.t}`).join("\n");
+  const prevDraft = JSON.stringify(memoryObj.items || []);
+
+  const sysPrompt = `You are AD PARTSOL's B2B Mobile Spare Parts AI Assistant.
+Customer preferred language: ${lang}.
+Recent Chat Context (for memory):
+${prevHistory || "None"}
+Current Draft Items: ${prevDraft}
+
+Rules:
+1. Merge new details (like quantity, model, variant, or additional parts) with the previous context/draft.
+2. If Brand, Model, and Part Name are clear, set "valid": true and list all items (default qty=1, variant="Standard" if not specified).
+3. If Brand, Model, or Part Name is still missing, set "valid": false and ask a short question in ${lang} inside "clarify_msg".
+
+Output strictly JSON:
 {
   "valid": true/false,
   "items": [
-    {"brand": "Vivo", "model": "Y20", "part_name": "Display Folder", "variant": "Universal/OG/Standard", "qty": 2}
+    {"brand": "Vivo", "model": "Y20", "part_name": "Display Folder", "variant": "Standard", "qty": 2}
   ],
-  "summary_text": "Clean summary in ${lang}",
-  "clarify_msg": "If brand, model, or part name is missing/unclear, ask politely in ${lang}"
+  "summary_text": "Short friendly confirmation in ${lang}",
+  "clarify_msg": "Short question in ${lang} if incomplete"
 }`;
 
   const userContent = [];
@@ -148,7 +161,7 @@ Supported customer language: ${lang}.
   });
 
   const data = await res.json();
-  if (!data.choices || !data.choices[0]) throw new Error("OpenAI response invalid: " + JSON.stringify(data));
+  if (!data.choices || !data.choices[0]) throw new Error("OpenAI error: " + JSON.stringify(data));
   return JSON.parse(data.choices[0].message.content);
 }
 
@@ -165,7 +178,7 @@ async function analyzePaymentScreenshot(env, imageUrl, expectedAmount, expectedU
       messages: [
         {
           role: "system",
-          content: `Analyze this UPI payment screenshot. Extract 12-digit UTR/Ref number, paid amount, and verify if looks genuine. Expected Amount: Rs ${expectedAmount}, Expected UPI:${expectedUpi}. Return strict JSON: {"is_valid_screenshot": true/false, "utr": "123456789012" or null, "amount": 500, "reason": "string"}`
+          content: `Analyze this UPI payment screenshot. Extract 12-digit UTR/Ref number, paid amount, and verify if genuine. Expected Amount: Rs ${expectedAmount}, Expected UPI:${expectedUpi}. Return strict JSON: {"is_valid_screenshot": true/false, "utr": "123456789012" or null, "amount": 500, "reason": "string"}`
         },
         {
           role: "user",
@@ -190,7 +203,6 @@ async function transcribeVoice(env, audioBuffer, filename = "voice.ogg") {
   });
 
   if (!res.ok) {
-    // Fallback to gpt-transcribe
     const formFallback = new FormData();
     formFallback.append("file", new Blob([audioBuffer]), filename);
     formFallback.append("model", "gpt-transcribe");
@@ -205,7 +217,7 @@ async function transcribeVoice(env, audioBuffer, filename = "voice.ogg") {
 }
 
 // ==========================================
-// 4. TELEGRAM & WHATSAPP SEND HELPERS
+// TELEGRAM & WHATSAPP SEND HELPERS
 // ==========================================
 async function tgCall(token, method, payload) {
   const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
@@ -244,10 +256,9 @@ async function notifyCustomer(env, customer, text, buttons = null, photoUrl = nu
       });
     }
   } else if (customer.platform === "whatsapp") {
-    // Strictly inside 24h free service window (Zero Paid Template Cost!)
     const now = Math.floor(Date.now() / 1000);
     if (now - customer.last_msg_at > 86000) {
-      await sendLog(env, `⚠️ *24h Window Expired* for WA Customer ${customer.chat_id}. Order update queued until customer replies.`);
+      await sendLog(env, `⚠️ *24h Window Expired* for WA Customer ${customer.chat_id}. Order update queued.`);
       return;
     }
     const payload = { messaging_product: "whatsapp", to: customer.chat_id };
@@ -280,7 +291,7 @@ async function notifyCustomer(env, customer, text, buttons = null, photoUrl = nu
 }
 
 // ==========================================
-// 5. TELEGRAM UPDATES ROUTER (6 BOTS)
+// TELEGRAM UPDATES ROUTER (6 BOTS)
 // ==========================================
 async function handleTelegramUpdate(botType, update, env) {
   if (botType === "customer") return await handleCustomerBot(update, env);
@@ -290,7 +301,6 @@ async function handleTelegramUpdate(botType, update, env) {
   if (botType === "admin") return await handleAdminBot(update, env);
 }
 
-// --- A. CUSTOMER BOT (@AdPartsol_Bot) ---
 async function handleCustomerBot(update, env) {
   const tgEnabled = await getSetting(env.DB, "tg_enabled", "1");
   if (tgEnabled !== "1") return;
@@ -309,7 +319,6 @@ async function handleCustomerBot(update, env) {
     await env.DB.prepare("UPDATE customers SET last_msg_at = ?, warned_22h = 0 WHERE id = ?").bind(now, custId).run();
   }
 
-  // Shadow Ban Check
   if (cust.banned_until > now) return;
 
   if (cb) {
@@ -319,6 +328,7 @@ async function handleCustomerBot(update, env) {
 
   const text = msg.text || msg.caption || "";
   if (text === "/start") {
+    await env.DB.prepare("UPDATE customers SET temp_data = NULL, state = 'IDLE' WHERE id = ?").bind(custId).run();
     return await tgCall(env.BOT_TOKEN_CUSTOMER, "sendMessage", {
       chat_id: chatId,
       text: "🚀 *Welcome to AD PARTSOL (B2B Mobile Spare Parts)*\n\nPlease select your preferred language / Apni bhasha chunein:",
@@ -333,7 +343,6 @@ async function handleCustomerBot(update, env) {
     });
   }
 
-  // Handle Photo / Voice / Text based on Customer State
   let mediaUrl = null;
   let finalInput = text;
 
@@ -350,11 +359,10 @@ async function handleCustomerBot(update, env) {
   await processCustomerInput(env, cust, finalInput, mediaUrl);
 }
 
-// --- SHARED CUSTOMER FLOW (Works identically for WhatsApp & Telegram!) ---
 async function processCustomerAction(env, cust, data) {
   if (data.startsWith("lang_")) {
     const lang = data.replace("lang_", "");
-    await env.DB.prepare("UPDATE customers SET lang = ?, state = 'AWAITING_REQ' WHERE id = ?").bind(lang, cust.id).run();
+    await env.DB.prepare("UPDATE customers SET lang = ?, state = 'AWAITING_REQ', temp_data = NULL WHERE id = ?").bind(lang, cust.id).run();
     cust.lang = lang;
     return await notifyCustomer(env, cust, "✅ Language saved!\n\n📝 *Apni Spare Parts Requirement bhejein:*\nAap *Text*, *Photo (Parchi/Part)*, ya *Voice Note* bhej sakte hain (Brand, Model, Part Name aur Quantity batayein).");
   }
@@ -390,7 +398,6 @@ async function processCustomerAction(env, cust, data) {
 }
 
 async function processCustomerInput(env, cust, text, mediaUrl) {
-  // 1. Profile Collection State
   if (cust.state === "AWAITING_PROFILE") {
     if (!text || text.length < 10) {
       return await notifyCustomer(env, cust, "⚠️ Kripya apna Full Name, 10-digit Phone Number aur pura Pin Code sahit Address likhein.");
@@ -403,7 +410,6 @@ async function processCustomerInput(env, cust, text, mediaUrl) {
     return await launchOrderBidding(env, cust);
   }
 
-  // 2. Payment Screenshot Upload State (20% or 80%)
   if (cust.state.startsWith("AWAITING_20_SS_") || cust.state.startsWith("AWAITING_80_SS_")) {
     const is20 = cust.state.startsWith("AWAITING_20_SS_");
     const orderId = Number(cust.state.split("_").pop());
@@ -417,7 +423,6 @@ async function processCustomerInput(env, cust, text, mediaUrl) {
     await notifyCustomer(env, cust, "🔍 AI aapka payment screenshot verify kar raha hai...");
     const check = await analyzePaymentScreenshot(env, mediaUrl, expectedAmt, upi);
 
-    // Duplicate UTR check
     if (check.utr) {
       const dup = await env.DB.prepare("SELECT id FROM payments WHERE extracted_utr = ? AND status != 'REJECTED'").bind(check.utr).first();
       if (dup) {
@@ -439,7 +444,6 @@ async function processCustomerInput(env, cust, text, mediaUrl) {
       .bind(is20 ? "AWAITING_20_APPROVAL" : "AWAITING_80_APPROVAL", orderId).run();
     await env.DB.prepare("UPDATE customers SET state = 'IDLE' WHERE id = ?").bind(cust.id).run();
 
-    // Send to Payment Team Group (@AdPartsol_PaymentBot)
     const caption = `💸 *New ${is20 ? "20% Advance" : "80% Balance"} Payment*\n\n📦 Order: *#${orderId}*\n👤 Customer: ${cust.full_name} (${cust.phone})\n💰 Expected: *₹${expectedAmt}*\n🤖 AI Detected: *₹${check.amount || "?"}* | UTR: \`${check.utr || "Check Image"}\``;
     const grpMsg = await tgCall(env.BOT_TOKEN_PAYMENT, "sendPhoto", {
       chat_id: env.PAYMENT_GROUP_ID,
@@ -460,22 +464,33 @@ async function processCustomerInput(env, cust, text, mediaUrl) {
     return await notifyCustomer(env, cust, "✅ Screenshot receive ho gaya hai! Payment Team verify kar rahi hai.");
   }
 
-  // 3. Default: Requirement Gathering via AI
+  // Requirement Gathering with Rolling 6-Message Memory
+  const mem = parseSessionMemory(cust.temp_data);
+  if (text) mem.history.push({ r: "User", t: text.slice(0, 120) });
+
   await notifyCustomer(env, cust, "🧠 AI aapki requirement analyze kar raha hai...");
-  const parsed = await analyzeCustomerRequirement(env, text, mediaUrl, cust.lang);
+  const parsed = await analyzeCustomerRequirement(env, text, mediaUrl, cust.lang, mem);
 
   if (!parsed.valid || !parsed.items || parsed.items.length === 0) {
-    return await notifyCustomer(env, cust, `🤔 *Clarification Needed:*\n${parsed.clarify_msg || "Kripya Brand, Model, Part Name aur Quantity saaf likhein."}`);
+    const botReply = parsed.clarify_msg || "Kripya Brand, Model, Part Name aur Quantity saaf likhein.";
+    mem.history.push({ r: "AI", t: botReply.slice(0, 120) });
+    mem.history = mem.history.slice(-6); // Keep only last 6 turns to save tokens!
+    await env.DB.prepare("UPDATE customers SET temp_data = ? WHERE id = ?").bind(JSON.stringify(mem), cust.id).run();
+    return await notifyCustomer(env, cust, `🤔 *Clarification Needed:*\n${botReply}`);
   }
 
-  await env.DB.prepare("UPDATE customers SET state = 'CONFIRM_REQ', temp_data = ? WHERE id = ?")
-    .bind(JSON.stringify(parsed.items), cust.id).run();
+  mem.items = parsed.items;
+  mem.history.push({ r: "AI", t: (parsed.summary_text || "Summary ready").slice(0, 120) });
+  mem.history = mem.history.slice(-6);
 
-  let itemLines = parsed.items.map((it, idx) => `${idx + 1}. *${it.brand} ${it.model}* -${it.part_name} (${it.variant || "Std"}) × *${it.qty} pcs*`).join("\n");
+  await env.DB.prepare("UPDATE customers SET state = 'CONFIRM_REQ', temp_data = ? WHERE id = ?")
+    .bind(JSON.stringify(mem), cust.id).run();
+
+  let itemLines = parsed.items.map((it, idx) => `${idx + 1}. *${it.brand} ${it.model}* -${it.part_name} (${it.variant \vert{}\vert{} "Std"}) × *${it.qty} pcs*`).join("\n");
   await notifyCustomer(
     env, cust,
-    `📋 *Order Summary:*\n\n${itemLines}\n\n${parsed.summary_text || ""}\n\nKya hum iska best wholesale rate nikaalein?`,
-    [[{ text: "➕ Continue", callback_data: "req_continue" }, { text: "❌ Edit / Cancel", callback_data: "req_cancel" }]]
+    `📋 *Order Summary:*\n\n${itemLines}\n\n${parsed.summary_text || ""}\n\nKya hum iska best wholesale rate nikaalein? *(Ya kuch aur add/change karna hai toh seedha likh kar bhejein)*`,
+    [[{ text: "➕ Continue", callback_data: "req_continue" }, { text: "❌ Clear All", callback_data: "req_cancel" }]]
   );
 }
 
@@ -483,7 +498,7 @@ async function applyFraudStrike(env, cust, reason) {
   const strikes = (cust.fraud_strikes || 0) + 1;
   const now = Math.floor(Date.now() / 1000);
   if (strikes >= 3) {
-    const banUntil = now + 12 * 3600; // 12 Hours Shadow Ban
+    const banUntil = now + 12 * 3600;
     await env.DB.prepare("UPDATE customers SET fraud_strikes = ?, banned_until = ?, state = 'IDLE' WHERE id = ?")
       .bind(strikes, banUntil, cust.id).run();
     await sendLog(env, `🚫 *SHADOW BAN (12h)*\nCustomer: ${cust.id} (${cust.phone})\nReason: 3 Fake Payment Screenshots (${reason})`);
@@ -494,21 +509,21 @@ async function applyFraudStrike(env, cust, reason) {
   }
 }
 
-// ==========================================
-// 6. LAUNCH ORDER & BROADCAST TO SUPPLIERS
-// ==========================================
 async function launchOrderBidding(env, cust) {
-  const items = JSON.parse(cust.temp_data || "[]");
+  const mem = parseSessionMemory(cust.temp_data);
+  const items = mem.items || [];
   if (!items.length) return await notifyCustomer(env, cust, "⚠️ Koi active requirement nahi mili. Dobara bhejein.");
 
-  const endsAt = Math.floor(Date.now() / 1000) + 1800; // Exactly 30 Minutes
+  const endsAt = Math.floor(Date.now() / 1000) + 1800; // 30 Minutes
   const margin = Number(await getSetting(env.DB, "margin_percent", "20"));
   const delivery = Number(await getSetting(env.DB, "delivery_charge", "100"));
 
-  const ordRes = await env.DB.prepare(
-    "INSERT INTO orders (customer_id, status, margin_percent, delivery_charge, bidding_ends_at) VALUES (?, 'BIDDING', ?, ?, ?)"
-  ).bind(cust.id, margin, delivery, endsAt).run();
-  const orderId = ordRes.meta.last_row_id;
+  // Generate 9-Digit Order ID (Matches website promise!)
+  const orderId = Math.floor(100000000 + Math.random() * 900000000);
+
+  await env.DB.prepare(
+    "INSERT INTO orders (id, customer_id, status, margin_percent, delivery_charge, bidding_ends_at) VALUES (?, ?, 'BIDDING', ?, ?, ?)"
+  ).bind(orderId, cust.id, margin, delivery, endsAt).run();
 
   const suppliers = await env.DB.prepare("SELECT * FROM suppliers WHERE is_verified = 1 AND is_active = 1").all();
 
@@ -518,7 +533,6 @@ async function launchOrderBidding(env, cust) {
     ).bind(orderId, it.brand, it.model, it.part_name, it.variant || "Standard", Number(it.qty) || 1).run();
     const itemId = itemRes.meta.last_row_id;
 
-    // Broadcast to all active verified suppliers
     for (const sup of (suppliers.results || [])) {
       const msgRes = await tgCall(env.BOT_TOKEN_SUPPLIER, "sendMessage", {
         chat_id: sup.tg_chat_id,
@@ -539,12 +553,9 @@ async function launchOrderBidding(env, cust) {
 
   await env.DB.prepare("UPDATE customers SET state = 'IDLE', temp_data = NULL WHERE id = ?").bind(cust.id).run();
   await notifyCustomer(env, cust, `✅ *Order #${orderId} Confirmed!*\n\nHumare verified suppliers se best wholesale rate mangwaya ja raha hai. *30 minutes* ke andar aapko final quotation mil jayega!`);
-  await sendLog(env, `🛒 *New Order #${orderId}* launched for bidding (${items.length} items). Broadcasted to ${(suppliers.results || []).length} active suppliers.`);
+  await sendLog(env, `🛒 *New Order #${orderId}* launched (${items.length} items). Broadcasted to ${(suppliers.results || []).length} active suppliers.`);
 }
 
-// ==========================================
-// 7. SUPPLIER BOT (@AdPartsol_SupplierBot)
-// ==========================================
 async function handleSupplierBot(update, env) {
   const msg = update.message;
   const cb = update.callback_query;
@@ -556,7 +567,6 @@ async function handleSupplierBot(update, env) {
       const [_, orderId, itemId] = cb.data.split("_").map(Number);
       const ord = await env.DB.prepare("SELECT status FROM orders WHERE id = ?").bind(orderId).first();
       if (!ord || ord.status !== "BIDDING") {
-        // Auto-Clean UI
         await tgCall(env.BOT_TOKEN_SUPPLIER, "editMessageReplyMarkup", { chat_id: chatId, message_id: cb.message.message_id, reply_markup: { inline_keyboard: [] } });
         return await tgCall(env.BOT_TOKEN_SUPPLIER, "sendMessage", { chat_id: chatId, text: "⏱️ Is order ka bidding time khatam ho chuka hai." });
       }
@@ -601,7 +611,6 @@ async function handleSupplierBot(update, env) {
     return await tgCall(env.BOT_TOKEN_SUPPLIER, "sendMessage", { chat_id: chatId, text: "🟢 *Active Mode ON:* Ab aapko naye order alerts milenge!", parse_mode: "Markdown" });
   }
 
-  // Rate Input ("1500 2")
   if (sup.current_bid_item_id) {
     const parts = text.split(/\s+/);
     const price = parseFloat(parts[0]);
@@ -614,7 +623,6 @@ async function handleSupplierBot(update, env) {
     if (bid) {
       await env.DB.prepare("UPDATE bids SET price_per_unit = ?, available_qty = ?, status = 'SUBMITTED' WHERE id = ?")
         .bind(price, qty, bid.id).run();
-      // Auto-Clean UI: Delete inline button from original message
       if (bid.tg_msg_id) {
         await tgCall(env.BOT_TOKEN_SUPPLIER, "editMessageReplyMarkup", {
           chat_id: chatId, message_id: bid.tg_msg_id, reply_markup: { inline_keyboard: [] }
@@ -628,9 +636,6 @@ async function handleSupplierBot(update, env) {
   }
 }
 
-// ==========================================
-// 8. PAYMENT & DELIVERY BOTS
-// ==========================================
 async function handlePaymentBot(update, env) {
   const cb = update.callback_query;
   if (!cb) return;
@@ -664,12 +669,10 @@ async function processPaymentDecision(env, payId, decision, source = "Web Panel"
     return { ok: true };
   }
 
-  // APPROVED FLOW
   if (pay.type === "ADVANCE_20") {
     await env.DB.prepare("UPDATE orders SET status = 'COLLECTING' WHERE id = ?").bind(order.id).run();
-    await notifyCustomer(env, cust, `🎉 *20% Advance Approved (Order #${order.id})!*\nHumari team suppliers se items collect karke packing shuru kar rahi hai.`);
+    await notifyCustomer(env, cust, `🎉 *20% Advance Approved!*\n🆔 *9-Digit Order ID:* \`${order.id}\`\nHumari team suppliers se items collect karke packing shuru kar rahi hai.`);
 
-    // Alert Packing Team Group
     await tgCall(env.BOT_TOKEN_DELIVERY, "sendMessage", {
       chat_id: env.PACKING_GROUP_ID,
       text: `📦 *Order #${order.id} Ready for Collection!*\n20% Advance Verified.\nCustomer: *${cust.full_name}*\nAddress:${cust.address}`,
@@ -743,13 +746,11 @@ async function handleDeliveryBot(update, env) {
     return;
   }
 
-  // Handle Packing Video Upload in Group
   if (msg && msg.video) {
     const activeOrdId = Number(await getSetting(env.DB, "active_video_order", "0"));
     if (!activeOrdId) return;
 
     const videoFileId = msg.video.file_id;
-    // Backup to Vault Group automatically!
     const vaultMsg = await tgCall(env.BOT_TOKEN_DELIVERY, "sendVideo", {
       chat_id: env.VAULT_GROUP_ID,
       video: videoFileId,
@@ -768,7 +769,6 @@ async function handleDeliveryBot(update, env) {
     await env.DB.prepare("DELETE FROM settings WHERE key = 'active_video_order'").run();
     await env.DB.prepare("UPDATE customers SET state = ? WHERE id = ?").bind(`AWAITING_80_SS_${activeOrdId}`, cust.id).run();
 
-    // Send Packing Video + 80% QR to Customer
     await notifyCustomer(env, cust, `📹 *Order #${activeOrdId} Packed & Verified!*\nAapke parts pack ho chuke hain.`, null, null, videoFileId);
     await notifyCustomer(env, cust, `💳 *80% Balance Payment: ₹${order.balance_80}*\nQR scan karke balance pay karein aur *Screenshot* bhejein taaki turant Tracking ID generate ho sake:`, null, qrUrl);
 
@@ -778,7 +778,6 @@ async function handleDeliveryBot(update, env) {
     });
   }
 
-  // Handle Tracking ID Input in Group
   if (msg && msg.text && !msg.text.startsWith("/")) {
     const shipOrdId = Number(await getSetting(env.DB, "active_ship_order", "0"));
     if (!shipOrdId) return;
@@ -798,9 +797,6 @@ async function handleDeliveryBot(update, env) {
   }
 }
 
-// ==========================================
-// 9. ADMIN BOT (@Zy7whqyVwtsvsnshJwg_bGw7wbot)
-// ==========================================
 async function handleAdminBot(update, env) {
   const msg = update.message;
   const cb = update.callback_query;
@@ -849,7 +845,6 @@ async function handleAdminBot(update, env) {
     });
   }
 
-  // Generate Web Panel Login Token for Staff (/addstaff payment 9876543210)
   if (text.startsWith("/addstaff ")) {
     const [_, role, phone] = text.split(/\s+/);
     if (!role || !phone) {
@@ -887,9 +882,6 @@ async function sendAdminPanel(env, chatId, editMsgId = null) {
   return await tgCall(env.BOT_TOKEN_ADMIN, "sendMessage", { chat_id: chatId, text, parse_mode: "Markdown", reply_markup });
 }
 
-// ==========================================
-// 10. WHATSAPP CLOUD API HANDLER
-// ==========================================
 async function handleWhatsAppUpdate(body, env) {
   const waEnabled = await getSetting(env.DB, "wa_enabled", "1");
   if (waEnabled !== "1") return;
@@ -898,7 +890,7 @@ async function handleWhatsAppUpdate(body, env) {
   if (!entry || !entry.messages || !entry.messages[0]) return;
 
   const msg = entry.messages[0];
-  const from = msg.from; // Customer phone
+  const from = msg.from;
   const custId = `wa_${from}`;
   const now = Math.floor(Date.now() / 1000);
 
@@ -925,7 +917,6 @@ async function handleWhatsAppUpdate(body, env) {
     return await processCustomerInput(env, cust, msg.text.body, null);
   }
 
-  // Image or Audio on WhatsApp
   if (msg.type === "image" || msg.type === "audio" || msg.type === "voice") {
     const mediaId = (msg.image || msg.audio || msg.voice).id;
     const metaRes = await fetch(`https://graph.facebook.com/v20.0/${mediaId}`, {
@@ -941,7 +932,7 @@ async function handleWhatsAppUpdate(body, env) {
     if (msg.type === "image") {
       const buf = await mediaBin.arrayBuffer();
       const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
-      const dataUri = `data:${metaJson.mime_type || "image/jpeg"};base64,${b64}`;
+      const dataUri = `data:${metaJson.mime_type \vert{}\vert{} "image/jpeg"};base64,${b64}`;
       return await processCustomerInput(env, cust, msg.image.caption || "", dataUri);
     } else {
       const text = await transcribeVoice(env, await mediaBin.arrayBuffer(), "wa_voice.ogg");
@@ -950,17 +941,12 @@ async function handleWhatsAppUpdate(body, env) {
   }
 }
 
-// ==========================================
-// 11. 30-MINUTE ENGINE, FRACTIONAL SPLIT & 22H FREE WA GUARD
-// ==========================================
 async function runAutomatedEngine(env) {
   const now = Math.floor(Date.now() / 1000);
 
-  // A. Check Expired 30-Min Bidding Windows
   const dueOrders = await env.DB.prepare("SELECT * FROM orders WHERE status = 'BIDDING' AND bidding_ends_at <= ?").bind(now).all();
 
   for (const order of (dueOrders.results || [])) {
-    // 1. Auto-Clean remaining supplier buttons
     const pendingBids = await env.DB.prepare(
       "SELECT b.*, s.tg_chat_id FROM bids b JOIN suppliers s ON b.supplier_id = s.id WHERE b.order_id = ? AND b.status = 'PENDING'"
     ).bind(order.id).all();
@@ -973,7 +959,6 @@ async function runAutomatedEngine(env) {
       }
     }
 
-    // 2. Fractional Split Calculation per Item
     const items = await env.DB.prepare("SELECT * FROM order_items WHERE order_id = ?").bind(order.id).all();
     let baseTotal = 0;
     let anyFulfilled = false;
@@ -1017,7 +1002,6 @@ async function runAutomatedEngine(env) {
       continue;
     }
 
-    // 3. Margin + Delivery + Nearest 50 Round Up
     const withMargin = baseTotal * (1 + (order.margin_percent / 100));
     const rawTotal = withMargin + order.delivery_charge;
     const finalTotal = Math.ceil(rawTotal / 50) * 50;
@@ -1030,12 +1014,11 @@ async function runAutomatedEngine(env) {
 
     await notifyCustomer(
       env, cust,
-      `🎉 *Quotation Ready - Order #${order.id}*\n\n${quoteLines.join("\n")}\n\n💰 *Total Wholesale Price:* ₹${finalTotal} (Incl. Delivery)\n⚡ *20% Advance to Book:* ₹${adv20}\n📦 *80% After Packing Video:* ₹${bal80}`,
+      `🎉 *Quotation Ready - Order #${order.id}*\n\n${quoteLines.join("\n")}\n\n💰 *Total Price:* ₹${finalTotal} (Delivery Included)\n⚡ *20\% Advance to Confirm:* ₹${adv20}\n📦 *80% After Packing Video:* ₹${bal80}`,
       [[{ text: `➕ Accept & Pay 20% (₹${adv20})`, callback_data: `pay20_${order.id}` }]]
     );
   }
 
-  // B. 22-Hour Free WhatsApp Session Keep-Alive Guard (Zero Template Cost!)
   const waWindowAlert = now - (22 * 3600);
   const waCusts = await env.DB.prepare(
     "SELECT c.* FROM customers c JOIN orders o ON c.id = o.customer_id WHERE c.platform = 'whatsapp' AND c.warned_22h = 0 AND c.last_msg_at <= ? AND c.last_msg_at > ? AND o.status NOT IN ('SHIPPED', 'CANCELLED')"
@@ -1051,13 +1034,9 @@ async function runAutomatedEngine(env) {
   }
 }
 
-// ==========================================
-// 12. WEB PANELS REST API (/a, /pay, /p, /c)
-// ==========================================
 async function handlePanelAPI(request, url, env) {
   const action = url.pathname.replace("/api/panel/", "");
 
-  // Public Customer Order Tracking (/c)
   if (action === "track") {
     const id = Number(url.searchParams.get("order_id"));
     const order = await env.DB.prepare("SELECT id, status, final_total, advance_20, balance_80, tracking_id, created_at FROM orders WHERE id = ?").bind(id).first();
@@ -1065,7 +1044,6 @@ async function handlePanelAPI(request, url, env) {
     return jsonRes({ ok: !!order, order, items: items.results || [] });
   }
 
-  // Staff Authentication Verification
   const phone = request.headers.get("x-staff-phone") || "";
   const token = request.headers.get("x-staff-token") || "";
   const staff = await env.DB.prepare("SELECT * FROM staff_users WHERE phone = ? AND access_token = ? AND is_active = 1").bind(phone, token).first();
