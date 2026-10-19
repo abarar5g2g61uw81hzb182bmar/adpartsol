@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AD PARTSOL - Payment Verification</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-white min-h-screen p-4">
+  <div id="loginBox" class="max-w-md mx-auto mt-20 bg-slate-900 p-6 rounded-xl border border-slate-800">
+    <h1 class="text-xl font-bold mb-4 text-emerald-400">💳 Payment Team Login</h1>
+    <input id="phone" placeholder="Staff Phone Number" class="w-full p-3 mb-3 bg-slate-950 rounded border border-slate-700">
+    <input id="token" type="password" placeholder="Access Token (ADP-...)" class="w-full p-3 mb-4 bg-slate-950 rounded border border-slate-700">
+    <button onclick="login()" class="w-full bg-emerald-500 text-black font-bold py-3 rounded">Login</button>
+  </div>
+
+  <div id="app" class="hidden max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold text-emerald-400">💳 Pending Payment Queue</h1>
+      <button onclick="loadPayments()" class="bg-slate-800 px-4 py-2 rounded text-sm">🔄 Refresh</button>
+    </div>
+    <div id="payList" class="grid md:grid-cols-2 gap-4"></div>
+  </div>
+
+  <script>
+    let creds = JSON.parse(localStorage.getItem('adp_pay') || 'null');
+    if (creds) loadPayments();
+
+    async function login() {
+      creds = { phone: document.getElementById('phone').value.trim(), token: document.getElementById('token').value.trim() };
+      localStorage.setItem('adp_pay', JSON.stringify(creds));
+      await loadPayments();
+    }
+
+    async function loadPayments() {
+      const res = await fetch('/api/panel/dashboard', { headers: { 'x-staff-phone': creds.phone, 'x-staff-token': creds.token } });
+      const data = await res.json();
+      if (!data.ok) { alert(data.error); localStorage.removeItem('adp_pay'); return; }
+      document.getElementById('loginBox').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+
+      if (!data.payments.length) {
+        document.getElementById('payList').innerHTML = `<div class="col-span-2 text-center py-12 text-slate-400">🎉 All caught up! No pending payment screenshots.</div>`;
+        return;
+      }
+
+      document.getElementById('payList').innerHTML = data.payments.map(p => `
+        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+          <div class="flex justify-between mb-2">
+            <span class="font-bold text-emerald-400">Order #${p.order_id} (${p.type})</span>
+            <span class="text-sm font-bold">Expected: ₹${p.expected_amount}</span>
+          </div>
+          <div class="text-xs text-slate-300 mb-3">🤖 AI UTR: <code class="bg-slate-800 px-1 rounded">${p.extracted_utr}</code> | Detected: ₹${p.extracted_amount}</div>
+          <a href="${p.file_id_or_url}" target="_blank"><img src="${p.file_id_or_url}" class="w-full h-64 object-contain bg-black rounded mb-3 border border-slate-700"></a>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="decide(${p.id}, 'APPROVED')" class="bg-emerald-500 text-black font-bold py-2 rounded">✅ Approve</button>
+            <button onclick="decide(${p.id}, 'REJECTED')" class="bg-rose-600 text-white font-bold py-2 rounded">❌ Reject (Fake)</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function decide(id, decision) {
+      await fetch('/api/panel/payment-action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-staff-phone': creds.phone, 'x-staff-token': creds.token },
+        body: JSON.stringify({ payment_id: id, decision })
+      });
+      await loadPayments();
+    }
+  </script>
+</body>
+</html>
