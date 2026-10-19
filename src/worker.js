@@ -13,6 +13,7 @@ export default {
         return jsonRes({ ok: true, msg: "Database tables initialized & verified!" });
       }
 
+      
       // Auto-register all 6 Telegram Bot Webhooks in 1 click!
       if (path === "/api/setup-webhooks") {
         const base = `${url.protocol}//${url.host}`;
