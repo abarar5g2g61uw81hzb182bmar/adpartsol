@@ -1,1 +1,79 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AD PARTSOL - Admin Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen p-4">
+  <div id="loginBox" class="max-w-md mx-auto mt-20 bg-slate-800 p-6 rounded-xl border border-slate-700">
+    <h1 class="text-xl font-bold mb-4 text-amber-400">🔐 Admin Terminal Login</h1>
+    <input id="phone" placeholder="Phone Number" class="w-full p-3 mb-3 bg-slate-900 rounded border border-slate-700">
+    <input id="token" type="password" placeholder="Telegram Access Token (ADP-...)" class="w-full p-3 mb-4 bg-slate-900 rounded border border-slate-700">
+    <button onclick="login()" class="w-full bg-amber-500 text-black font-bold py-3 rounded hover:bg-amber-400">Login</button>
+  </div>
+
+  <div id="app" class="hidden max-w-6xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold text-amber-400">🎛️ AD PARTSOL — Admin Control</h1>
+      <button onclick="loadData()" class="bg-slate-700 px-4 py-2 rounded text-sm">🔄 Refresh</button>
+    </div>
+    <div id="stats" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"></div>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+        <h2 class="font-bold mb-3 text-lg">📦 Live Orders</h2>
+        <div id="ordersList" class="space-y-3 max-h-96 overflow-y-auto"></div>
+      </div>
+      <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+        <h2 class="font-bold mb-3 text-lg">🏭 Verified Suppliers</h2>
+        <div id="suppliersList" class="space-y-2 max-h-96 overflow-y-auto"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let creds = JSON.parse(localStorage.getItem('adp_admin') || 'null');
+    if (creds) loadData();
+
+    async function login() {
+      creds = { phone: document.getElementById('phone').value.trim(), token: document.getElementById('token').value.trim() };
+      localStorage.setItem('adp_admin', JSON.stringify(creds));
+      await loadData();
+    }
+
+    async function loadData() {
+      const res = await fetch('/api/panel/dashboard', { headers: { 'x-staff-phone': creds.phone, 'x-staff-token': creds.token } });
+      const data = await res.json();
+      if (!data.ok) { alert(data.error); localStorage.removeItem('adp_admin'); return; }
+      document.getElementById('loginBox').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+
+      const sMap = Object.fromEntries(data.settings.map(s => [s.key, s.value]));
+      document.getElementById('stats').innerHTML = `
+        <div class="bg-slate-800 p-4 rounded-lg border border-slate-700"><div class="text-xs text-slate-400">Total Orders</div><div class="text-2xl font-bold">${data.orders.length}</div></div>
+        <div class="bg-slate-800 p-4 rounded-lg border border-slate-700"><div class="text-xs text-slate-400">Pending Payments</div><div class="text-2xl font-bold text-amber-400">${data.payments.length}</div></div>
+        <div class="bg-slate-800 p-4 rounded-lg border border-slate-700"><div class="text-xs text-slate-400">Margin / Delivery</div><div class="text-xl font-bold">${sMap.margin_percent}% / ₹${sMap.delivery_charge}</div></div>
+        <div class="bg-slate-800 p-4 rounded-lg border border-slate-700"><div class="text-xs text-slate-400">Bots Status</div><div class="text-sm font-bold">TG:${sMap.tg_enabled==='1'?'🟢':'🔴'} WA:${sMap.wa_enabled==='1'?'🟢':'🔴'} AI:${sMap.ai_enabled==='1'?'🟢':'🔴'}</div></div>
+      `;
+
+      document.getElementById('ordersList').innerHTML = data.orders.map(o => `
+        <div class="p-3 bg-slate-900 rounded border border-slate-700 flex justify-between items-center">
+          <div>
+            <div class="font-bold">Order #${o.id} <span class="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded">${o.status}</span></div>
+            <div class="text-xs text-slate-400">Customer: ${o.customer_id} | Total: ₹${o.final_total}</div>
+          </div>
+          <div class="text-right text-xs text-slate-400">${o.tracking_id ? '🚚 '+o.tracking_id : ''}</div>
+        </div>
+      `).join('');
+
+      document.getElementById('suppliersList').innerHTML = data.suppliers.map(s => `
+        <div class="p-3 bg-slate-900 rounded border border-slate-700 flex justify-between">
+          <div><b>${s.name}</b> <span class="text-xs text-slate-400">(${s.verify_code})</span></div>
+          <div>${s.is_verified ? (s.is_active ? '🟢 Active' : '😴 Sleep') : '⏳ Unverified'}</div>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>
