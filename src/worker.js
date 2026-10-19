@@ -13,7 +13,6 @@ export default {
         return jsonRes({ ok: true, msg: "Database tables initialized & verified!" });
       }
 
-      
       // Auto-register all 6 Telegram Bot Webhooks in 1 click!
       if (path === "/api/setup-webhooks") {
         const base = `${url.protocol}//${url.host}`;
@@ -472,7 +471,7 @@ async function processCustomerInput(env, cust, text, mediaUrl) {
   await env.DB.prepare("UPDATE customers SET state = 'CONFIRM_REQ', temp_data = ? WHERE id = ?")
     .bind(JSON.stringify(parsed.items), cust.id).run();
 
-  let itemLines = parsed.items.map((it, idx) => `${idx + 1}. *${it.brand} ${it.model}* -${it.part_name} (${it.variant \vert{}\vert{} "Std"}) × *${it.qty} pcs*`).join("\n");
+  let itemLines = parsed.items.map((it, idx) => `${idx + 1}. *${it.brand} ${it.model}* -${it.part_name} (${it.variant || "Std"}) × *${it.qty} pcs*`).join("\n");
   await notifyCustomer(
     env, cust,
     `📋 *Order Summary:*\n\n${itemLines}\n\n${parsed.summary_text || ""}\n\nKya hum iska best wholesale rate nikaalein?`,
@@ -942,7 +941,7 @@ async function handleWhatsAppUpdate(body, env) {
     if (msg.type === "image") {
       const buf = await mediaBin.arrayBuffer();
       const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
-      const dataUri = `data:${metaJson.mime_type \vert{}\vert{} "image/jpeg"};base64,${b64}`;
+      const dataUri = `data:${metaJson.mime_type || "image/jpeg"};base64,${b64}`;
       return await processCustomerInput(env, cust, msg.image.caption || "", dataUri);
     } else {
       const text = await transcribeVoice(env, await mediaBin.arrayBuffer(), "wa_voice.ogg");
