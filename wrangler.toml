@@ -1,0 +1,29 @@
+name = "adpartsol"
+main = "src/worker.js"
+compatibility_date = "2024-10-01"
+
+# Static Website + Web Panels (/a, /pay, /p, /c)
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# Cloudflare D1 Database Binding
+[[d1_databases]]
+binding = "DB"
+database_name = "adpartsol-db"
+database_id = "YAHAN_APNA_D1_DATABASE_ID_DAAL"
+
+# 1-Minute Cron Trigger (For 30-Min Bidding Engine & 22h Free WhatsApp Window Alert)
+[triggers]
+crons = ["* * * * *"]
+
+# Public Non-Secret IDs (Already pre-filled from your screenshots!)
+[vars]
+ADMIN_TG_ID = "8826122972"
+VAULT_GROUP_ID = "-1004388781992"
+PAYMENT_GROUP_ID = "-1003899231714"
+LOGS_GROUP_ID = "-1003725562445"
+PACKING_GROUP_ID = "-1004221312474"
+WA_PHONE_ID = "1374252479107736"
+WA_WABA_ID = "1106679415484985"
+WA_VERIFY_TOKEN = "adpartsol_secret_verify_2026"
