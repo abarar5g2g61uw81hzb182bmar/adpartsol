@@ -1,32 +1,47 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>AD PARTSOL - Admin Panel</title>
+  <title>AD PARTSOL — Command Console</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-900 text-white min-h-screen p-4">
-  <div id="loginBox" class="max-w-md mx-auto mt-20 bg-slate-800 p-6 rounded-xl border border-slate-700">
-    <h1 class="text-xl font-bold mb-4 text-amber-400">🔐 Admin Terminal Login</h1>
-    <input id="phone" placeholder="Phone Number" class="w-full p-3 mb-3 bg-slate-900 rounded border border-slate-700">
-    <input id="token" type="password" placeholder="Telegram Access Token (ADP-...)" class="w-full p-3 mb-4 bg-slate-900 rounded border border-slate-700">
-    <button onclick="login()" class="w-full bg-amber-500 text-black font-bold py-3 rounded hover:bg-amber-400">Login</button>
+<body class="bg-neutral-950 text-neutral-100 min-h-screen pb-20 font-mono">
+  <div id="loginBox" class="max-w-md mx-auto mt-20 bg-neutral-900 p-6 rounded-xl border border-neutral-800">
+    <h1 class="text-lg font-bold mb-4">★ AD PARTSOL — STAFF LOGIN</h1>
+    <input id="phone" placeholder="Staff Phone Number" class="w-full p-3 mb-3 bg-neutral-950 rounded border border-neutral-800">
+    <input id="token" type="password" placeholder="Access Token (ADP-...)" class="w-full p-3 mb-4 bg-neutral-950 rounded border border-neutral-800">
+    <button onclick="login()" class="w-full bg-white text-black font-bold py-3 rounded">[+]AUTHENTICATE</button>
   </div>
 
-  <div id="app" class="hidden max-w-6xl mx-auto">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-amber-400">🎛️ AD PARTSOL — Admin Control</h1>
-      <button onclick="loadData()" class="bg-slate-700 px-4 py-2 rounded text-sm">🔄 Refresh</button>
+  <div id="app" class="hidden max-w-6xl mx-auto p-4">
+    <div class="flex justify-between items-center border-b border-neutral-800 pb-3 mb-5">
+      <div>
+        <h1 class="text-xl font-bold">★ AD PARTSOL — COMMAND DESK</h1>
+        <p id="roleBadge" class="text-xs text-neutral-400"></p>
+      </div>
+      <button onclick="loadData()" class="border border-neutral-700 px-3 py-1.5 rounded text-xs">[↻] SYNC</button>
     </div>
-    <div id="stats" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"></div>
+
+    <!-- Direct Supplier Assign Section (For Phone-Call Negotiated Orders) -->
+    <div class="bg-neutral-900 p-4 rounded-xl border border-neutral-800 mb-6">
+      <h2 class="font-bold text-sm mb-3">☞ DIRECT SUPPLIER ASSIGN (SEND NOTICE TO SUPPLIER)</h2>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+        <input id="asgOrder" placeholder="9-Digit Order ID" class="p-2.5 bg-neutral-950 rounded border border-neutral-800 text-sm">
+        <select id="asgSup" class="p-2.5 bg-neutral-950 rounded border border-neutral-800 text-sm"></select>
+        <input id="asgPrice" type="number" placeholder="Agreed Unit Price (Rs)" class="p-2.5 bg-neutral-950 rounded border border-neutral-800 text-sm">
+        <button onclick="assignSupplier()" class="bg-white text-black font-bold py-2.5 rounded text-sm">[+] ASSIGN & NOTIFY</button>
+      </div>
+    </div>
+
+    <div id="stats" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6"></div>
+
     <div class="grid md:grid-cols-2 gap-6">
-      <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-        <h2 class="font-bold mb-3 text-lg">📦 Live Orders</h2>
+      <div class="bg-neutral-900 p-4 rounded-xl border border-neutral-800">
+        <h2 class="font-bold mb-3 text-sm">■ MY QUEUE & LIVE ORDERS</h2>
         <div id="ordersList" class="space-y-3 max-h-96 overflow-y-auto"></div>
       </div>
-      <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-        <h2 class="font-bold mb-3 text-lg">🏭 Verified Suppliers</h2>
+      <div class="bg-neutral-900 p-4 rounded-xl border border-neutral-800">
+        <h2 class="font-bold mb-3 text-sm">■ SUPPLIER DIRECTORY & STATUS</h2>
         <div id="suppliersList" class="space-y-2 max-h-96 overflow-y-auto"></div>
       </div>
     </div>
@@ -48,31 +63,51 @@
       if (!data.ok) { alert(data.error); localStorage.removeItem('adp_admin'); return; }
       document.getElementById('loginBox').classList.add('hidden');
       document.getElementById('app').classList.remove('hidden');
+      document.getElementById('roleBadge').textContent = `ROLE: ${data.role.toUpperCase()} | UPI: constantabrar@upi`;
+
+      document.getElementById('asgSup').innerHTML = data.suppliers.map(s =>
+        `<option value="${s.id}">#${s.id} - ${s.name} (${s.is_verified ? 'Verified' : 'Unverified'})</option>`
+      ).join('');
 
       const sMap = Object.fromEntries(data.settings.map(s => [s.key, s.value]));
       document.getElementById('stats').innerHTML = `
-        <div class="bg-slate-800 p-4 rounded-lg border border-slate-700"><div class="text-xs text-slate-400">Total Orders</div><div class="text-2xl font-bold">${data.orders.length}</div></div>
-        <div class="bg-slate-800 p-4 rounded-lg border border-slate-700"><div class="text-xs text-slate-400">Pending Payments</div><div class="text-2xl font-bold text-amber-400">${data.payments.length}</div></div>
-        <div class="bg-slate-800 p-4 rounded-lg border border-slate-700"><div class="text-xs text-slate-400">Margin / Delivery</div><div class="text-xl font-bold">${sMap.margin_percent}% / ₹${sMap.delivery_charge}</div></div>
-        <div class="bg-slate-800 p-4 rounded-lg border border-slate-700"><div class="text-xs text-slate-400">Bots Status</div><div class="text-sm font-bold">TG:${sMap.tg_enabled==='1'?'🟢':'🔴'} WA:${sMap.wa_enabled==='1'?'🟢':'🔴'} AI:${sMap.ai_enabled==='1'?'🟢':'🔴'}</div></div>
+        <div class="bg-neutral-900 p-3 rounded border border-neutral-800"><div class="text-xs text-neutral-400">Total Orders</div><div class="text-xl font-bold">${data.orders.length}</div></div>
+        <div class="bg-neutral-900 p-3 rounded border border-neutral-800"><div class="text-xs text-neutral-400">Pending Payments</div><div class="text-xl font-bold">${data.payments.filter(p=>p.status==='PENDING').length}</div></div>
+        <div class="bg-neutral-900 p-3 rounded border border-neutral-800"><div class="text-xs text-neutral-400">Margin / Delivery</div><div class="text-xl font-bold">${sMap.margin_percent}% / Rs.${sMap.delivery_charge}</div></div>
+        <div class="bg-neutral-900 p-3 rounded border border-neutral-800"><div class="text-xs text-neutral-400">Channels</div><div class="text-xs font-bold mt-1">TG:${sMap.tg_enabled==='1'?'[ON]':'[OFF]'} WA:${sMap.wa_enabled==='1'?'[ON]':'[OFF]'}</div></div>
       `;
 
       document.getElementById('ordersList').innerHTML = data.orders.map(o => `
-        <div class="p-3 bg-slate-900 rounded border border-slate-700 flex justify-between items-center">
+        <div class="p-3 bg-neutral-950 rounded border border-neutral-800 flex justify-between items-center">
           <div>
-            <div class="font-bold">Order #${o.id} <span class="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded">${o.status}</span></div>
-            <div class="text-xs text-slate-400">Customer: ${o.customer_id} | Total: ₹${o.final_total}</div>
+            <div class="font-bold text-sm">Order #${o.id} <span class="text-xs px-2 py-0.5 border border-neutral-700 rounded">${o.status}</span></div>
+            <div class="text-xs text-neutral-400">Total: Rs.${o.final_total || 0} | Adv: Rs.${o.advance_20 || 0}</div>
           </div>
-          <div class="text-right text-xs text-slate-400">${o.tracking_id ? '🚚 '+o.tracking_id : ''}</div>
+          <button onclick="document.getElementById('asgOrder').value='${o.id}'" class="text-xs border border-neutral-700 px-2 py-1 rounded">Select</button>
         </div>
       `).join('');
 
       document.getElementById('suppliersList').innerHTML = data.suppliers.map(s => `
-        <div class="p-3 bg-slate-900 rounded border border-slate-700 flex justify-between">
-          <div><b>${s.name}</b> <span class="text-xs text-slate-400">(${s.verify_code})</span></div>
-          <div>${s.is_verified ? (s.is_active ? '🟢 Active' : '😴 Sleep') : '⏳ Unverified'}</div>
+        <div class="p-3 bg-neutral-950 rounded border border-neutral-800 flex justify-between text-sm">
+          <div><b>#${s.id} ${s.name}</b> <span class="text-xs text-neutral-500">(${s.verify_code})</span></div>
+          <div>${s.is_verified ? (s.is_active ? '★ Active' : 'ⓘ Sleep') : '× Unverified'}</div>
         </div>
       `).join('');
+    }
+
+    async function assignSupplier() {
+      const order_id = document.getElementById('asgOrder').value.trim();
+      const supplier_id = document.getElementById('asgSup').value;
+      const unit_price = document.getElementById('asgPrice').value.trim();
+      if (!order_id || !supplier_id) return alert('Enter Order ID & Select Supplier');
+      const res = await fetch('/api/panel/assign-supplier', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-staff-phone': creds.phone, 'x-staff-token': creds.token },
+        body: JSON.stringify({ order_id, supplier_id, unit_price })
+      });
+      const out = await res.json();
+      alert(out.msg);
+      await loadData();
     }
   </script>
 </body>
