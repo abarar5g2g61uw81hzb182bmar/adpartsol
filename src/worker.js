@@ -1401,18 +1401,24 @@ async function handlePanelAPI(request, url, env) {
     return jsonRes({ ok: !!order, order, items: items.results || [] });
   }
 
-  // Master Admin OR Staff Auth Check
+// Master Admin (Strictly via Cloudflare Secrets) OR Staff Auth Check
   const phone = (request.headers.get("x-staff-phone") || "").trim();
   const token = (request.headers.get("x-staff-token") || "").trim();
 
   let staff = null;
-  if (phone === "8637213741" && (token === "AD PartSol\u207f" || token === "AD PartSol")) {
-    staff = { role: "admin", phone: "8637213741", is_master: true };
-  } else {
-    staff = await env.DB.prepare("SELECT * FROM staff_users WHERE phone = ? AND access_token = ? AND is_active = 1").bind(phone, token).first();
-  }
-  if (!staff) return jsonRes({ ok: false, error: "Incorrect username or password" }, 401);
+  const masterUser = String(env.ADMIN_USERNAME || "").trim();
+  const masterPass = String(env.ADMIN_PASSWORD || "").trim();
 
+  if (masterUser && masterPass && phone === masterUser && token === masterPass) {
+    staff = { role: "admin", phone: masterUser, is_master: true };
+  } else {
+    staff = await env.DB.prepare(
+      "SELECT * FROM staff_users WHERE phone = ? AND access_token = ? AND is_active = 1"
+    ).bind(phone, token).first();
+  }
+
+  if (!staff) return jsonRes({ ok: false, error: "Incorrect username or password" }, 401);
+  
   if (action === "login") return jsonRes({ ok: true, role: staff.role });
 
   if (action === "dashboard") {
