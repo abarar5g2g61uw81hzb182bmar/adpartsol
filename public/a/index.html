@@ -145,6 +145,239 @@ td.c,th.c{text-align:center}
  .search,select.role{flex:1 1 100%}
  .c3,.c4,.c5,.c6,.c7,.c8{grid-column:span 12}.c3{grid-column:span 6}
 }
+  
+/* ===== MOBILE RESPONSIVE HOTFIX ===== */
+@media (max-width: 900px) {
+
+  /* 1. Header: title + exactly 3 buttons in one row */
+  .top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) repeat(3, 44px);
+    align-items: start;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .top h2 {
+    grid-column: 1;
+    min-width: 0;
+    font-size: clamp(23px, 6vw, 30px);
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+
+  .top h2 small {
+    font-size: 12px;
+    line-height: 1.5;
+    margin-top: 7px;
+    overflow-wrap: anywhere;
+  }
+
+  .top > .mbtn {
+    width: 44px;
+    height: 44px;
+    justify-self: center;
+    align-self: start;
+    margin: 0;
+  }
+
+  /* Search and role dropdown each get their own full row */
+  .top > .search,
+  .top > select.role {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .top > .search {
+    padding: 0 14px;
+  }
+
+  .top > .search input {
+    min-width: 0;
+    width: 100%;
+    font-size: 14px;
+  }
+
+  .top > select.role {
+    padding: 14px;
+  }
+
+  /* 2. Prevent dashboard cards and currency values overflowing */
+  main,
+  #view,
+  .page,
+  .grid,
+  .card {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .card {
+    padding: 18px;
+    border-radius: 24px;
+  }
+
+  .grid {
+    gap: 16px;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .grid > .card.c3 {
+    grid-column: span 6;
+    padding: 16px;
+  }
+
+  .grid > .card.c3 .big {
+    font-size: clamp(18px, 5.2vw, 25px);
+    line-height: 1.2;
+    letter-spacing: -0.04em;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .card h3 {
+    font-size: 14px;
+    overflow-wrap: anywhere;
+  }
+
+  /* 3. Buttons inside cards should shrink/wrap instead of clipping */
+  .act {
+    min-width: 0;
+    max-width: 100%;
+    padding: 10px 12px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .card .row {
+    min-width: 0;
+  }
+
+  .row .g1 {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .row > .big {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  /* 4. Kanban board: preserve horizontal scrolling */
+  .cols {
+    width: 100%;
+    max-width: 100%;
+    gap: 14px;
+    padding: 8px 8px 20px;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .col {
+    flex: 0 0 min(260px, 82vw);
+    min-width: 0;
+    max-width: 82vw;
+  }
+
+  .mini {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  /* 5. Bottom navigation: swipe without clipping individual tabs */
+  aside {
+    left: 10px;
+    right: 10px;
+    width: auto;
+    min-width: 0;
+    padding: 8px 10px;
+  }
+
+  aside nav {
+    flex: 1 1 0;
+    min-width: 0;
+    gap: 4px;
+    padding: 2px 4px 6px;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  aside nav button {
+    flex: 0 0 66px;
+    min-width: 66px;
+    max-width: 66px;
+    padding: 8px 2px;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  /* Keep payment cards and their action buttons within the viewport */
+  .pay {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .pay > .card {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .pay .shot {
+    max-width: 100%;
+  }
+
+  /* Tables may scroll internally, never stretch the whole page */
+  .scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Long form rows: prevent input fields pushing cards wider */
+  .card .row input,
+  .card .row select,
+  .cin input {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+/* Extra-small phones */
+@media (max-width: 380px) {
+  #app {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .top {
+    gap: 7px;
+    grid-template-columns: minmax(0, 1fr) repeat(3, 40px);
+  }
+
+  .top > .mbtn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .grid > .card.c3 {
+    padding: 12px;
+  }
+
+  .grid > .card.c3 .big {
+    font-size: 18px;
+  }
+
+  .card {
+    padding: 14px;
+  }
+                                                                      }
+    
 </style>
 </head>
 <body>
