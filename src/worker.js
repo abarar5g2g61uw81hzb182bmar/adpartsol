@@ -1393,6 +1393,7 @@ async function runAutomatedEngine(env) {
 async function handlePanelAPI(request, url, env) {
   const action = url.pathname.replace("/api/panel/", "");
 
+  // Public Customer Order Tracking (/c)
   if (action === "track") {
     const id = Number(url.searchParams.get("order_id"));
     const order = await env.DB.prepare("SELECT id, status, final_total, advance_20, balance_80, tracking_id, created_at FROM orders WHERE id = ?").bind(id).first();
@@ -1400,56 +1401,121 @@ async function handlePanelAPI(request, url, env) {
     return jsonRes({ ok: !!order, order, items: items.results || [] });
   }
 
-  const phone = request.headers.get("x-staff-phone") || "";
-  const token = request.headers.get("x-staff-token") || "";
-  const staff = await env.DB.prepare("SELECT * FROM staff_users WHERE phone = ? AND access_token = ? AND is_active = 1").bind(phone, token).first();
-  if (!staff) return jsonRes({ ok: false, error: "Unauthorized. Request token via Admin Bot." }, 401);
+  // Master Admin OR Staff Auth Check
+  const phone = (request.headers.get("x-staff-phone") || "").trim();
+  const token = (request.headers.get("x-staff-token") || "").trim();
+
+  let staff = null;
+  if (phone === "8637213741" && (token === "AD PartSol\u207f" || token === "AD PartSol")) {
+    staff = { role: "admin", phone: "8637213741", is_master: true };
+  } else {
+    staff = await env.DB.prepare("SELECT * FROM staff_users WHERE phone = ? AND access_token = ? AND is_active = 1").bind(phone, token).first();
+  }
+  if (!staff) return jsonRes({ ok: false, error: "Incorrect username or password" }, 401);
+
+  if (action === "login") return jsonRes({ ok: true, role: staff.role });
 
   if (action === "dashboard") {
-    const orders = await env.DB.prepare("SELECT * FROM orders ORDER BY created_at DESC LIMIT 60").all();
-    const payments = await env.DB.prepare("SELECT * FROM payments ORDER BY id DESC LIMIT 40").all();
+    const orders = await env.DB.prepare("SELECT * FROM orders ORDER BY created_at DESC LIMIT 80").all();
+    const payments = await env.DB.prepare("SELECT * FROM payments ORDER BY id DESC LIMIT 50").all();
     const settings = await env.DB.prepare("SELECT * FROM settings").all();
     const suppliers = await env.DB.prepare("SELECT * FROM suppliers ORDER BY id DESC").all();
-    const items = await env.DB.prepare("SELECT * FROM order_items ORDER BY id DESC LIMIT 120").all();
-    const bids = await env.DB.prepare("SELECT * FROM bids ORDER BY id DESC LIMIT 120").all();
-
-    // Server-side Role Privacy Filter (Matches Staff Dashboards Blueprint!)
-    const role = staff.role;
-    const safeOrders = (orders.results || []).map(o => {
-      if (role === "payment") return { ...o, supplier_base_total: undefined, margin_percent: undefined };
-      if (role === "packing") return { ...o, supplier_base_total: undefined, margin_percent: undefined, final_total: undefined };
-      return o;
-    });
+    const items = await env.DB.prepare("SELECT * FROM order_items ORDER BY id DESC LIMIT 150").all();
+    const bids = await env.DB.prepare("SELECT b.*, s.name as sup_name FROM bids b LEFT JOIN suppliers s ON b.supplier_id = s.id ORDER BY b.id DESC LIMIT 150").all();
+    const customers = await env.DB.prepare("SELECT * FROM customers ORDER BY last_msg_at DESC LIMIT 60").all();
+    const staffList = await env.DB.prepare("SELECT id, role, phone, access_token, is_active, created_at FROM staff_users ORDER BY id DESC").all();
 
     return jsonRes({
       ok: true,
-      role,
-      orders: safeOrders,
+      role: staff.role,
+      orders: orders.results || [],
       payments: payments.results || [],
       settings: settings.results || [],
-      suppliers: role === "payment" ? [] : (suppliers.results || []),
+      suppliers: suppliers.results || [],
       items: items.results || [],
-      bids: (role === "admin" || role === "order_desk") ? (bids.results || []) : []
+      bids: bids.results || [],
+      customers: customers.results || [],
+      staff_list: staff.role === "admin" ? (staffList.results || []) : []
     });
   }
 
+  // Save Any Setting / Toggle / Timer / Margin / UPI / Emergency Stop
+  if (action === "save-settings" && request.method === "POST") {
+    const body = await request.json();
+    const stmts = Object.entries(body).map(([k, v]) =>
+      env.DB.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)").bind(k, String(v))
+    );
+    if (stmts.length) await env.DB.batch(stmts);
+    await sendLog(env, `★ Admin updated settings: ${Object.keys(body).join(", ")}`);
+    return jsonRes({ ok: true, msg: "Settings saved to live engine" });
+  }
+
+  // Direct Call Supplier Assign
   if (action === "assign-supplier" && request.method === "POST") {
     const { order_id, supplier_id, unit_price } = await request.json();
     return jsonRes(await adminAssignSupplierToOrder(env, Number(order_id), Number(supplier_id), Number(unit_price || 0)));
   }
 
-  if (action === "payment-action" && request.method === "POST") {
-    const { payment_id, decision } = await request.json();
-    return jsonRes(await processPaymentDecision(env, Number(payment_id), decision, "Web Panel"));
+  // Force Close Active Bidding Window
+  if (action === "force-close" && request.method === "POST") {
+    const { order_id } = await request.json();
+    if (order_id) {
+      await env.DB.prepare("UPDATE orders SET bidding_ends_at = 0 WHERE id = ?").bind(Number(order_id)).run();
+    } else {
+      await env.DB.prepare("UPDATE orders SET bidding_ends_at = 0 WHERE status = 'BIDDING'").run();
+    }
+    await runAutomatedEngine(env);
+    return jsonRes({ ok: true, msg: "Bidding closed & lowest quote dispatched!" });
   }
 
+  // Extend Bidding Window (+10 Mins)
+  if (action === "extend-window" && request.method === "POST") {
+    const { order_id, mins } = await request.json();
+    const addSec = (Number(mins) || 10) * 60;
+    await env.DB.prepare("UPDATE orders SET bidding_ends_at = bidding_ends_at + ? WHERE id = ?").bind(addSec, Number(order_id)).run();
+    return jsonRes({ ok: true, msg: `Window extended by ${mins || 10}m` });
+  }
+
+  // Approve / Reject Payment
+  if (action === "payment-action" && request.method === "POST") {
+    const { payment_id, decision } = await request.json();
+    return jsonRes(await processPaymentDecision(env, Number(payment_id), decision, "Admin Dashboard"));
+  }
+
+  // Ship Order with Tracking ID
   if (action === "ship-order" && request.method === "POST") {
     const { order_id, tracking_id } = await request.json();
     const order = await env.DB.prepare("SELECT * FROM orders WHERE id = ?").bind(order_id).first();
+    if (!order) return jsonRes({ ok: false, error: "Order not found" });
     const cust = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(order.customer_id).first();
     await env.DB.prepare("UPDATE orders SET status = 'SHIPPED', tracking_id = ? WHERE id = ?").bind(tracking_id, order_id).run();
-    await notifyCustomer(env, cust, `★ Order #${order_id} Dispatched\n→ Tracking ID: ${tracking_id}`);
-    return jsonRes({ ok: true });
+    if (cust) await notifyCustomer(env, cust, `★ Order #${order_id} Dispatched\n━━━━━━━━━━━━━━━━━\n→ Tracking ID: ${tracking_id}`);
+    return jsonRes({ ok: true, msg: `Order #${order_id} shipped!` });
+  }
+
+  // Create Supplier Code
+  if (action === "add-supplier" && request.method === "POST") {
+    const { name, phone } = await request.json();
+    const code = "SUP" + Math.random().toString(36).substring(2, 7).toUpperCase();
+    await env.DB.prepare("INSERT INTO suppliers (name, phone, verify_code) VALUES (?, ?, ?)").bind(name || "Supplier", phone || "", code).run();
+    return jsonRes({ ok: true, code, msg: `Supplier added! Code: /verify ${code}` });
+  }
+
+  // Create Staff Login Credentials
+  if (action === "add-staff" && request.method === "POST") {
+    const { role, phone } = await request.json();
+    const tok = "ADP-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+    await env.DB.prepare("INSERT INTO staff_users (role, phone, access_token) VALUES (?, ?, ?)").bind(role, phone, tok).run();
+    return jsonRes({ ok: true, token: tok, msg: `Staff added! Token: ${tok}` });
+  }
+
+  // Direct Reply to Customer Chat (Support Take-Over)
+  if (action === "send-chat" && request.method === "POST") {
+    const { customer_id, text } = await request.json();
+    const cust = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(customer_id).first();
+    if (!cust) return jsonRes({ ok: false, error: "Customer not found" });
+    await notifyCustomer(env, cust, `★ AD PARTSOL Support\n━━━━━━━━━━━━━━━━━\n${text}`);
+    return jsonRes({ ok: true, msg: "Message sent to customer!" });
   }
 
   return jsonRes({ ok: false, error: "Unknown endpoint" }, 404);
