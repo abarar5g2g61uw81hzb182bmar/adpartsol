@@ -1,72 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>AD PARTSOL - Payment Verification</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>AD PartSol — Payment Verification Desk</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#e3e8f4;--hi:#ebeffa;--lo:#d8dfee;--sd:rgba(146,160,198,.78);--sl:rgba(255,255,255,.95);--ink:#2e3c5f;--mute:#70809f;--deep:#4a8af0;--red:#e0524a;--green:#25a862;--rz:9px 9px 20px var(--sd),-9px -9px 20px var(--sl);--in:inset 5px 5px 11px var(--sd),inset -5px -5px 11px var(--sl);--cv:linear-gradient(145deg,var(--hi),var(--lo))}
+*{box-sizing:border-box}body{margin:0;font-family:"Plus Jakarta Sans",sans-serif;background:var(--bg);color:var(--ink);padding:16px}
+.wrap{max-width:720px;margin:0 auto}.card{background:var(--cv);border-radius:24px;padding:18px;box-shadow:var(--rz);margin-bottom:16px}
+.inbox{background:var(--bg);box-shadow:var(--in);border:0;border-radius:14px;padding:14px;width:100%;font-size:16px;margin-bottom:12px;outline:0}
+.btn{padding:13px 18px;border-radius:14px;border:0;font-weight:800;cursor:pointer;background:linear-gradient(145deg,#7db4ff,#4a8af0);color:#fff;width:100%}
+.shot{height:220px;background:#090d16;border-radius:16px;overflow:hidden;margin:12px 0;display:grid;place-items:center}
+.shot img{width:100%;height:100%;object-fit:contain}
+</style>
 </head>
-<body class="bg-slate-950 text-white min-h-screen p-4">
-  <div id="loginBox" class="max-w-md mx-auto mt-20 bg-slate-900 p-6 rounded-xl border border-slate-800">
-    <h1 class="text-xl font-bold mb-4 text-emerald-400">💳 Payment Team Login</h1>
-    <input id="phone" placeholder="Staff Phone Number" class="w-full p-3 mb-3 bg-slate-950 rounded border border-slate-700">
-    <input id="token" type="password" placeholder="Access Token (ADP-...)" class="w-full p-3 mb-4 bg-slate-950 rounded border border-slate-700">
-    <button onclick="login()" class="w-full bg-emerald-500 text-black font-bold py-3 rounded">Login</button>
+<body>
+<div class="wrap">
+  <div id="loginBox" class="card">
+    <h2 style="margin:0 0 12px">★ Payment Manager Login</h2>
+    <input id="u" class="inbox" placeholder="Staff Phone Number">
+    <input id="p" type="password" class="inbox" placeholder="ADP-Token">
+    <button class="btn" onclick="login()">Enter Payment Desk</button>
   </div>
-
-  <div id="app" class="hidden max-w-4xl mx-auto">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-emerald-400">💳 Pending Payment Queue</h1>
-      <button onclick="loadPayments()" class="bg-slate-800 px-4 py-2 rounded text-sm">🔄 Refresh</button>
+  <div id="app" style="display:none">
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+      <h2 style="margin:0;font-size:18px">★ Payment Verification Queue</h2>
+      <button onclick="load()" style="padding:8px 14px;border-radius:12px;border:0;box-shadow:var(--in);font-weight:700">↻ Sync</button>
     </div>
-    <div id="payList" class="grid md:grid-cols-2 gap-4"></div>
+    <div id="list"></div>
   </div>
-
-  <script>
-    let creds = JSON.parse(localStorage.getItem('adp_pay') || 'null');
-    if (creds) loadPayments();
-
-    async function login() {
-      creds = { phone: document.getElementById('phone').value.trim(), token: document.getElementById('token').value.trim() };
-      localStorage.setItem('adp_pay', JSON.stringify(creds));
-      await loadPayments();
-    }
-
-    async function loadPayments() {
-      const res = await fetch('/api/panel/dashboard', { headers: { 'x-staff-phone': creds.phone, 'x-staff-token': creds.token } });
-      const data = await res.json();
-      if (!data.ok) { alert(data.error); localStorage.removeItem('adp_pay'); return; }
-      document.getElementById('loginBox').classList.add('hidden');
-      document.getElementById('app').classList.remove('hidden');
-
-      if (!data.payments.length) {
-        document.getElementById('payList').innerHTML = `<div class="col-span-2 text-center py-12 text-slate-400">🎉 All caught up! No pending payment screenshots.</div>`;
-        return;
-      }
-
-      document.getElementById('payList').innerHTML = data.payments.map(p => `
-        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
-          <div class="flex justify-between mb-2">
-            <span class="font-bold text-emerald-400">Order #${p.order_id} (${p.type})</span>
-            <span class="text-sm font-bold">Expected: ₹${p.expected_amount}</span>
-          </div>
-          <div class="text-xs text-slate-300 mb-3">🤖 AI UTR: <code class="bg-slate-800 px-1 rounded">${p.extracted_utr}</code> | Detected: ₹${p.extracted_amount}</div>
-          <a href="${p.file_id_or_url}" target="_blank"><img src="${p.file_id_or_url}" class="w-full h-64 object-contain bg-black rounded mb-3 border border-slate-700"></a>
-          <div class="grid grid-cols-2 gap-2">
-            <button onclick="decide(${p.id}, 'APPROVED')" class="bg-emerald-500 text-black font-bold py-2 rounded">✅ Approve</button>
-            <button onclick="decide(${p.id}, 'REJECTED')" class="bg-rose-600 text-white font-bold py-2 rounded">❌ Reject (Fake)</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    async function decide(id, decision) {
-      await fetch('/api/panel/payment-action', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-staff-phone': creds.phone, 'x-staff-token': creds.token },
-        body: JSON.stringify({ payment_id: id, decision })
-      });
-      await loadPayments();
-    }
-  </script>
+</div>
+<script>
+let C = JSON.parse(localStorage.getItem("adp_pay_c") || "null");
+if (C) load();
+function login() { C = { u: document.getElementById("u").value.trim(), p: document.getElementById("p").value.trim() }; localStorage.setItem("adp_pay_c", JSON.stringify(C)); load(); }
+async function load() {
+  const r = await fetch("/api/panel/dashboard", { headers: { "x-staff-phone": C.u, "x-staff-token": C.p } });
+  const d = await r.json();
+  if (!d.ok) { localStorage.removeItem("adp_pay_c"); return alert(d.error); }
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("app").style.display = "block";
+  const pend = (d.payments || []).filter(x => x.status === "PENDING");
+  document.getElementById("list").innerHTML = pend.map(x => `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between"><b>Order #${x.order_id} (${x.type})</b><b style="color:var(--deep)">Expected: ₹${x.expected_amount}</b></div>
+      <div style="font-size:12.5px;color:var(--mute);margin-top:4px">AI UTR: <b>${x.extracted_utr}</b> | Detected: ₹${x.extracted_amount || "?"}</div>
+      <div class="shot"><a href="${x.file_id_or_url}" target="_blank"><img src="${x.file_id_or_url}"></a></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button class="btn" style="background:var(--green)" onclick="act(${x.id},'APPROVED')">✓ Approve</button>
+        <button class="btn" style="background:var(--red)" onclick="act(${x.id},'REJECTED')">✕ Reject</button>
+      </div>
+    </div>
+  `).join("") || `<div class="card">No pending payment screenshots.</div>`;
+}
+async function act(payment_id, decision) {
+  await fetch("/api/panel/payment-action", { method: "POST", headers: { "Content-Type": "application/json", "x-staff-phone": C.u, "x-staff-token": C.p }, body: JSON.stringify({ payment_id, decision }) });
+  load();
+}
+</script>
 </body>
 </html>
