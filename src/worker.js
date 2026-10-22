@@ -1494,6 +1494,23 @@ async function runAutomatedEngine(env) {
 async function handlePanelAPI(request, url, env, baseUrl) {
   const action = url.pathname.replace("/api/panel/", "");
 
+  // Extract Device, IP & Geo Info from Cloudflare Headers
+  const ip = request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for") || "Unknown IP";
+  const ua = request.headers.get("user-agent") || "Unknown Device";
+  const city = request.cf?.city || "Unknown City";
+  const region = request.cf?.region || "";
+  const country = request.cf?.country || "IN";
+
+  // Frontend JS Error Logger -> Sends directly to Logs Bot!
+  if (action === "client-error" && request.method === "POST") {
+    try {
+      const errBody = await request.json();
+      await sendLog(env, `★ FRONTEND UI ERROR\n━━━━━━━━━━━━━━━━━\n→ Page: ${errBody.page || "/a"}\n→ Error: ${errBody.message}\n→ Line: ${errBody.line || "?"}\n→ IP: ${ip}\n└ Device: ${ua.slice(0, 100)}`);
+    } catch (_) {}
+    return jsonRes({ ok: true });
+  }
+
+  // Public Order Tracker (/c)
   if (action === "track") {
     const id = Number(url.searchParams.get("order_id"));
     const order = await env.DB.prepare("SELECT id, status, final_total, advance_20, balance_80, tracking_id, created_at FROM orders WHERE id = ?").bind(id).first();
@@ -1503,20 +1520,39 @@ async function handlePanelAPI(request, url, env, baseUrl) {
 
   const phone = (request.headers.get("x-staff-phone") || "").trim();
   const token = (request.headers.get("x-staff-token") || "").trim();
+  const isLoginAttempt = request.headers.get("x-login-attempt") === "1";
 
   let staff = null;
   const masterUser = String(env.ADMIN_USERNAME || "").trim();
   const masterPass = String(env.ADMIN_PASSWORD || "").trim();
 
+  // 1. Check Cloudflare Secrets
   if (masterUser && masterPass && phone === masterUser && token === masterPass) {
     staff = { role: "admin", phone: masterUser, is_master: true };
-  } else {
+  }
+  // 2. Check staff_users table (e.g. 8637213741 + ADP-YQMQVK)
+  if (!staff && phone && token) {
     staff = await env.DB.prepare(
       "SELECT * FROM staff_users WHERE phone = ? AND access_token = ? AND is_active = 1"
     ).bind(phone, token).first();
   }
 
-  if (!staff) return jsonRes({ ok: false, error: "Incorrect username or password" }, 401);
+  if (!staff) {
+    if (isLoginAttempt) {
+      await sendLog(
+        env,
+        `× FAILED PANEL LOGIN ATTEMPT\n━━━━━━━━━━━━━━━━━\n→ Entered User: ${phone || "Empty"}\n→ Entered Token: ${token ? token.slice(0, 4) + "***" : "Empty"}\n→ IP: ${ip} (${city}, ${region}, ${country})\n└ Device: ${ua.slice(0, 120)}`
+      );
+    }
+    return jsonRes({ ok: false, error: "Invalid credentials! Check Username or ADP-Token." }, 401);
+  }
+
+  if (isLoginAttempt) {
+    await sendLog(
+      env,
+      `★ STAFF PANEL LOGIN SUCCESS\n━━━━━━━━━━━━━━━━━\n→ User: ${staff.phone} (${staff.role.toUpperCase()})\n→ IP: ${ip} (${city}, ${region}, ${country})\n└ Device: ${ua.slice(0, 120)}`
+    );
+  }
 
   if (action === "dashboard") {
     const orders = await env.DB.prepare("SELECT * FROM orders ORDER BY created_at DESC LIMIT 80").all();
@@ -1556,10 +1592,10 @@ async function handlePanelAPI(request, url, env, baseUrl) {
       env.DB.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)").bind(k, String(v))
     );
     if (stmts.length) await env.DB.batch(stmts);
+    await sendLog(env, `★ Settings Updated by ${staff.phone} (${ip}):\n${ JSON.stringify(body).slice(0, 300) }`);
     return jsonRes({ ok: true, msg: "Settings saved to live engine" });
   }
 
-  // Add Non-Overlapping Margin Slab Rule
   if (action === "add-margin-rule" && request.method === "POST") {
     const { min_price, max_price, margin_type, margin_value } = await request.json();
     const minP = Number(min_price), maxP = Number(max_price), val = Number(margin_value);
