@@ -204,7 +204,7 @@ Output strictly JSON:
   return JSON.parse(data.choices[0].message.content);
 }
 
-// Progressive Multi-Message Profile Extractor (Never forgets previous message!)
+// Progressive Multi-Message Profile Extractor
 async function extractCustomerProfileAI(env, textInput, lang = "hinglish", prevProfile = {}) {
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -315,6 +315,38 @@ async function markWhatsAppRead(env, messageId) {
   } catch (_) {}
 }
 
+// Send Native WhatsApp Flow (v7.3 JSON Compatible)
+async function sendWhatsAppNativeFlow(env, toPhone, bodyText, buttonText, flowId, screenId, flowToken) {
+  const payload = {
+    messaging_product: "whatsapp",
+    to: toPhone,
+    type: "interactive",
+    interactive: {
+      type: "flow",
+      header: { type: "text", text: "★ AD PARTSOL" },
+      body: { text: bodyText },
+      footer: { text: "AD PARTSOL — B2B Supply" },
+      action: {
+        name: "flow",
+        parameters: {
+          flow_message_version: "3",
+          flow_token: flowToken,
+          flow_id: String(flowId),
+          flow_cta: buttonText.slice(0, 20),
+          flow_action: "navigate",
+          flow_action_payload: { screen: screenId }
+        }
+      }
+    }
+  };
+
+  await fetch(`https://graph.facebook.com/v20.0/${env.WA_PHONE_ID}/messages`, {
+    method: "POST",
+    headers: { "Authorization": `Bearer ${env.WA_ACCESS_TOKEN}`, "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+}
+
 async function notifyCustomer(env, customer, text, buttons = null, photoUrl = null, videoFileId = null, editMsgId = null) {
   if (customer.platform === "telegram") {
     const reply_markup = buttons ? { inline_keyboard: buttons } : undefined;
@@ -404,8 +436,9 @@ async function handleCustomerBot(update, env, baseUrl) {
   const now = Math.floor(Date.now() / 1000);
 
   let cust = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(custId).first();
-  if (!cust) {
-    await env.DB.prepare("INSERT INTO customers (id, platform, chat_id, last_msg_at) VALUES (?, 'telegram', ?, ?)").bind(custId, chatId, now).run();
+  const isNew = !cust;
+  if (isNew) {
+    await env.DB.prepare("INSERT INTO customers (id, platform, chat_id, last_msg_at, state) VALUES (?, 'telegram', ?, ?, 'AWAITING_REQ')").bind(custId, chatId, now).run();
     cust = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(custId).first();
   } else {
     await env.DB.prepare("UPDATE customers SET last_msg_at = ?, warned_22h = 0 WHERE id = ?").bind(now, custId).run();
@@ -419,23 +452,32 @@ async function handleCustomerBot(update, env, baseUrl) {
   }
 
   const text = msg.text || msg.caption || "";
-  if (text === "/start") {
-    await env.DB.prepare("UPDATE customers SET temp_data = NULL, state = 'AWAITING_REQ' WHERE id = ?").bind(custId).run();
+  if (text === "/start" || (isNew && !cust.full_name)) {
     const greet = GREETING_TEMPLATES[Math.floor(Math.random() * GREETING_TEMPLATES.length)];
-    const formUrl = `${baseUrl}/c?cid=${encodeURIComponent(custId)}`;
+    const setupFormUrl = `${baseUrl}/c?mode=setup&cid=${encodeURIComponent(custId)}`;
+    const orderFormUrl = `${baseUrl}/c?mode=order&cid=${encodeURIComponent(custId)}`;
 
-    return await tgCall(env.BOT_TOKEN_CUSTOMER, "sendMessage", {
-      chat_id: chatId,
-      text: `${greet}\n━━━━━━━━━━━━━━━━━\n☞ Select your language or use the Quick Registration & Order Form below:`,
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "☞ Open Quick Setup & Order Form", url: formUrl }],
-          [{ text: "■ English", callback_data: "lang_english" }, { text: "■ Hindi", callback_data: "lang_hindi" }],
-          [{ text: "■ Hinglish", callback_data: "lang_hinglish" }, { text: "■ Odia", callback_data: "lang_odia" }],
-          [{ text: "■ Odia + English", callback_data: "lang_odia_eng" }]
-        ]
-      }
-    });
+    if (!cust.full_name || !cust.phone || !cust.address) {
+      return await tgCall(env.BOT_TOKEN_CUSTOMER, "sendMessage", {
+        chat_id: chatId,
+        text: `${greet}\n━━━━━━━━━━━━━━━━━\n☞ Tap the button below to complete your 10-second Shop Setup (or simply type your requirement directly in chat):`,
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "☞ Fill Shop Setup Form", url: setupFormUrl }]
+          ]
+        }
+      });
+    } else {
+      return await tgCall(env.BOT_TOKEN_CUSTOMER, "sendMessage", {
+        chat_id: chatId,
+        text: `${greet}\n━━━━━━━━━━━━━━━━━\nWelcome back, ${cust.full_name}!\n☞ Tap below to open the Product Order Form, or send a Voice Note / Photo / Text right here:`,
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "☞ Open Product Order Form", url: orderFormUrl }]
+          ]
+        }
+      });
+    }
   }
 
   let mediaUrl = null;
@@ -495,11 +537,25 @@ async function processCustomerAction(env, cust, data, msgId = null, baseUrl = "h
       mem.draft_profile = { name: cust.full_name || "", phone: cust.phone || "", address: cust.address || "" };
       await env.DB.prepare("UPDATE customers SET state = 'AWAITING_PROFILE', temp_data = ? WHERE id = ?")
         .bind(JSON.stringify(mem), cust.id).run();
-      return await notifyCustomer(
-        env, cust,
-        `★ Delivery Details Required\n━━━━━━━━━━━━━━━━━\n☞ Please send your Name, Phone Number, and Delivery Address (you can send in one or multiple messages, or fill the 10-sec form: ${baseUrl}/c?cid=${encodeURIComponent(cust.id)} ):`,
-        null, null, null, msgId
-      );
+
+      if (cust.platform === "telegram") {
+        const setupFormUrl = `${baseUrl}/c?mode=setup&cid=${encodeURIComponent(cust.id)}`;
+        return await tgCall(env.BOT_TOKEN_CUSTOMER, "sendMessage", {
+          chat_id: cust.chat_id,
+          text: "★ Delivery Details Required\n━━━━━━━━━━━━━━━━━\n☞ Tap the button below to fill your Shop Setup Form, or send your Name, Phone Number, and Address right here in chat:",
+          reply_markup: { inline_keyboard: [[{ text: "☞ Fill Shop Setup Form", url: setupFormUrl }]] }
+        });
+      } else {
+        const setupFlowId = await getSetting(env.DB, "wa_flow_id_setup", "");
+        if (setupFlowId) {
+          return await sendWhatsAppNativeFlow(
+            env, cust.chat_id,
+            "★ Delivery Details Required\n━━━━━━━━━━━━━━━━━\n☞ Tap below to complete your 10-second Shop Registration Form, or reply with your Name, Phone Number, and Address:",
+            "Shop Setup Form", setupFlowId, "SHOP_SETUP", `setup_${cust.id}`
+          );
+        }
+        return await notifyCustomer(env, cust, "★ Delivery Details Required\n━━━━━━━━━━━━━━━━━\n☞ Please send your Name, Phone Number, and Delivery Address:");
+      }
     }
     return await showCombinedFinalConfirmation(env, cust, msgId, baseUrl);
   }
@@ -594,7 +650,7 @@ async function processCustomerInput(env, cust, text, mediaUrl, baseUrl = "https:
     );
   }
 
-  // 1. Progressive Multi-Message AI Profile Extraction (Remembers previous messages!)
+  // 1. Progressive Multi-Message AI Profile Extraction
   if (cust.state === "AWAITING_PROFILE") {
     let loaderMsgId = null;
     if (cust.platform === "telegram") loaderMsgId = await startTgTypingLoader(env.BOT_TOKEN_CUSTOMER, cust.chat_id);
@@ -773,7 +829,7 @@ async function launchOrderBidding(env, cust, editMsgId = null, baseUrl = "https:
     });
 
     for (const sup of (suppliers.results || [])) {
-      // Remove "Continue to Panel" button from the supplier's previous latest message so only the newest message has the button!
+      // Remove "Continue to Panel" button from previous latest message so only newest message has it
       if (sup.last_panel_msg_id) {
         await tgCall(env.BOT_TOKEN_SUPPLIER, "editMessageReplyMarkup", {
           chat_id: sup.tg_chat_id,
@@ -927,7 +983,7 @@ async function handleSupplierPortalAPI(request, url, env) {
 }
 
 // ==========================================
-// 8. CUSTOMER WEB FORMS API (/c — REGISTRATION + ORDER FORM)
+// 8. CUSTOMER WEB FORMS API (/c — STANDALONE FORM 1 & FORM 2)
 // ==========================================
 async function handleCustomerPortalAPI(request, url, env, baseUrl) {
   const action = url.pathname.replace("/api/customer/", "");
@@ -938,51 +994,75 @@ async function handleCustomerPortalAPI(request, url, env, baseUrl) {
     return jsonRes({ ok: !!cust, customer: cust });
   }
 
-  // Form 1: Registration Form Submit -> Sends VIP Bridge Pass!
+  // Form 1: Registration Submit -> Sends Bridge Pass + Hidden Button for Form 2
   if (action === "register" && request.method === "POST") {
     const { cid, full_name, phone, address, lang, email } = await request.json();
     let custId = cid || `wa_91${String(phone).replace(/\D/g, "").slice(-10)}`;
     const now = Math.floor(Date.now() / 1000);
 
     let cust = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(custId).first();
+    const cleanAddr = `${address}${email ? " | Email: " + email : ""}`;
+
     if (!cust) {
       const plat = custId.startsWith("tg_") ? "telegram" : "whatsapp";
       const chatId = custId.replace(/^(tg_|wa_)/, "");
       await env.DB.prepare(
         "INSERT INTO customers (id, platform, chat_id, full_name, phone, address, lang, last_msg_at, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'AWAITING_REQ')"
-      ).bind(custId, plat, chatId, full_name, phone, `${address}${email ? " | Email: " + email : ""}`, lang || "hinglish", now).run();
+      ).bind(custId, plat, chatId, full_name, phone, cleanAddr, lang || "hinglish", now).run();
       cust = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(custId).first();
     } else {
       await env.DB.prepare(
         "UPDATE customers SET full_name = ?, phone = ?, address = ?, lang = ?, state = 'AWAITING_REQ' WHERE id = ?"
-      ).bind(full_name, phone, `${address}${email ? " | Email: " + email : ""}`, lang || "hinglish", custId).run();
+      ).bind(full_name, phone, cleanAddr, lang || "hinglish", custId).run();
       cust = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(custId).first();
     }
 
-    // Check if customer already had draft items before filling Form 1
     const mem = parseSessionMemory(cust.temp_data);
     if (mem.items && mem.items.length > 0) {
       await showCombinedFinalConfirmation(env, cust, null, baseUrl);
     } else {
       const partnerCode = "ADP-" + String(phone).slice(-4);
-      const bridgePass = `★ Welcome to AD PARTSOL, ${full_name}!\n━━━━━━━━━━━━━━━━━\n→ Verified Partner ID: #${partnerCode}\n→ Delivery Hub: ${address}\n└ Preferred Language: ${(lang || "hinglish").toUpperCase()}\n━━━━━━━━━━━━━━━━━\nⓘ You can now order in 2 ways:\n1. Simply send a Text, Voice Note, or Part Slip Photo right here in chat.\n2. Or use the Quick Order Form in your browser.`;
-      await notifyCustomer(env, cust, bridgePass);
+      const orderFormUrl = `${baseUrl}/c?mode=order&cid=${encodeURIComponent(custId)}`;
+      const bridgeText = `★ Shop Profile Verified — ${full_name}\n━━━━━━━━━━━━━━━━━\n→ Partner ID: #${partnerCode}\n→ Delivery Hub: ${address}\n└ Language: ${(lang || "hinglish").toUpperCase()}\n━━━━━━━━━━━━━━━━━\n☞ Now tell us what parts you need! Tap the Product Order Form button below, or simply send a Voice Note, Photo, or Text here:`;
+
+      if (cust.platform === "telegram") {
+        await tgCall(env.BOT_TOKEN_CUSTOMER, "sendMessage", {
+          chat_id: cust.chat_id,
+          text: bridgeText,
+          reply_markup: {
+            inline_keyboard: [[{ text: "☞ Open Product Order Form", url: orderFormUrl }]]
+          }
+        });
+      } else {
+        const orderFlowId = await getSetting(env.DB, "wa_flow_id_order", "");
+        if (orderFlowId) {
+          await sendWhatsAppNativeFlow(env, cust.chat_id, bridgeText, "Order Spare Parts", orderFlowId, "PRODUCT_ORDER", `ord_${cust.id}`);
+        } else {
+          await notifyCustomer(env, cust, bridgeText);
+        }
+      }
     }
     return jsonRes({ ok: true, cid: custId });
   }
 
-  // Form 2: Direct Multi-Item Order Form Submit
+  // Form 2: Standalone Product Order Submit -> Sends Order Summary to Chat
   if (action === "submit-order" && request.method === "POST") {
     const { cid, items } = await request.json();
     const cust = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(cid).first();
-    if (!cust) return jsonRes({ ok: false, error: "Please complete Step 1 Registration first" }, 400);
+    if (!cust) return jsonRes({ ok: false, error: "Customer not found" }, 400);
 
     const mem = parseSessionMemory(cust.temp_data);
-    mem.items = items;
-    await env.DB.prepare("UPDATE customers SET temp_data = ? WHERE id = ?").bind(JSON.stringify(mem), cust.id).run();
-    cust.temp_data = JSON.stringify(mem);
+    mem.items = (mem.items || []).concat(items);
+    await env.DB.prepare("UPDATE customers SET state = 'CONFIRM_REQ', temp_data = ? WHERE id = ?")
+      .bind(JSON.stringify(mem), cust.id).run();
 
-    await launchOrderBidding(env, cust, null, baseUrl);
+    const summaryBox = formatSummaryBox(mem.items, "[?] Are these details correct?");
+    const actionButtons = [
+      [{ text: "[+] Confirm & Continue", callback_data: "req_continue" }],
+      [{ text: "[+] Add More Products", callback_data: "req_add_more" }, { text: "[✎] Edit", callback_data: "req_edit" }],
+      [{ text: "[×] Cancel", callback_data: "req_cancel" }]
+    ];
+    await notifyCustomer(env, cust, summaryBox, actionButtons);
     return jsonRes({ ok: true });
   }
 
@@ -1182,6 +1262,17 @@ async function handleAdminBot(update, env, baseUrl) {
     return await tgCall(env.BOT_TOKEN_ADMIN, "sendMessage", { chat_id: chatId, text: "★ All active bidding windows closed & item-wise invoices dispatched." });
   }
 
+  // Save WhatsApp Flow IDs directly from Admin Bot: /setflow setup 123456789 OR /setflow order 987654321
+  if (text.startsWith("/setflow ")) {
+    const [_, type, flowId] = text.split(/\s+/);
+    if (!type || !flowId) {
+      return await tgCall(env.BOT_TOKEN_ADMIN, "sendMessage", { chat_id: chatId, text: "Usage:\n/setflow setup <FLOW_ID>\n/setflow order <FLOW_ID>" });
+    }
+    const key = type.toLowerCase() === "setup" ? "wa_flow_id_setup" : "wa_flow_id_order";
+    await env.DB.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)").bind(key, flowId.trim()).run();
+    return await tgCall(env.BOT_TOKEN_ADMIN, "sendMessage", { chat_id: chatId, text: `★ Saved ${key} = ${flowId.trim()}` });
+  }
+
   if (text.startsWith("/assign ")) {
     const [_, ordIdStr, supIdStr, priceStr] = text.split(/\s+/);
     const res = await adminAssignSupplierToOrder(env, Number(ordIdStr), Number(supIdStr), Number(priceStr || 0));
@@ -1286,8 +1377,10 @@ async function sendAdminPanel(env, chatId, editMsgId = null) {
   const ai = await getSetting(env.DB, "ai_enabled", "1");
   const margin = await getSetting(env.DB, "margin_percent", "20");
   const deliv = await getSetting(env.DB, "delivery_charge", "100");
+  const fSetup = await getSetting(env.DB, "wa_flow_id_setup", "Not Set");
+  const fOrder = await getSetting(env.DB, "wa_flow_id_order", "Not Set");
 
-  const text = `★ AD PARTSOL — Master Control\n━━━━━━━━━━━━━━━━━\n→ Default Margin: ${margin}% | Delivery: Rs.${deliv}\n\nCommands:\n/newsupplier Name\n/addstaff payment 9876543210\n/assign <OrderID> <SupplierID> <Price>\n/forceclose`;
+  const text = `★ AD PARTSOL — Master Control\n━━━━━━━━━━━━━━━━━\n→ Default Margin: ${margin}% | Delivery: Rs.${deliv}\n→ WA Setup Flow ID: ${fSetup}\n→ WA Order Flow ID: ${fOrder}\n\nCommands:\n/setflow setup <FLOW_ID>\n/setflow order <FLOW_ID>\n/newsupplier Name\n/addstaff payment 9876543210\n/assign <OrderID> <SupplierID> <Price>\n/forceclose`;
   const reply_markup = {
     inline_keyboard: [
       [{ text: `Telegram: ${tg === "1" ? "[ON]" : "[OFF]"}`, callback_data: "toggle_tg_enabled" }],
@@ -1303,7 +1396,7 @@ async function sendAdminPanel(env, chatId, editMsgId = null) {
 }
 
 // ==========================================
-// 11. WHATSAPP CLOUD API HANDLER (FORM + AI BRIDGE)
+// 11. WHATSAPP CLOUD API HANDLER (NATIVE v7.3 FLOWS + AI)
 // ==========================================
 async function handleWhatsAppUpdate(body, env, baseUrl) {
   const waEnabled = await getSetting(env.DB, "wa_enabled", "1");
@@ -1337,20 +1430,100 @@ async function handleWhatsAppUpdate(body, env, baseUrl) {
       return await notifyCustomer(env, cust, "★ Session active for 24 hours. You will receive your order update here.");
     }
     if (btnId) return await processCustomerAction(env, cust, btnId, null, baseUrl);
+
+    // Handle WhatsApp Native Flow v7.3 Submissions (nfm_reply)
+    if (msg.interactive?.type === "nfm_reply") {
+      const rawJson = msg.interactive.nfm_reply?.response_json || "{}";
+      const formData = JSON.parse(rawJson);
+
+      // 1. Native Setup Flow (SHOP_SETUP) Submitted
+      if (formData.form_type === "setup" || formData.shop_name) {
+        const fullName = `${formData.full_name || "Partner"} (${formData.shop_name || "Shop"})`;
+        const phone = formData.phone || from;
+        const addr = `${formData.address || ""}${formData.email ? " | Email: " + formData.email : ""}`;
+        const lang = formData.lang || "hinglish";
+
+        await env.DB.prepare(
+          "UPDATE customers SET full_name = ?, phone = ?, address = ?, lang = ?, state = 'AWAITING_REQ' WHERE id = ?"
+        ).bind(fullName, phone, addr, lang, cust.id).run();
+        cust = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(cust.id).first();
+
+        const mem = parseSessionMemory(cust.temp_data);
+        if (mem.items && mem.items.length > 0) {
+          return await showCombinedFinalConfirmation(env, cust, null, baseUrl);
+        }
+
+        const partnerCode = "ADP-" + String(phone).slice(-4);
+        const bridgeMsg = `★ Welcome to AD PARTSOL, ${fullName}!\n━━━━━━━━━━━━━━━━━\n→ Partner ID: #${partnerCode}\n→ Delivery Hub: ${formData.address}\n└ Language: ${lang.toUpperCase()}\n━━━━━━━━━━━━━━━━━\n☞ Tap below to open the Spare Parts Order Form, or simply send a Voice Note, Photo, or Text right here:`;
+
+        const orderFlowId = await getSetting(env.DB, "wa_flow_id_order", "");
+        if (orderFlowId) {
+          return await sendWhatsAppNativeFlow(env, from, bridgeMsg, "Order Spare Parts", orderFlowId, "PRODUCT_ORDER", `ord_${cust.id}`);
+        }
+        return await notifyCustomer(env, cust, bridgeMsg);
+      }
+
+      // 2. Native Product Order Flow (PRODUCT_ORDER) Submitted
+      if (formData.form_type === "order" || formData.brand) {
+        const mem = parseSessionMemory(cust.temp_data);
+        mem.items = mem.items || [];
+        mem.items.push({
+          brand: formData.brand,
+          model: "",
+          part_name: formData.part_name,
+          variant: formData.variant || "Standard",
+          qty: Number(formData.qty) || 1
+        });
+        await env.DB.prepare("UPDATE customers SET state = 'CONFIRM_REQ', temp_data = ? WHERE id = ?")
+          .bind(JSON.stringify(mem), cust.id).run();
+
+        if (formData.more_items && formData.more_items.trim()) {
+          return await processCustomerInput(env, cust, formData.more_items.trim(), null, baseUrl);
+        }
+
+        const summaryBox = formatSummaryBox(mem.items, "[?] Are these details correct?");
+        return await notifyCustomer(env, cust, summaryBox, [
+          [{ text: "[+] Confirm", callback_data: "req_continue" }, { text: "[✎] Edit", callback_data: "req_edit" }, { text: "[×] Cancel", callback_data: "req_cancel" }]
+        ]);
+      }
+    }
   }
 
+  // First Message / Greeting on WhatsApp -> Send Native Flow 1 (or Flow 2 if already registered)
   if (msg.type === "text") {
     const t = (msg.text.body || "").trim();
-    const formUrl = `${baseUrl}/c?cid=${encodeURIComponent(custId)}`;
-    if (isNew || t.toLowerCase() === "/start" || t.toLowerCase() === "hi" || t.toLowerCase() === "hello") {
+    const isGreeting = ["hi", "hello", "/start", "hey", "start"].includes(t.toLowerCase());
+
+    if (isNew || isGreeting) {
       const greet = GREETING_TEMPLATES[Math.floor(Math.random() * GREETING_TEMPLATES.length)];
-      return await notifyCustomer(
-        env, cust,
-        `${greet}\n━━━━━━━━━━━━━━━━━\n☞ Fill your 10-Second Shop Setup & Order Form here:\n${formUrl}\n\nOr select your language below and send your requirement directly by Text, Photo, or Voice Note:`,
-        [
-          [{ text: "English", callback_data: "lang_english" }, { text: "Hindi", callback_data: "lang_hindi" }, { text: "Hinglish", callback_data: "lang_hinglish" }]
-        ]
-      );
+      const setupFlowId = await getSetting(env.DB, "wa_flow_id_setup", "");
+      const orderFlowId = await getSetting(env.DB, "wa_flow_id_order", "");
+
+      if (!cust.full_name && setupFlowId) {
+        return await sendWhatsAppNativeFlow(
+          env, from,
+          `${greet}\n━━━━━━━━━━━━━━━━━\n☞ Tap below to fill your 10-second Shop Registration Form (or type your spare part requirement directly in chat):`,
+          "Shop Setup Form",
+          setupFlowId,
+          "SHOP_SETUP",
+          `setup_${cust.id}`
+        );
+      } else if (cust.full_name && orderFlowId) {
+        return await sendWhatsAppNativeFlow(
+          env, from,
+          `${greet}\n━━━━━━━━━━━━━━━━━\nWelcome back, ${cust.full_name}!\n☞ Tap below to open the Product Order Form, or send a Voice Note, Photo, or Text:`,
+          "Order Spare Parts",
+          orderFlowId,
+          "PRODUCT_ORDER",
+          `ord_${cust.id}`
+        );
+      } else if (isGreeting) {
+        return await notifyCustomer(
+          env, cust,
+          `${greet}\n━━━━━━━━━━━━━━━━━\n☞ Select your language below or tell us what mobile spare parts you need:`,
+          [[{ text: "English", callback_data: "lang_english" }, { text: "Hindi", callback_data: "lang_hindi" }, { text: "Hinglish", callback_data: "lang_hinglish" }]]
+        );
+      }
     }
     return await processCustomerInput(env, cust, t, null, baseUrl);
   }
@@ -1426,7 +1599,7 @@ async function runAutomatedEngine(env) {
 
       if (fulfilled > 0) {
         anyFulfilled = true;
-        item.fulfilled_qty = fulfilled; // Fixes Qty: 0 bug in memory!
+        item.fulfilled_qty = fulfilled;
 
         const avgBaseUnit = itemBaseCost / fulfilled;
         const sellUnit = await calculateItemSellingUnit(env.DB, avgBaseUnit, order.margin_percent);
@@ -1494,14 +1667,12 @@ async function runAutomatedEngine(env) {
 async function handlePanelAPI(request, url, env, baseUrl) {
   const action = url.pathname.replace("/api/panel/", "");
 
-  // Extract Device, IP & Geo Info from Cloudflare Headers
   const ip = request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for") || "Unknown IP";
   const ua = request.headers.get("user-agent") || "Unknown Device";
   const city = request.cf?.city || "Unknown City";
   const region = request.cf?.region || "";
   const country = request.cf?.country || "IN";
 
-  // Frontend JS Error Logger -> Sends directly to Logs Bot!
   if (action === "client-error" && request.method === "POST") {
     try {
       const errBody = await request.json();
@@ -1510,7 +1681,6 @@ async function handlePanelAPI(request, url, env, baseUrl) {
     return jsonRes({ ok: true });
   }
 
-  // Public Order Tracker (/c)
   if (action === "track") {
     const id = Number(url.searchParams.get("order_id"));
     const order = await env.DB.prepare("SELECT id, status, final_total, advance_20, balance_80, tracking_id, created_at FROM orders WHERE id = ?").bind(id).first();
@@ -1526,11 +1696,9 @@ async function handlePanelAPI(request, url, env, baseUrl) {
   const masterUser = String(env.ADMIN_USERNAME || "").trim();
   const masterPass = String(env.ADMIN_PASSWORD || "").trim();
 
-  // 1. Check Cloudflare Secrets
   if (masterUser && masterPass && phone === masterUser && token === masterPass) {
     staff = { role: "admin", phone: masterUser, is_master: true };
   }
-  // 2. Check staff_users table (e.g. 8637213741 + ADP-YQMQVK)
   if (!staff && phone && token) {
     staff = await env.DB.prepare(
       "SELECT * FROM staff_users WHERE phone = ? AND access_token = ? AND is_active = 1"
@@ -1592,7 +1760,7 @@ async function handlePanelAPI(request, url, env, baseUrl) {
       env.DB.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)").bind(k, String(v))
     );
     if (stmts.length) await env.DB.batch(stmts);
-    await sendLog(env, `★ Settings Updated by ${staff.phone} (${ip}):\n${ JSON.stringify(body).slice(0, 300) }`);
+    await sendLog(env, `★ Settings Updated by ${staff.phone} (${ip}):\n${JSON.stringify(body).slice(0, 300)}`);
     return jsonRes({ ok: true, msg: "Settings saved to live engine" });
   }
 
