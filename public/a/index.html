@@ -2,842 +2,875 @@
 <html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>AD PartSol — Master Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>AD PartSol — Super Admin Cockpit</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#e3e8f4;--hi:#ebeffa;--lo:#d8dfee;--sd:rgba(146,160,198,.78);--sl:rgba(255,255,255,.95);--ink:#2e3c5f;--mute:#70809f;--line:rgba(38,54,74,.07);--teal:#5b9dff;--teal2:#a8cdff;--deep:#4a8af0;--amber:#e99a2b;--red:#e0524a;--green:#25a862;--gold:#c9a45c;--card:var(--bg);color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-:root[data-theme="dark"]{--bg:#151b2e;--hi:#1b2338;--lo:#11172a;--sd:rgba(4,7,18,.78);--sl:rgba(52,68,112,.35);--ink:#e6ecfa;--mute:#8a98bd;--line:rgba(255,255,255,.06);--deep:#8fb0ff;color-scheme:dark}
-:root{--rz:9px 9px 20px var(--sd),-9px -9px 20px var(--sl);--rs:5px 5px 11px var(--sd),-5px -5px 11px var(--sl);--in:inset 5px 5px 11px var(--sd),inset -5px -5px 11px var(--sl);--cv:linear-gradient(145deg,var(--hi),var(--lo))}
-html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
-*{box-sizing:border-box}
-body{margin:0;height:100%;font-family:"Plus Jakarta Sans",system-ui,-apple-system,sans-serif;color:var(--ink);background:var(--bg);overflow-x:hidden;letter-spacing:.005em}
-button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
-input,select{font:inherit;color:inherit}
-:focus-visible{outline:2px solid var(--teal);outline-offset:3px}
-svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
-#login{position:fixed;inset:0;display:grid;place-items:center;padding:20px;overflow:hidden;z-index:10;background:var(--bg);transition:clip-path 1s cubic-bezier(.7,0,.2,1),opacity .2s;clip-path:circle(150% at var(--cx,50%) var(--cy,50%))}
-#login.out{transform:none;opacity:0;pointer-events:none;clip-path:circle(0% at var(--cx,50%) var(--cy,50%));transition:clip-path 1s cubic-bezier(.7,0,.2,1),opacity .2s .8s}
-.lbox{position:relative;width:min(410px,100%);background:var(--cv);border-radius:36px;padding:40px 32px 32px;box-shadow:14px 14px 34px var(--sd),-14px -14px 34px var(--sl);animation:rise .9s cubic-bezier(.2,.8,.2,1)}
-@keyframes rise{from{opacity:0;transform:translateY(34px) scale(.95)}}
-.logo,aside .av{animation:morph 9s ease-in-out infinite}
-.logo{width:84px;height:84px;border-radius:50%;background:var(--cv);box-shadow:var(--rz);display:grid;place-items:center;color:var(--deep);font-weight:800;font-size:26px;margin:0 auto 20px;position:relative;letter-spacing:.02em}
-.logo:before{content:"";position:absolute;inset:9px;border-radius:inherit;box-shadow:var(--in)}
+:root{--bg:#e3e8f4;--hi:#ebeffa;--lo:#d8dfee;--sd:rgba(146,160,198,.78);--sl:rgba(255,255,255,.95);--ink:#2e3c5f;--mute:#70809f;--line:rgba(38,54,74,.08);--teal:#5b9dff;--teal2:#a8cdff;--deep:#4a8af0;--amber:#e99a2b;--red:#e0524a;--green:#25a862;--rz:9px 9px 20px var(--sd),-9px -9px 20px var(--sl);--rs:5px 5px 11px var(--sd),-5px -5px 11px var(--sl);--in:inset 5px 5px 11px var(--sd),inset -5px -5px 11px var(--sl);--cv:linear-gradient(145deg,var(--hi),var(--lo))}
+:root[data-theme="dark"]{--bg:#151b2e;--hi:#1b2338;--lo:#11172a;--sd:rgba(4,7,18,.82);--sl:rgba(52,68,112,.32);--ink:#e6ecfa;--mute:#8a98bd;--line:rgba(255,255,255,.07);--deep:#8fb0ff;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;max-width:100vw;overflow-x:hidden;font-family:"Plus Jakarta Sans",system-ui,sans-serif;color:var(--ink);background:var(--bg)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* Login Screen */
+#login{position:fixed;inset:0;display:grid;place-items:center;padding:18px;z-index:100;background:var(--bg);transition:opacity .5s}
+#login.out{opacity:0;pointer-events:none}
+.lbox{width:min(400px,100%);background:var(--cv);border-radius:32px;padding:34px 24px 28px;box-shadow:var(--rz)}
+.logo{width:76px;height:76px;border-radius:50%;background:var(--cv);box-shadow:var(--rz);display:grid;place-items:center;color:var(--deep);font-weight:800;font-size:24px;margin:0 auto 16px;position:relative}
+.logo:before{content:"";position:absolute;inset:8px;border-radius:50%;box-shadow:var(--in)}
 .logo span{position:relative}
-.logo:after{content:"";position:absolute;inset:-12px;border-radius:50%;border:1.5px solid var(--teal);opacity:0;animation:ping 2.8s infinite}
-@keyframes ping{from{opacity:.6;transform:scale(.92)}to{opacity:0;transform:scale(1.35)}}
-@keyframes morph{0%,100%{border-radius:50%}25%{border-radius:46% 54% 52% 48%/54% 46% 54% 46%}50%{border-radius:54% 46% 48% 52%/46% 54% 46% 54%}75%{border-radius:48% 52% 54% 46%/52% 48% 52% 48%}}
-.lbox h1{margin:0;text-align:center;font-size:26px;font-weight:800;letter-spacing:-.01em}
-.lbox p{text-align:center;color:var(--mute);margin:8px 0 26px;font-size:14px}
-.fld{display:flex;align-items:center;gap:12px;background:var(--bg);box-shadow:var(--in);border-radius:18px;padding:0 18px;margin-bottom:16px;color:var(--mute);transition:color .25s,box-shadow .25s}
-.fld:focus-within{color:var(--teal);box-shadow:var(--in),0 0 0 2px rgba(47,98,232,.35)}
-.fld input{flex:1;border:0;background:none;padding:16px 0;outline:0;min-width:0;color:var(--ink)}
-.btn{width:100%;padding:16px;border-radius:18px;background:linear-gradient(145deg,#7db4ff,#4a8af0);color:#fff;font-weight:700;letter-spacing:.03em;transition:transform .2s,box-shadow .2s;box-shadow:8px 8px 18px var(--sd),-6px -6px 14px var(--sl);margin-top:6px}
-.btn:hover{transform:translateY(-2px)}.btn:active{transform:scale(.98);box-shadow:inset 4px 4px 9px rgba(0,0,0,.25)}
-.err{color:var(--red);font-size:13px;text-align:center;min-height:18px;margin-top:12px}
-.shake{animation:shake .4s}
-@keyframes shake{25%{transform:translateX(-9px)}75%{transform:translateX(9px)}}
-.remember{text-align:center;color:var(--mute);font-size:12px;margin-top:12px;line-height:1.5}
-#app{display:none;min-height:100%;padding:22px;gap:26px;grid-template-columns:92px 1fr}
-#app.show{display:grid;animation:appin .9s ease}
-@keyframes appin{from{opacity:0;transform:scale(.97)}}
-aside{background:var(--cv);border-radius:32px;padding:20px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;position:sticky;top:22px;height:calc(100dvh - 44px);box-shadow:var(--rz);color:var(--mute)}
-aside .av{width:52px;height:52px;border-radius:50%;box-shadow:var(--in);display:grid;place-items:center;font-weight:800;color:var(--deep);margin-bottom:12px}
-nav{display:flex;flex-direction:column;gap:8px;width:100%;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;flex:1;padding:4px 2px}
-nav button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:11px 2px;border-radius:18px;font-size:10px;font-weight:600;transition:box-shadow .3s,color .3s,transform .3s}
-nav button:hover{color:var(--ink);box-shadow:var(--rs)}
-nav button.on{color:var(--teal);box-shadow:var(--in);animation:blobnav 5s ease-in-out infinite}
-nav button.on svg{filter:drop-shadow(0 0 5px rgba(47,98,232,.55))}
-@keyframes blobnav{0%,100%{border-radius:18px}33%{border-radius:26px 14px 24px 16px/16px 26px 14px 24px}66%{border-radius:14px 26px 16px 24px/24px 14px 26px 16px}}
-.tools{display:flex;flex-direction:column;gap:12px;margin-top:6px}
-.tools button,.mbtn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;box-shadow:var(--rs);color:var(--mute);transition:.25s}
-.tools button:hover{color:var(--teal)}.tools button:active,.mbtn:active{box-shadow:var(--in)}
-.mbtn{display:none;color:var(--deep);flex:none}
-main{min-width:0}
-.top{display:flex;gap:16px;align-items:center;margin-bottom:24px;flex-wrap:wrap}
-.top h2{margin:0;font-size:30px;font-weight:800;letter-spacing:-.02em;flex:1;min-width:200px}
-.top h2 small{display:block;font-size:13px;font-weight:500;color:var(--mute);margin-top:4px}
-.search{display:flex;align-items:center;gap:10px;background:var(--bg);box-shadow:var(--in);border-radius:18px;padding:0 18px;min-width:240px;color:var(--mute)}
-.search input{border:0;background:none;outline:0;padding:14px 0;width:100%;color:var(--ink)}
-select.role{background:var(--bg);box-shadow:var(--rs);border:0;border-radius:18px;padding:14px 16px;color:var(--ink);font-weight:600;outline:0}
-.inbox{background:var(--bg);box-shadow:var(--in);border:0;border-radius:14px;padding:11px 14px;color:var(--ink);outline:0;width:100%}
-.grid{display:grid;gap:26px;grid-template-columns:repeat(12,1fr)}
-.card{background:var(--cv);border-radius:28px;padding:24px;box-shadow:var(--rz);min-width:0;transition:transform .4s cubic-bezier(.2,.8,.2,1),box-shadow .4s}
-@media (hover:hover){.card:hover{transform:translateY(-4px)}}
-.grid>.card,.pay>.card{animation:rise2 .75s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*60ms)}
-@keyframes rise2{from{opacity:0;transform:translateY(24px) scale(.97);filter:blur(5px)}}
-.card h3{margin:0 0 16px;font-size:15px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.lbox h1{margin:0;text-align:center;font-size:24px;font-weight:800}
+.lbox p{text-align:center;color:var(--mute);margin:6px 0 22px;font-size:13px}
+.fld{display:flex;align-items:center;gap:10px;background:var(--bg);box-shadow:var(--in);border-radius:16px;padding:0 16px;margin-bottom:14px;color:var(--mute)}
+.fld input{flex:1;border:0;background:none;padding:15px 0;outline:0;font-size:16px;color:var(--ink);min-width:0}
+.btn{width:100%;padding:15px;border-radius:16px;background:linear-gradient(145deg,#7db4ff,#4a8af0);color:#fff;font-weight:800;font-size:15px;box-shadow:6px 6px 14px var(--sd),-4px -4px 10px var(--sl)}
+.err{color:var(--red);font-size:12.5px;text-align:center;min-height:18px;margin-top:10px;font-weight:600}
+
+/* App Shell */
+#app{display:none;min-height:100dvh;padding:20px;gap:22px;grid-template-columns:88px minmax(0,1fr)}
+#app.show{display:grid}
+aside{background:var(--cv);border-radius:28px;padding:16px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;position:sticky;top:20px;height:calc(100dvh - 40px);box-shadow:var(--rz);z-index:40}
+aside .av{width:46px;height:46px;border-radius:50%;box-shadow:var(--in);display:grid;place-items:center;font-weight:800;color:var(--deep);margin-bottom:6px;flex:none}
+nav{display:flex;flex-direction:column;gap:6px;width:100%;overflow-y:auto;scrollbar-width:none;flex:1;padding:2px}
+nav::-webkit-scrollbar{display:none}
+nav button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:16px;font-size:10px;font-weight:700;color:var(--mute);transition:.25s;flex:none}
+nav button.on{color:var(--teal);box-shadow:var(--in)}
+.tools{display:flex;flex-direction:column;gap:10px;padding-top:6px}
+.tools button,.mbtn{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;box-shadow:var(--rs);color:var(--deep);background:var(--cv);flex:none}
+.tools button:active,.mbtn:active{box-shadow:var(--in)}
+.mbtn{display:none}
+
+main{min-width:0;width:100%}
+.top{display:flex;gap:12px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
+.top h2{margin:0;font-size:24px;font-weight:800;flex:1;min-width:160px}
+.top h2 small{display:block;font-size:12px;font-weight:600;color:var(--mute);margin-top:3px}
+.search{display:flex;align-items:center;gap:10px;background:var(--bg);box-shadow:var(--in);border-radius:16px;padding:0 14px;min-width:220px;flex:1;color:var(--mute)}
+.search input{border:0;background:none;outline:0;padding:12px 0;width:100%;font-size:15px;color:var(--ink)}
+
+/* Responsive Grid & Cards */
+.grid{display:grid;gap:18px;grid-template-columns:repeat(12,minmax(0,1fr))}
 .c3{grid-column:span 3}.c4{grid-column:span 4}.c5{grid-column:span 5}.c6{grid-column:span 6}.c7{grid-column:span 7}.c8{grid-column:span 8}.c12{grid-column:span 12}
-.big{font-size:34px;font-weight:800;letter-spacing:-.03em;background:linear-gradient(135deg,var(--ink),var(--deep));-webkit-background-clip:text;background-clip:text;color:transparent}
-.mute{color:var(--mute);font-size:12.5px}
-.chip{display:inline-block;padding:5px 12px;border-radius:99px;font-size:11.5px;font-weight:700;box-shadow:var(--in);color:var(--deep);background:var(--bg)}
+.card{background:var(--cv);border-radius:24px;padding:20px;box-shadow:var(--rz);min-width:0;overflow:hidden}
+.card h3{margin:0 0 14px;font-size:14.5px;font-weight:800;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.big{font-size:28px;font-weight:800;letter-spacing:-.02em;color:var(--deep)}
+.mute{color:var(--mute);font-size:12px;line-height:1.45}
+.chip{display:inline-flex;align-items:center;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;box-shadow:var(--in);color:var(--deep);background:var(--bg);white-space:nowrap}
 .chip.r{color:var(--red)}.chip.a{color:var(--amber)}.chip.g{color:var(--green)}
-.bars{display:flex;align-items:flex-end;gap:14px;height:180px;padding:14px;border-radius:22px;box-shadow:var(--in)}
-.bars div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:11px;color:var(--mute);gap:8px}
-.bars i{width:100%;max-width:34px;border-radius:12px;background:linear-gradient(180deg,var(--teal2),var(--deep));height:0;transition:height 1.1s cubic-bezier(.2,.8,.2,1);box-shadow:0 0 14px rgba(47,98,232,.35)}
-.row{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)}.row:last-child{border:0}
-.row .g1{flex:1;min-width:0}.row b{display:block;font-size:14px}
-.tog{width:50px;height:28px;border-radius:99px;background:var(--bg);box-shadow:var(--in);position:relative;flex:none;cursor:pointer}
-.tog:after{content:"";position:absolute;top:4px;left:4px;width:20px;height:20px;border-radius:50%;background:var(--cv);box-shadow:3px 3px 6px var(--sd),-2px -2px 5px var(--sl);transition:transform .35s cubic-bezier(.3,1.4,.5,1),background .3s,width .2s}
-.tog.on:after{transform:translateX(22px);background:linear-gradient(145deg,var(--teal2),var(--deep))}
-.ring{width:168px;height:168px;border-radius:50%;margin:4px auto;display:grid;place-items:center;box-shadow:var(--rz);background:conic-gradient(var(--teal) 0deg,rgba(0,0,0,0) 0deg)}
-.ring>div{width:128px;height:128px;border-radius:50%;background:var(--bg);box-shadow:var(--in);display:grid;place-items:center;text-align:center;position:relative;overflow:hidden}
-.liq{position:absolute;inset:0;border-radius:50%}
-.liq i{position:absolute;left:-50%;width:200%;height:200%;top:var(--y,20%);border-radius:43%;background:rgba(91,157,255,.3);animation:spin 8s linear infinite;transition:top 1s}
-.liq i:nth-child(2){background:rgba(126,166,255,.32);animation-duration:12s;animation-direction:reverse;border-radius:40%}
-@keyframes spin{to{transform:rotate(360deg)}}
-.act{padding:11px 18px;border-radius:15px;font-weight:700;font-size:12.5px;color:var(--deep);box-shadow:var(--rs);transition:transform .2s,box-shadow .2s;background:var(--cv);position:relative;overflow:hidden}
-.act:hover{transform:translateY(-2px)}.act:active{box-shadow:var(--in);transform:none}
-.act.p{background:linear-gradient(145deg,#7db4ff,#4a8af0);color:#fff;box-shadow:6px 6px 14px var(--sd),-4px -4px 10px var(--sl)}
+
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.row:last-child{border:0}
+.row .g1{flex:1;min-width:150px}
+.row b{display:block;font-size:13.5px}
+
+.inbox{background:var(--bg);box-shadow:var(--in);border:0;border-radius:14px;padding:11px 14px;color:var(--ink);font-size:15px;font-weight:600;outline:0;width:100%;min-width:0}
+.act{padding:10px 16px;border-radius:14px;font-weight:700;font-size:12.5px;color:var(--deep);box-shadow:var(--rs);background:var(--cv);white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px}
+.act:active{box-shadow:var(--in)}
+.act.p{background:linear-gradient(145deg,#7db4ff,#4a8af0);color:#fff}
 .act.d{color:var(--red)}
-.cols{display:flex;gap:20px;overflow-x:auto;padding:6px 6px 18px;scroll-snap-type:x proximity}
-.col{min-width:230px;flex:1;scroll-snap-align:start}
-.col h4{margin:0 0 14px;font-size:13px;display:flex;justify-content:space-between;align-items:center}
-.mini{background:var(--cv);box-shadow:var(--rs);border-radius:20px;padding:15px;margin-bottom:16px;font-size:13px}
-.prog{height:10px;border-radius:9px;box-shadow:var(--in);overflow:hidden;padding:2px;margin-top:6px}
-.prog i{display:block;height:100%;width:0;border-radius:9px;background:linear-gradient(90deg,var(--teal),var(--teal2),var(--teal));background-size:200% 100%;animation:flow 2.6s linear infinite;transition:width 1s}
-.prog.r i{background:var(--red);animation:none}.prog.a i{background:var(--amber);animation:none}
-@keyframes flow{to{background-position:-200% 0}}
-.pay{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:24px}
-.shot{height:160px;border-radius:16px;box-shadow:var(--in);display:grid;place-items:center;font-size:12px;color:var(--mute);margin:12px 0;overflow:hidden;position:relative}
-.shot img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{text-align:left;color:var(--mute);font-weight:600;padding:10px;border-bottom:1px solid var(--line)}
-td{padding:12px 10px;border-bottom:1px solid var(--line)}
-td.c,th.c{text-align:center}
-.scroll{overflow-x:auto}
-.msgs{display:flex;flex-direction:column;gap:12px;margin:10px 0;padding:16px;border-radius:22px;box-shadow:var(--in);max-height:300px;overflow-y:auto}
-.m{max-width:78%;padding:11px 15px;border-radius:18px;font-size:13px}
-.m.u{background:var(--bg);box-shadow:var(--rs);border-bottom-left-radius:4px}
-.m.s{background:linear-gradient(145deg,#7db4ff,#4a8af0);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;box-shadow:4px 4px 10px var(--sd)}
-.tabs{display:flex;gap:12px;margin-bottom:22px;flex-wrap:wrap}
-.tabs button{padding:10px 20px;border-radius:99px;box-shadow:var(--rs);font-weight:600;font-size:13px;color:var(--mute);transition:.3s}
-.tabs button.on{box-shadow:var(--in);color:var(--teal)}
-#toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px);background:var(--cv);color:var(--ink);padding:13px 24px;border-radius:18px;font-size:13px;font-weight:700;opacity:0;pointer-events:none;transition:.4s;z-index:50;box-shadow:var(--rz);border:1px solid rgba(91,157,255,.45)}
+
+.tog{width:48px;height:26px;border-radius:99px;background:var(--bg);box-shadow:var(--in);position:relative;flex:none;cursor:pointer}
+.tog:after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--cv);box-shadow:2px 2px 5px var(--sd);transition:transform .28s cubic-bezier(.3,1.3,.5,1),background .25s}
+.tog.on:after{transform:translateX(22px);background:linear-gradient(145deg,var(--teal2),var(--deep))}
+
+.tabs{display:flex;gap:10px;margin-bottom:18px;overflow-x:auto;padding:4px 2px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{padding:9px 16px;border-radius:99px;box-shadow:var(--rs);font-weight:700;font-size:12px;color:var(--mute);background:var(--cv);flex:none;white-space:nowrap}
+.tabs button.on{box-shadow:var(--in);color:var(--deep)}
+
+.bars{display:flex;align-items:flex-end;gap:10px;height:160px;padding:14px 10px;border-radius:20px;box-shadow:var(--in);overflow-x:auto}
+.bars div{flex:1;min-width:42px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:10.5px;color:var(--mute);gap:6px;text-align:center}
+.bars i{width:100%;max-width:28px;border-radius:8px;background:linear-gradient(180deg,var(--teal2),var(--deep));transition:height .8s ease}
+
+.scroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:16px}
+table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:520px}
+th{text-align:left;color:var(--mute);font-weight:700;padding:10px 8px;border-bottom:1px solid var(--line)}
+td{padding:11px 8px;border-bottom:1px solid var(--line)}
+
+.shot{height:150px;border-radius:16px;box-shadow:var(--in);display:grid;place-items:center;margin:10px 0;overflow:hidden;background:#0b0f19}
+.shot img{width:100%;height:100%;object-fit:contain}
+
+#toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,20px);background:var(--cv);color:var(--ink);padding:12px 20px;border-radius:16px;font-size:12.5px;font-weight:800;opacity:0;pointer-events:none;transition:.3s;z-index:90;box-shadow:var(--rz);border:1px solid var(--teal);max-width:92vw;text-align:center}
 #toast.on{opacity:1;transform:translate(-50%,0)}
-.live{width:9px;height:9px;border-radius:50%;background:var(--green);display:inline-block;margin-right:6px;animation:ping2 1.8s infinite}
-@keyframes ping2{0%{box-shadow:0 0 0 0 rgba(37,168,98,.55)}100%{box-shadow:0 0 0 10px rgba(37,168,98,0)}}
-.stop{width:100%;padding:18px;border-radius:20px;background:linear-gradient(145deg,#ee6a62,#c9413a);color:#fff;font-weight:800;letter-spacing:.06em;box-shadow:8px 8px 18px var(--sd),-6px -6px 14px var(--sl);animation:pulse 2.6s infinite}
-@keyframes pulse{50%{box-shadow:8px 8px 18px var(--sd),-6px -6px 14px var(--sl),0 0 0 10px rgba(224,82,74,.12)}}
-.navy{background:linear-gradient(145deg,rgba(91,157,255,.16),rgba(74,138,240,.05))!important}
-.cin{display:flex;gap:10px;margin-top:12px;align-items:center}
-.goo{position:absolute;inset:0;filter:url(#goo);opacity:.4;pointer-events:none}
-.goo i{position:absolute;border-radius:50%;background:linear-gradient(135deg,var(--teal2),var(--teal))}
-.goo i:nth-child(1){width:260px;height:260px;left:8%;top:10%;animation:g1 15s ease-in-out infinite}
-.goo i:nth-child(2){width:200px;height:200px;right:10%;top:20%;animation:g2 18s ease-in-out infinite}
-.goo i:nth-child(3){width:300px;height:300px;left:30%;bottom:-6%;animation:g3 20s ease-in-out infinite}
-@keyframes g1{50%{transform:translate(18vw,14vh) scale(1.2)}}
-@keyframes g2{50%{transform:translate(-16vw,18vh) scale(.85)}}
-@keyframes g3{50%{transform:translate(-14vw,-16vh) scale(1.15)}}
-.rip{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.65),rgba(126,166,255,.3) 60%,transparent 70%);transform:scale(0);animation:rip .8s ease-out forwards;pointer-events:none}
-@keyframes rip{to{transform:scale(1);opacity:0}}
-@media (max-width:900px){
- #app{grid-template-columns:1fr;padding:14px 14px 114px;gap:16px}
- aside{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));top:auto;height:76px;flex-direction:row;padding:8px;border-radius:28px;z-index:20}
- aside .av,.tools{display:none}
- nav{flex-direction:row;overflow-x:auto;overflow-y:hidden;gap:6px;padding:2px}
- nav button{min-width:66px;padding:9px 4px;flex:none}
- .mbtn{display:grid}
- .search,select.role{flex:1 1 100%}
- .c3,.c4,.c5,.c6,.c7,.c8{grid-column:span 12}.c3{grid-column:span 6}
+
+.stop{width:100%;padding:16px;border-radius:18px;background:linear-gradient(145deg,#ee6a62,#c9413a);color:#fff;font-weight:800;letter-spacing:.04em;box-shadow:var(--rs)}
+
+/* 1000% Mobile Responsive Breakpoints */
+@media (max-width:920px){
+  #app{grid-template-columns:1fr;padding:12px 12px 104px;gap:14px}
+  aside{position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));top:auto;height:70px;flex-direction:row;padding:6px 8px;border-radius:24px;box-shadow:0 -4px 20px var(--sd),var(--rz)}
+  aside .av,.tools{display:none}
+  nav{flex-direction:row;overflow-x:auto;overflow-y:hidden;gap:6px;align-items:center}
+  nav button{min-width:64px;padding:7px 4px;font-size:9.5px}
+  .mbtn{display:grid}
+  .top h2{font-size:20px;min-width:120px}
+  .search{flex:1 1 100%;order:4}
+  .grid{gap:14px}
+  .c3,.c4,.c5,.c6,.c7,.c8{grid-column:span 12}
+  .c3{grid-column:span 6}
+  .card{padding:16px;border-radius:20px}
+  .big{font-size:22px}
 }
-  
-/* ===== MOBILE RESPONSIVE HOTFIX ===== */
-@media (max-width: 900px) {
-
-  /* 1. Header: title + exactly 3 buttons in one row */
-  .top {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) repeat(3, 44px);
-    align-items: start;
-    gap: 10px;
-    width: 100%;
-    min-width: 0;
-  }
-
-  .top h2 {
-    grid-column: 1;
-    min-width: 0;
-    font-size: clamp(23px, 6vw, 30px);
-    line-height: 1.15;
-    overflow-wrap: anywhere;
-  }
-
-  .top h2 small {
-    font-size: 12px;
-    line-height: 1.5;
-    margin-top: 7px;
-    overflow-wrap: anywhere;
-  }
-
-  .top > .mbtn {
-    width: 44px;
-    height: 44px;
-    justify-self: center;
-    align-self: start;
-    margin: 0;
-  }
-
-  /* Search and role dropdown each get their own full row */
-  .top > .search,
-  .top > select.role {
-    grid-column: 1 / -1;
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-  }
-
-  .top > .search {
-    padding: 0 14px;
-  }
-
-  .top > .search input {
-    min-width: 0;
-    width: 100%;
-    font-size: 14px;
-  }
-
-  .top > select.role {
-    padding: 14px;
-  }
-
-  /* 2. Prevent dashboard cards and currency values overflowing */
-  main,
-  #view,
-  .page,
-  .grid,
-  .card {
-    min-width: 0;
-    max-width: 100%;
-  }
-
-  .card {
-    padding: 18px;
-    border-radius: 24px;
-  }
-
-  .grid {
-    gap: 16px;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-  }
-
-  .grid > .card.c3 {
-    grid-column: span 6;
-    padding: 16px;
-  }
-
-  .grid > .card.c3 .big {
-    font-size: clamp(18px, 5.2vw, 25px);
-    line-height: 1.2;
-    letter-spacing: -0.04em;
-    overflow-wrap: anywhere;
-    word-break: normal;
-  }
-
-  .card h3 {
-    font-size: 14px;
-    overflow-wrap: anywhere;
-  }
-
-  /* 3. Buttons inside cards should shrink/wrap instead of clipping */
-  .act {
-    min-width: 0;
-    max-width: 100%;
-    padding: 10px 12px;
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
-
-  .card .row {
-    min-width: 0;
-  }
-
-  .row .g1 {
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
-
-  .row > .big {
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
-
-  /* 4. Kanban board: preserve horizontal scrolling */
-  .cols {
-    width: 100%;
-    max-width: 100%;
-    gap: 14px;
-    padding: 8px 8px 20px;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-  }
-
-  .col {
-    flex: 0 0 min(260px, 82vw);
-    min-width: 0;
-    max-width: 82vw;
-  }
-
-  .mini {
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
-
-  /* 5. Bottom navigation: swipe without clipping individual tabs */
-  aside {
-    left: 10px;
-    right: 10px;
-    width: auto;
-    min-width: 0;
-    padding: 8px 10px;
-  }
-
-  aside nav {
-    flex: 1 1 0;
-    min-width: 0;
-    gap: 4px;
-    padding: 2px 4px 6px;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-  }
-
-  aside nav button {
-    flex: 0 0 66px;
-    min-width: 66px;
-    max-width: 66px;
-    padding: 8px 2px;
-    font-size: 10px;
-    white-space: nowrap;
-  }
-
-  /* Keep payment cards and their action buttons within the viewport */
-  .pay {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 16px;
-    min-width: 0;
-  }
-
-  .pay > .card {
-    min-width: 0;
-    max-width: 100%;
-  }
-
-  .pay .shot {
-    max-width: 100%;
-  }
-
-  /* Tables may scroll internally, never stretch the whole page */
-  .scroll {
-    max-width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* Long form rows: prevent input fields pushing cards wider */
-  .card .row input,
-  .card .row select,
-  .cin input {
-    min-width: 0;
-    max-width: 100%;
-  }
+@media (max-width:420px){
+  .c3{grid-column:span 6}
+  .row{gap:8px}
+  .act{width:100%}
 }
-
-/* Extra-small phones */
-@media (max-width: 380px) {
-  #app {
-    padding-left: 10px;
-    padding-right: 10px;
-  }
-
-  .top {
-    gap: 7px;
-    grid-template-columns: minmax(0, 1fr) repeat(3, 40px);
-  }
-
-  .top > .mbtn {
-    width: 40px;
-    height: 40px;
-  }
-
-  .grid > .card.c3 {
-    padding: 12px;
-  }
-
-  .grid > .card.c3 .big {
-    font-size: 18px;
-  }
-
-  .card {
-    padding: 14px;
-  }
-                                                                      }
-    
 </style>
 </head>
 <body>
 
 <section id="login">
- <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="goo"><feGaussianBlur in="SourceGraphic" stdDeviation="16" result="b"/><feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -10"/></filter></defs></svg>
- <div class="goo"><i></i><i></i><i></i></div>
- <form class="lbox" id="lf" autocomplete="off">
-  <div class="logo"><span>AD</span></div>
-  <h1>AD PartSol</h1>
-  <p>Sign in to the live command panel</p>
-  <label class="fld"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><input id="u" placeholder="Phone / Username" inputmode="numeric" autocomplete="off"></label>
-  <label class="fld"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="3"/><path d="M8 11V8a4 4 0 018 0v3"/></svg><input id="p" type="password" placeholder="Password or ADP-Token" autocomplete="off"></label>
-  <button class="btn" type="submit">Sign in</button>
-  <div class="err" id="err"></div>
-  <div class="remember">Connected to Cloudflare D1 Live Engine</div>
- </form>
+  <form class="lbox" id="lf" autocomplete="off">
+    <div class="logo"><span>AD</span></div>
+    <h1>AD PartSol</h1>
+    <p>Super Admin & Staff Command Deck</p>
+    <label class="fld"><input id="u" placeholder="Admin Username / Phone" autocomplete="off"></label>
+    <label class="fld"><input id="p" type="password" placeholder="Secret Password / ADP-Token" autocomplete="off"></label>
+    <button class="btn" type="submit">Authenticate & Enter</button>
+    <div class="err" id="err"></div>
+  </form>
 </section>
 
 <div id="app">
- <aside>
-  <div class="av">AD</div>
-  <nav id="nav"></nav>
-  <div class="tools">
-   <button id="syncBtn" title="Sync Live Data"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7M21 3v6h-6"/></svg></button>
-   <button id="theme" title="Theme"></button>
-   <button id="lock" title="Lock"></button>
-  </div>
- </aside>
- <main>
-  <div class="top">
-   <h2 id="ttl"></h2>
-   <button class="mbtn" id="syncBtn2"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7M21 3v6h-6"/></svg></button>
-   <button class="mbtn" id="theme2"></button><button class="mbtn" id="lock2"></button>
-   <label class="search"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="qSearch" placeholder="Search order ID, phone, part, UTR..." oninput="filterSearch(this.value)"></label>
-   <select class="role" id="role" aria-label="Role view">
-    <option>Super Admin</option><option>Order Desk</option><option>Payment Manager</option><option>Packing Team</option><option>Inventory Manager</option><option>Support Agent</option><option>Accountant</option>
-   </select>
-  </div>
-  <div id="view"></div>
- </main>
+  <aside>
+    <div class="av">AD</div>
+    <nav id="nav"></nav>
+    <div class="tools">
+      <button id="syncBtn" title="Sync"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7M21 3v6h-6"/></svg></button>
+      <button id="theme" title="Theme"><svg class="i" viewBox="0 0 24 24"><path d="M20 14A8 8 0 019.5 4 8 8 0 1020 14z"/></svg></button>
+      <button id="lock" title="Logout"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="3"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></button>
+    </div>
+  </aside>
+
+  <main>
+    <div class="top">
+      <h2 id="ttl">Command Deck<small>Live D1 Engine</small></h2>
+      <button class="mbtn" id="syncBtn2"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7M21 3v6h-6"/></svg></button>
+      <button class="mbtn" id="theme2"><svg class="i" viewBox="0 0 24 24"><path d="M20 14A8 8 0 019.5 4 8 8 0 1020 14z"/></svg></button>
+      <button class="mbtn" id="lock2"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="3"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></button>
+      <label class="search">
+        <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        <input placeholder="Search Order ID, Phone, Part, UTR, Supplier..." oninput="filterRows(this.value)">
+      </label>
+    </div>
+    <div id="view"></div>
+  </main>
 </div>
+
 <div id="toast"></div>
 
 <script>
-var KEY="adps_live_creds";
-var $=function(s){return document.querySelector(s)};
-var STATE={orders:[],payments:[],settings:{},suppliers:[],items:[],bids:[],customers:[],staff_list:[],curPage:"home"};
-
-var P={
- grid:"<rect x='3' y='3' width='7' height='7' rx='2'/><rect x='14' y='3' width='7' height='7' rx='2'/><rect x='3' y='14' width='7' height='7' rx='2'/><rect x='14' y='14' width='7' height='7' rx='2'/>",
- card:"<rect x='3' y='6' width='18' height='13' rx='3'/><path d='M3 11h18'/>",
- box:"<path d='M21 8l-9-5-9 5v8l9 5 9-5z'/><path d='M3 8l9 5 9-5M12 13v8'/>",
- store:"<path d='M4 9l1-5h14l1 5'/><path d='M4 9a3 3 0 006 0 3 3 0 006 0 3 3 0 004 0'/><path d='M5 12v8h14v-8'/>",
- chat:"<path d='M4 5h16v11H9l-5 4z'/>",
- truck:"<path d='M2 6h12v10H2zM14 10h4l4 3v3h-8'/><circle cx='7' cy='18' r='2'/><circle cx='17' cy='18' r='2'/>",
- coin:"<circle cx='12' cy='12' r='9'/><path d='M9 9c1-1.5 5-1.5 6 0M9 15c1 1.5 5 1.5 6 0M12 6v12'/>",
- team:"<circle cx='9' cy='8' r='3.5'/><path d='M2 20c1-4 4-6 7-6s6 2 7 6'/><path d='M16 4.5a3.5 3.5 0 010 7M18 14c2 .6 3.4 2.6 4 6'/>",
- shield:"<path d='M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z'/><path d='M9 12l2 2 4-4'/>",
- sliders:"<line x1='4' y1='21' x2='4' y2='14'/><line x1='4' y1='10' x2='4' y2='3'/><line x1='12' y1='21' x2='12' y2='12'/><line x1='12' y1='8' x2='12' y2='3'/><line x1='20' y1='21' x2='20' y2='16'/><line x1='20' y1='12' x2='20' y2='3'/><line x1='1' y1='14' x2='7' y2='14'/><line x1='9' y1='8' x2='15' y2='8'/><line x1='17' y1='16' x2='23' y2='16'/>",
- lock:"<rect x='4' y='11' width='16' height='10' rx='3'/><path d='M8 11V8a4 4 0 018 0v3'/>",
- moon:"<path d='M20 14A8 8 0 019.5 4 8 8 0 1020 14z'/>"
-};
-function ic(n){return "<svg class='i' viewBox='0 0 24 24'>"+P[n]+"</svg>"}
-$("#theme").innerHTML=$("#theme2").innerHTML=ic("moon");
-$("#lock").innerHTML=$("#lock2").innerHTML=ic("lock");
-
-function getCreds(){try{return JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){return null}}
-function toast(t){var x=$("#toast");x.textContent=t;x.classList.add("on");clearTimeout(x._t);x._t=setTimeout(function(){x.classList.remove("on")},2600)}
-
-async function api(path,body){
- var c=getCreds();if(!c)return {ok:false,error:"Not signed in"};
- var opt={method:body?"POST":"GET",headers:{"x-staff-phone":c.u,"x-staff-token":c.p}};
- if(body){opt.headers["Content-Type"]="application/json";opt.body=JSON.stringify(body)}
- var r=await fetch("/api/panel/"+path,opt);
- return await r.json();
-}
-
-async function syncAll(silent){
- var d=await api("dashboard");
- if(!d.ok){if(!silent)toast(d.error||"Sync failed");return false}
- STATE.orders=d.orders||[];
- STATE.payments=d.payments||[];
- STATE.suppliers=d.suppliers||[];
- STATE.items=d.items||[];
- STATE.bids=d.bids||[];
- STATE.customers=d.customers||[];
- STATE.staff_list=d.staff_list||[];
- STATE.settings={};
- (d.settings||[]).forEach(function(s){STATE.settings[s.key]=s.value});
- go(STATE.curPage,true);
- if(!silent)toast("★ Synced with Live Engine");
- return true;
-}
-
-$("#lf").addEventListener("submit",async function(e){
- e.preventDefault();
- var u=$("#u").value.trim(),p=$("#p").value.normalize("NFC").trim();
- localStorage.setItem(KEY,JSON.stringify({u:u,p:p}));
- var d=await api("dashboard");
- if(d.ok){
-  var bb=$(".btn").getBoundingClientRect(),L=$("#login");
-  L.style.setProperty("--cx",(bb.left+bb.width/2)+"px");
-  L.style.setProperty("--cy",(bb.top+bb.height/2)+"px");
-  $("#login").classList.add("out");
-  $("#app").classList.add("show");
-  setTimeout(function(){$("#login").style.display="none"},950);
-  await syncAll(true);
-  toast("★ Welcome back, Admin");
- }else{
-  localStorage.removeItem(KEY);
-  $("#err").textContent=d.error||"Incorrect username or password";
-  var b=$(".lbox");b.classList.remove("shake");void b.offsetWidth;b.classList.add("shake");
- }
-});
-
-$("#syncBtn").onclick=$("#syncBtn2").onclick=function(){syncAll(false)};
-$("#lock2").onclick=$("#lock").onclick=function(){
- localStorage.removeItem(KEY);
- $("#app").classList.remove("show");
- var l=$("#login");l.style.display="grid";void l.offsetWidth;l.classList.remove("out");
- $("#u").value="";$("#p").value="";$("#err").textContent="";
-};
-$("#theme2").onclick=$("#theme").onclick=function(){
- var r=document.documentElement,d=r.getAttribute("data-theme")==="dark";
- r.setAttribute("data-theme",d?"light":"dark");
+const KEY = "adps_master_session";
+const $ = s => document.querySelector(s);
+let STATE = {
+  orders: [], payments: [], settings: {}, suppliers: [], items: [],
+  bids: [], customers: [], staff_list: [], margin_rules: [],
+  curPage: "home", ctrlCat: "pricing"
 };
 
-var NAV=[
- ["home","Home","grid"],
- ["orders","Orders","box"],
- ["pay","Payments","card"],
- ["pack","Packing","truck"],
- ["sup","Suppliers","team"],
- ["controls","Controls","sliders"],
- ["inv","Inventory","store"],
- ["chat","Support","chat"],
- ["fin","Finance","coin"],
- ["staff","Staff","shield"]
+const ICONS = {
+  home: "<rect x='3' y='3' width='7' height='7' rx='2'/><rect x='14' y='3' width='7' height='7' rx='2'/><rect x='3' y='14' width='7' height='7' rx='2'/><rect x='14' y='14' width='7' height='7' rx='2'/>",
+  bidroom: "<circle cx='12' cy='12' r='9'/><path d='M12 7v5l3 3'/>",
+  margins: "<path d='M3 17l6-6 4 4 8-8'/><path d='M14 7h7v7'/>",
+  sup: "<circle cx='9' cy='8' r='3.5'/><path d='M2 20c1-4 4-6 7-6s6 2 7 6'/><path d='M16 4.5a3.5 3.5 0 010 7M18 14c2 .6 3.4 2.6 4 6'/>",
+  orders: "<path d='M21 8l-9-5-9 5v8l9 5 9-5z'/><path d='M3 8l9 5 9-5M12 13v8'/>",
+  pay: "<rect x='3' y='6' width='18' height='13' rx='3'/><path d='M3 11h18'/>",
+  pack: "<path d='M2 6h12v10H2zM14 10h4l4 3v3h-8'/><circle cx='7' cy='18' r='2'/><circle cx='17' cy='18' r='2'/>",
+  controls: "<line x1='4' y1='21' x2='4' y2='14'/><line x1='4' y1='10' x2='4' y2='3'/><line x1='12' y1='21' x2='12' y2='12'/><line x1='12' y1='8' x2='12' y2='3'/><line x1='20' y1='21' x2='20' y2='16'/><line x1='20' y1='12' x2='20' y2='3'/><line x1='1' y1='14' x2='7' y2='14'/><line x1='9' y1='8' x2='15' y2='8'/><line x1='17' y1='16' x2='23' y2='16'/>",
+  chat: "<path d='M4 5h16v11H9l-5 4z'/>",
+  staff: "<path d='M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z'/><path d='M9 12l2 2 4-4'/>"
+};
+
+const NAV = [
+  ["home", "Cockpit", "home"],
+  ["bidroom", "Bid Room", "bidroom"],
+  ["margins", "Margins", "margins"],
+  ["sup", "Suppliers", "sup"],
+  ["orders", "Orders", "orders"],
+  ["pay", "Payments", "pay"],
+  ["pack", "Packing", "pack"],
+  ["controls", "250+ Controls", "controls"],
+  ["chat", "Customers", "chat"],
+  ["staff", "Staff & Portals", "staff"]
 ];
-var TITLES={
- home:"Hello, Admin",
- orders:"Command Board",
- pay:"Pending Payments",
- pack:"Packing & Dispatch",
- sup:"Supplier & Bid Room",
- controls:"Flight Controls & Timers",
- inv:"Inventory & Stock",
- chat:"Customer Support",
- fin:"Money & Ledger",
- staff:"Staff & Security"
+
+$("#nav").innerHTML = NAV.map(n => `<button data-p="${n[0]}"><svg class="i" viewBox="0 0 24 24">${ICONS[n[2]]}</svg>${n[1]}</button>`).join("");
+$("#nav").onclick = e => { const b = e.target.closest("button"); if (b) go(b.dataset.p); };
+
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("on");
+  clearTimeout(t._tm); t._tm = setTimeout(() => t.classList.remove("on"), 2600);
+}
+
+function getCreds() { try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch (_) { return null; } }
+
+async function api(path, body) {
+  const c = getCreds(); if (!c) return { ok: false, error: "Not logged in" };
+  const opt = { method: body ? "POST" : "GET", headers: { "x-staff-phone": c.u, "x-staff-token": c.p } };
+  if (body) { opt.headers["Content-Type"] = "application/json"; opt.body = JSON.stringify(body); }
+  const r = await fetch("/api/panel/" + path, opt);
+  return await r.json();
+}
+
+async function syncAll(silent) {
+  const d = await api("dashboard");
+  if (!d.ok) { if (!silent) toast(d.error || "Auth failed"); return false; }
+  STATE.orders = d.orders || [];
+  STATE.payments = d.payments || [];
+  STATE.suppliers = d.suppliers || [];
+  STATE.items = d.items || [];
+  STATE.bids = d.bids || [];
+  STATE.customers = d.customers || [];
+  STATE.staff_list = d.staff_list || [];
+  STATE.margin_rules = d.margin_rules || [];
+  STATE.settings = {};
+  (d.settings || []).forEach(s => STATE.settings[s.key] = s.value);
+  go(STATE.curPage, true);
+  if (!silent) toast("★ Live Engine Synced");
+  return true;
+}
+
+$("#lf").onsubmit = async e => {
+  e.preventDefault();
+  const u = $("#u").value.trim(), p = $("#p").value.trim();
+  localStorage.setItem(KEY, JSON.stringify({ u, p }));
+  const ok = await syncAll(true);
+  if (ok) {
+    $("#login").classList.add("out");
+    setTimeout(() => $("#login").style.display = "none", 500);
+    $("#app").classList.add("show");
+    toast("★ Authenticated: Super Admin");
+  } else {
+    localStorage.removeItem(KEY);
+    $("#err").textContent = "Invalid Admin Credentials (Check Cloudflare Secrets)";
+  }
 };
-$("#nav").innerHTML=NAV.map(function(n){return "<button data-p='"+n[0]+"'>"+ic(n[2])+n[1]+"</button>"}).join("");
-$("#nav").onclick=function(e){var b=e.target.closest("button");if(b)go(b.dataset.p)};
-var timers=[];
 
-function go(p,skipScroll){
- STATE.curPage=p;
- timers.forEach(clearInterval);timers=[];
- document.querySelectorAll("#nav button").forEach(function(b){b.classList.toggle("on",b.dataset.p===p)});
- $("#ttl").innerHTML=TITLES[p]+"<small>"+new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"})+" — "+$("#role").value+" view</small>";
- var v=$("#view");v.innerHTML="<div class='page'>"+R[p]()+"</div>";
- requestAnimationFrame(function(){requestAnimationFrame(function(){animate(v);if(AFTER[p])AFTER[p]()})});
- if(!skipScroll)scrollTo(0,0);
-}
-$("#role").onchange=function(){go(STATE.curPage,true);toast("Viewing as "+this.value)};
+$("#syncBtn").onclick = $("#syncBtn2").onclick = () => syncAll(false);
+$("#theme").onclick = $("#theme2").onclick = () => {
+  const r = document.documentElement;
+  r.setAttribute("data-theme", r.getAttribute("data-theme") === "dark" ? "light" : "dark");
+};
+$("#lock").onclick = $("#lock2").onclick = () => {
+  localStorage.removeItem(KEY);
+  location.reload();
+};
 
-function animate(v){
- v.querySelectorAll(".grid>.card,.pay>.card").forEach(function(e,i){e.style.setProperty("--i",i)});
- v.querySelectorAll("[data-h]").forEach(function(e){e.style.height=e.dataset.h+"%"});
- v.querySelectorAll("[data-w]").forEach(function(e){e.style.width=e.dataset.w+"%"});
- v.querySelectorAll("[data-n]").forEach(function(e){
-  var t=+e.dataset.n,pre=e.dataset.pre||"",s=performance.now();
-  (function f(n){var k=Math.min(1,(n-s)/900);k=1-Math.pow(1-k,3);e.textContent=pre+Math.round(t*k).toLocaleString("en-IN");if(k<1)requestAnimationFrame(f)})(s);
- });
-}
-
-function chip(t,c){return "<span class='chip "+(c||"")+"'>"+t+"</span>"}
-function stat(l,n,pre,sub,cls){return "<div class='card c3 "+(cls||"")+"'><div class='mute'>"+l+"</div><div class='big' data-n='"+n+"' data-pre='"+(pre||"")+"'>0</div><div class='mute'>"+(sub||"")+"</div></div>"}
-function tog(key,on){return "<span class='tog "+(on?"on":"")+"' data-setting='"+key+"'></span>"}
-function prog(w,c){return "<div class='prog "+(c||"")+"'><i data-w='"+w+"'></i></div>"}
-
-/* LIVE TOGGLE HANDLER */
-document.addEventListener("click",async function(e){
- var t=e.target.closest(".tog[data-setting]");
- if(t){
-  t.classList.toggle("on");
-  var k=t.dataset.setting,val=t.classList.contains("on")?"1":"0";
-  STATE.settings[k]=val;
-  var body={};body[k]=val;
-  await api("save-settings",body);
-  toast("★ Live Setting Updated: "+k+" = "+(val==="1"?"ON":"OFF"));
-  return;
- }
- var tb=e.target.closest(".tabs button");
- if(tb){tb.parentNode.querySelectorAll("button").forEach(function(b){b.classList.remove("on")});tb.classList.add("on")}
+/* Global Click Delegate for Toggles */
+document.addEventListener("click", async e => {
+  const tg = e.target.closest(".tog[data-k]");
+  if (tg) {
+    tg.classList.toggle("on");
+    const k = tg.dataset.k, v = tg.classList.contains("on") ? "1" : "0";
+    STATE.settings[k] = v;
+    await api("save-settings", { [k]: v });
+    toast(`★ ${k} = ${v === "1" ? "ON" : "OFF"}`);
+  }
 });
 
-var R={},AFTER={};
-
-/* 1. HOME */
-R.home=function(){
- var pendPays=STATE.payments.filter(function(p){return p.status==="PENDING"});
- var rev=STATE.orders.reduce(function(a,o){return a+(Number(o.final_total)||0)},0);
- var biddingOrds=STATE.orders.filter(function(o){return o.status==="BIDDING"});
- var s=STATE.settings;
-
- return "<div class='grid'>"+
- stat("Total Orders",STATE.orders.length,"","Live in database")+
- stat("Total Order Value",rev,"\u20b9","Quoted & active","navy")+
- stat("Pending Payments",pendPays.length,"","20% & 80% screenshots")+
- stat("Active Suppliers",STATE.suppliers.filter(function(x){return x.is_verified&&x.is_active}).length,"","Verified partners")+
-
- "<div class='card c7'><h3>Live Orders Stream <span class='mute'><span class='live'></span>real-time D1</span></h3>"+
- (STATE.orders.length?STATE.orders.slice(0,7).map(function(o){
-   var its=STATE.items.filter(function(i){return i.order_id===o.id}).map(function(i){return i.brand+" "+i.model+" "+i.part_name+" (x"+i.req_qty+")"}).join(", ");
-   var col=o.status==="SHIPPED"?"g":o.status==="BIDDING"?"a":"";
-   return "<div class='row'><div class='g1'><b>#"+o.id+" — "+(its||"Spare Parts")+"</b><span class='mute'>Customer: "+o.customer_id+" | Total: \u20b9"+(o.final_total||0)+"</span></div>"+chip(o.status,col)+"</div>";
- }).join(""):"<div class='mute'>No orders yet. Send a message on Telegram or WhatsApp to test!</div>")+
- "</div>"+
-
- "<div class='card c5'><h3>Master System Switches</h3>"+
-  [["tg_enabled","Telegram Bot Engine",s.tg_enabled!=="0"],
-   ["wa_enabled","WhatsApp Cloud Engine",s.wa_enabled!=="0"],
-   ["ai_enabled","OpenAI 4-Model Brain",s.ai_enabled!=="0"],
-   ["require_admin_approve","Admin Approval on Quotes",s.require_admin_approve==="1"]
-  ].map(function(r){return "<div class='row'><div class='g1'><b>"+r[1]+"</b></div>"+tog(r[0],r[2])+"</div>"}).join("")+
-  "<div style='margin-top:14px;display:flex;gap:10px'><button class='act p' style='flex:1' onclick='forceCloseAll()'>Force Close All Bids</button></div>"+
- "</div>"+
-
- "<div class='card c4'><h3>Active Bidding Timer</h3><div class='ring' id='ring'><div><span class='liq' id='liq'><i></i><i></i></span><div style='position:relative;z-index:1'><b class='big' style='font-size:28px' id='cd'>"+(biddingOrds.length?Math.max(0,biddingOrds[0].bidding_ends_at-Math.floor(Date.now()/1000)):0)+"</b><div class='mute'>seconds left</div></div></div></div><div style='text-align:center;margin-top:12px'><button class='act p' onclick='forceCloseAll()'>Confirm Lowest Bid Now</button></div></div>"+
-
- "<div class='card c8'><h3>Direct Call Supplier Assign (Send Instant Notice)</h3>"+
-  "<div class='mute' style='margin-bottom:12px'>Call supplier, agree on price, select Order ID & Supplier below to send instant notice and auto-delete from other suppliers:</div>"+
-  "<div class='grid' style='gap:12px'>"+
-   "<div class='c4'><input id='asgOrd' class='inbox' placeholder='9-Digit Order ID' value='"+(STATE.orders[0]?STATE.orders[0].id:"")+"'></div>"+
-   "<div class='c4'><select id='asgSup' class='inbox'>"+STATE.suppliers.map(function(sp){return "<option value='"+sp.id+"'>#"+sp.id+" "+sp.name+"</option>"}).join("")+"</select></div>"+
-   "<div class='c4'><input id='asgPrice' class='inbox' type='number' placeholder='Agreed Rate (Rs/pc)'></div>"+
-  "</div>"+
-  "<div style='margin-top:14px'><button class='act p' onclick='assignSupplierNow()'>[+] Assign Supplier & Send Quote</button></div>"+
- "</div></div>";
-};
-
-AFTER.home=function(){
- var r=$("#ring"),c=$("#cd"),lq=$("#liq");if(!r||!c)return;
- var t=parseInt(c.textContent,10)||0;
- function w(){var pct=Math.min(1,t/1800);lq.style.setProperty("--y",((1-pct)*100)+"%");r.style.background="conic-gradient(var(--teal) "+(pct*360)+"deg,rgba(110,125,170,.2) 0deg)"}
- w();
- timers.push(setInterval(function(){if(t>0)t--;c.textContent=t;w()},1000));
-};
-
-/* 2. ORDERS COMMAND BOARD */
-R.orders=function(){
- var states=["BIDDING","NO_BIDS","QUOTED","AWAITING_20_APPROVAL","COLLECTING","PACKING","AWAITING_80_PAYMENT","READY_TO_SHIP","SHIPPED"];
- return "<div class='cols'>"+states.map(function(st){
-  var list=STATE.orders.filter(function(o){return o.status===st});
-  return "<div class='col'><h4>"+st+" "+chip(list.length)+"</h4>"+
-   (list.map(function(o){
-    var its=STATE.items.filter(function(i){return i.order_id===o.id}).map(function(i){return i.brand+" "+i.model+" "+i.part_name}).join(", ");
-    return "<div class='mini'><b>#"+o.id+"</b><div class='mute'>"+(its||"Order")+"</div><div style='margin-top:6px;font-weight:700'>\u20b9"+(o.final_total||0)+"</div>"+
-     "<div style='margin-top:8px;display:flex;gap:6px'><button class='act' onclick='forceCloseOrder("+o.id+")'>Quote Now</button></div></div>";
-   }).join("")||"<div class='mute'>Empty</div>")+
-  "</div>";
- }).join("")+"</div>";
-};
-
-/* 3. PAYMENTS (LIVE SCREENSHOTS & 1-TAP APPROVE/REJECT) */
-R.pay=function(){
- var list=STATE.payments;
- return "<div class='tabs'><button class='on'>All Payments ("+list.length+")</button></div><div class='pay'>"+
- (list.length?list.map(function(p){
-  var isPend=p.status==="PENDING";
-  return "<div class='card mini' style='padding:18px'><div class='mute'>Order #"+p.order_id+" — "+p.type+"</div>"+
-   "<div class='big' style='font-size:26px'>Expected: \u20b9"+p.expected_amount+"</div>"+
-   "<div class='shot'><a href='"+p.file_id_or_url+"' target='_blank'><img src='"+p.file_id_or_url+"' alt='Payment Screenshot'></a></div>"+
-   "<div>"+chip("UTR: "+(p.extracted_utr||"N/A"),"g")+" "+chip("AI Read: \u20b9"+(p.extracted_amount||0),p.extracted_amount==p.expected_amount?"g":"a")+" "+chip(p.status,isPend?"a":p.status==="APPROVED"?"g":"r")+"</div>"+
-   (isPend?"<div style='display:flex;gap:8px;margin-top:14px'><button class='act p' style='flex:1' onclick=\"decidePay("+p.id+",'APPROVED')\">Approve</button><button class='act d' style='flex:1' onclick=\"decidePay("+p.id+",'REJECTED')\">Reject</button></div>":"")+
-  "</div>";
- }).join(""):"<div class='card c12 mute'>No payment screenshots in queue yet.</div>")+"</div>";
-};
-
-/* 4. PACKING & DISPATCH */
-R.pack=function(){
- var packOrds=STATE.orders.filter(function(o){return ["COLLECTING","PACKING","AWAITING_80_PAYMENT","READY_TO_SHIP","SHIPPED"].includes(o.status)});
- return "<div class='grid'><div class='card c12'><h3>Active Packing & Dispatch Queue "+chip(packOrds.length,"a")+"</h3>"+
- (packOrds.length?packOrds.map(function(o){
-  var its=STATE.items.filter(function(i){return i.order_id===o.id}).map(function(i){
-   var al=JSON.parse(i.allocated_json||"[]").map(function(a){return a.name+" ("+a.qty+" pcs @ \u20b9"+a.price+")"}).join(", ");
-   return i.brand+" "+i.model+" "+i.part_name+" x"+i.fulfilled_qty+" [Collect from: "+(al||"Warehouse")+"]";
-  }).join(" | ");
-  return "<div class='row' style='flex-wrap:wrap'><div class='g1'><b>Order #"+o.id+" "+chip(o.status,o.status==="READY_TO_SHIP"?"g":"a")+"</b><span class='mute'>"+its+"</span></div>"+
-   "<div style='display:flex;gap:8px;align-items:center'>"+
-    "<input id='trk_"+o.id+"' class='inbox' style='width:200px' placeholder='Tracking ID / Courier' value='"+(o.tracking_id||"")+"'>"+
-    "<button class='act p' onclick='shipNow("+o.id+")'>Ship & Notify</button>"+
-   "</div></div>";
- }).join(""):"<div class='mute'>No orders in packing stage right now.</div>")+"</div></div>";
-};
-
-/* 5. SUPPLIERS & LIVE BID ROOM */
-R.sup=function(){
- return "<div class='grid'><div class='card c7'><h3>Live Supplier Bids ("+STATE.bids.length+")</h3>"+
- (STATE.bids.length?STATE.bids.slice(0,15).map(function(b){
-  return "<div class='row'><div class='g1'><b>"+(b.sup_name||"Supplier #"+b.supplier_id)+" — Order #"+b.order_id+"</b><span class='mute'>Item #"+b.item_id+" | Status: "+b.status+" | Qty: "+(b.available_qty||0)+" pcs</span></div><b class='big' style='font-size:22px'>\u20b9"+(b.price_per_unit||"—")+"</b></div>";
- }).join(""):"<div class='mute'>No bids recorded yet.</div>")+
- "</div>"+
- "<div class='card c5'><h3>Supplier Directory ("+STATE.suppliers.length+")</h3>"+
-  "<div style='display:flex;gap:8px;margin-bottom:14px'><input id='newSupName' class='inbox' placeholder='New Supplier Name'><button class='act p' onclick='createSupplier()'>+ Code</button></div>"+
-  STATE.suppliers.map(function(s){
-   return "<div class='row'><div class='g1'><b>#"+s.id+" "+s.name+"</b><span class='mute'>Verify Code: /verify "+s.verify_code+"</span></div>"+chip(s.is_verified?(s.is_active?"Active":"Sleep"):"Unverified",s.is_verified?"g":"a")+"</div>";
-  }).join("")+
- "</div></div>";
-};
-
-/* 6. FLIGHT CONTROLS & TIMERS (100% CUSTOMIZABLE) */
-R.controls=function(){
- var s=STATE.settings;
- return "<div class='grid'>"+
- "<div class='card c6'><h3>Pricing, Margin & UPI Engine</h3>"+
-  "<div class='row'><div class='g1'><b>Admin Margin (%)</b><span class='mute'>Added automatically to supplier base price</span></div><input id='set_margin' class='inbox' style='width:110px' type='number' value='"+(s.margin_percent||20)+"'></div>"+
-  "<div class='row'><div class='g1'><b>Delivery Charge (\u20b9)</b><span class='mute'>Flat freight added per order</span></div><input id='set_deliv' class='inbox' style='width:110px' type='number' value='"+(s.delivery_charge||100)+"'></div>"+
-  "<div class='row'><div class='g1'><b>Active Merchant UPI ID</b><span class='mute'>Used for dynamic 20% & 80% QR codes</span></div><input id='set_upi' class='inbox' style='width:210px' value='"+(s.upi_id||"constantabrar@upi")+"'></div>"+
-  "<div class='row'><div class='g1'><b>Telegram Promo Discount (%)</b><span class='mute'>Shown to WhatsApp users to shift to TG</span></div><input id='set_tg_disc' class='inbox' style='width:110px' type='number' value='"+(s.tg_promo_percent||25)+"'></div>"+
-  "<div style='margin-top:16px'><button class='act p' onclick='saveFlightControls()'>Save Pricing & UPI Settings</button></div>"+
- "</div>"+
-
- "<div class='card c6'><h3>System Timeouts & SLA Timers</h3>"+
-  "<div class='row'><div class='g1'><b>Supplier Bidding Window (Minutes)</b><span class='mute'>Default: 30 minutes</span></div><input id='set_bid_mins' class='inbox' style='width:110px' type='number' value='"+(s.bidding_window_mins||30)+"'></div>"+
-  "<div class='row'><div class='g1'><b>Supplier Input Lock Timeout (Seconds)</b><span class='mute'>Default: 60s before CONTINUE/CANCEL</span></div><input id='set_sup_timeout' class='inbox' style='width:110px' type='number' value='"+(s.supplier_timeout_sec||60)+"'></div>"+
-  "<div class='row'><div class='g1'><b>Payment Approval SLA (Minutes)</b><span class='mute'>Alert threshold for Payment Manager</span></div><input id='set_pay_sla' class='inbox' style='width:110px' type='number' value='"+(s.payment_sla_mins||5)+"'></div>"+
-  "<div class='row'><div class='g1'><b>Max Fake Screenshot Strikes</b><span class='mute'>Before 12-hour automatic Shadow Ban</span></div><input id='set_strikes' class='inbox' style='width:110px' type='number' value='"+(s.max_fraud_strikes||3)+"'></div>"+
-  "<div style='margin-top:16px'><button class='act p' onclick='saveFlightControls()'>Save SLA & Timeout Rules</button></div>"+
- "</div></div>";
-};
-
-/* 7. INVENTORY */
-R.inv=function(){
- return "<div class='grid'>"+
- stat("Catalog Items",STATE.items.length,"","Ordered parts")+
- stat("Fulfilled Items",STATE.items.filter(function(i){return i.fulfilled_qty>0}).length,"","Matched with suppliers")+
- stat("Pending Match",STATE.items.filter(function(i){return i.fulfilled_qty===0}).length,"","In bidding")+
- stat("Suppliers Linked",STATE.suppliers.length,"","Total network")+
- "<div class='card c12'><h3>Requested Parts Ledger</h3><div class='scroll'><table><tr><th>Order ID</th><th>Brand & Model</th><th>Part Name</th><th>Quality</th><th class='c'>Req Qty</th><th class='c'>Fulfilled</th></tr>"+
- STATE.items.map(function(x){return "<tr><td><b>#"+x.order_id+"</b></td><td>"+x.brand+" "+x.model+"</td><td>"+x.part_name+"</td><td>"+chip(x.variant||"Standard")+"</td><td class='c'>"+x.req_qty+"</td><td class='c'>"+chip(x.fulfilled_qty,x.fulfilled_qty>=x.req_qty?"g":"a")+"</td></tr>"}).join("")+
- "</table></div></div></div>";
-};
-
-/* 8. SUPPORT & HUMAN TAKE-OVER CHAT */
-R.chat=function(){
- var custs=STATE.customers;
- var activeCust=custs[0]||{id:"",full_name:"No Customer",phone:"",lang:"hinglish"};
- return "<div class='grid'><div class='card c5'><h3>Customer Inbox ("+custs.length+")</h3>"+
- (custs.map(function(c){
-  var minsAgo=Math.round((Math.floor(Date.now()/1000)-(c.last_msg_at||0))/60);
-  return "<div class='row' style='cursor:pointer' onclick=\"selectChat('"+c.id+"')\"><div class='g1'><b>"+(c.full_name||c.id)+"</b><span class='mute'>"+c.platform.toUpperCase()+" | Lang: "+c.lang+" | State: "+c.state+"</span></div>"+chip(minsAgo+"m ago",minsAgo<1380?"g":"r")+"</div>";
- }).join("")||"<div class='mute'>No customers yet.</div>")+
- "</div>"+
- "<div class='card c7'><h3>Direct Message to Customer</h3>"+
-  "<div class='row'><div class='g1'><input id='chatCustId' class='inbox' placeholder='Customer ID (e.g. tg_12345 or wa_91...)' value='"+activeCust.id+"'></div></div>"+
-  "<div class='cin'><input id='chatMsgTxt' class='inbox' placeholder='Type direct message to customer (Telegram / WhatsApp)...'><button class='act p' onclick='sendDirectChat()'>Send Now</button></div>"+
- "</div></div>";
-};
-
-/* 9. FINANCE */
-R.fin=function(){
- var totAdv=STATE.orders.reduce(function(a,o){return a+(Number(o.advance_20)||0)},0);
- var totBal=STATE.orders.reduce(function(a,o){return a+(Number(o.balance_80)||0)},0);
- var totCost=STATE.orders.reduce(function(a,o){return a+(Number(o.supplier_base_total)||0)},0);
- var netMargin=STATE.orders.reduce(function(a,o){return a+((Number(o.final_total)||0)-(Number(o.supplier_base_total)||0))},0);
- return "<div class='grid'>"+
- stat("20% Advance Pool",totAdv,"\u20b9","Across orders")+
- stat("80% Balance Pool",totBal,"\u20b9","Before dispatch")+
- stat("Supplier Base Cost",totCost,"\u20b9","Payable to suppliers")+
- stat("Gross Margin + Freight",Math.max(0,netMargin),"\u20b9","AD PartSol Spread","navy")+
- "</div>";
-};
-
-/* 10. STAFF & EMERGENCY STOP */
-R.staff=function(){
- return "<div class='grid'><div class='card c6'><h3>Staff Credentials Generator</h3>"+
-  "<div class='grid' style='gap:10px;margin-bottom:14px'>"+
-   "<div class='c5'><select id='stRole' class='inbox'><option value='admin'>Super Admin</option><option value='order_desk'>Order Desk</option><option value='payment'>Payment Manager</option><option value='packing'>Packing Team</option><option value='inventory'>Inventory Manager</option><option value='support'>Support Agent</option></select></div>"+
-   "<div class='c4'><input id='stPhone' class='inbox' placeholder='Phone Number'></div>"+
-   "<div class='c3'><button class='act p' style='width:100%' onclick='createStaff()'>+ Create</button></div>"+
-  "</div>"+
-  (STATE.staff_list.map(function(s){
-   return "<div class='row'><div class='g1'><b>"+s.phone+" ("+s.role.toUpperCase()+")</b><span class='mute'>Password Token: "+s.access_token+"</span></div>"+chip("Active","g")+"</div>";
-  }).join("")||"<div class='mute'>No secondary staff tokens created yet.</div>")+
- "</div>"+
- "<div class='card c6'><h3>Emergency Kill Switch</h3><p class='mute'>Instantly pauses Telegram, WhatsApp, and OpenAI bots across all channels.</p><button class='stop' onclick='emergencyStop()'>EMERGENCY STOP ALL BOTS</button></div></div>";
-};
-
-/* ACTION FUNCTIONS */
-async function assignSupplierNow(){
- var o=$("#asgOrd").value.trim(),s=$("#asgSup").value,p=$("#asgPrice").value.trim();
- if(!o||!s)return toast("Enter Order ID & Select Supplier");
- var r=await api("assign-supplier",{order_id:o,supplier_id:s,unit_price:p});
- toast(r.msg||"Assigned");await syncAll(true);
-}
-async function forceCloseAll(){
- var r=await api("force-close",{});toast(r.msg||"Closed");await syncAll(true);
-}
-async function forceCloseOrder(id){
- var r=await api("force-close",{order_id:id});toast(r.msg||"Closed");await syncAll(true);
-}
-async function decidePay(id,dec){
- var r=await api("payment-action",{payment_id:id,decision:dec});
- toast("★ Payment "+dec);await syncAll(true);
-}
-async function shipNow(id){
- var t=$("#trk_"+id).value.trim();if(!t)return toast("Enter Tracking ID first");
- var r=await api("ship-order",{order_id:id,tracking_id:t});
- toast(r.msg||"Shipped!");await syncAll(true);
-}
-async function createSupplier(){
- var n=$("#newSupName").value.trim();if(!n)return toast("Enter supplier name");
- var r=await api("add-supplier",{name:n});
- toast(r.msg);await syncAll(true);
-}
-async function createStaff(){
- var role=$("#stRole").value,ph=$("#stPhone").value.trim();
- if(!ph)return toast("Enter staff phone number");
- var r=await api("add-staff",{role:role,phone:ph});
- toast(r.msg);await syncAll(true);
-}
-async function saveFlightControls(){
- var body={
-  margin_percent:$("#set_margin").value,
-  delivery_charge:$("#set_deliv").value,
-  upi_id:$("#set_upi").value.trim(),
-  tg_promo_percent:$("#set_tg_disc").value,
-  bidding_window_mins:$("#set_bid_mins").value,
-  supplier_timeout_sec:$("#set_sup_timeout").value,
-  payment_sla_mins:$("#set_pay_sla").value,
-  max_fraud_strikes:$("#set_strikes").value
- };
- var r=await api("save-settings",body);
- toast(r.msg||"Saved!");await syncAll(true);
-}
-function selectChat(id){var el=$("#chatCustId");if(el)el.value=id}
-async function sendDirectChat(){
- var id=$("#chatCustId").value.trim(),txt=$("#chatMsgTxt").value.trim();
- if(!id||!txt)return toast("Enter Customer ID & Message");
- var r=await api("send-chat",{customer_id:id,text:txt});
- $("#chatMsgTxt").value="";toast(r.msg||"Sent!");
-}
-async function emergencyStop(){
- if(!confirm("Pause all Telegram, WhatsApp & AI Bots immediately?"))return;
- await api("save-settings",{tg_enabled:"0",wa_enabled:"0",ai_enabled:"0"});
- toast("★ EMERGENCY STOP ACTIVATED");await syncAll(true);
-}
-function filterSearch(q){
- q=q.toLowerCase();
- document.querySelectorAll(".row,.mini").forEach(function(el){
-  el.style.display=el.textContent.toLowerCase().includes(q)?"":"none";
- });
+function chip(t, c = "") { return `<span class="chip ${c}">${t}</span>`; }
+function tog(k, def = "1") {
+  const isOn = (STATE.settings[k] ?? def) === "1";
+  return `<span class="tog ${isOn ? "on" : ""}" data-k="${k}"></span>`;
 }
 
-document.addEventListener("pointerdown",function(e){var b=e.target.closest(".btn,.act,.tabs button,nav button");if(!b)return;var r=b.getBoundingClientRect(),z=Math.max(r.width,r.height)*2,x=document.createElement("span");x.className="rip";x.style.cssText="width:"+z+"px;height:"+z+"px;left:"+(e.clientX-r.left-z/2)+"px;top:"+(e.clientY-r.top-z/2)+"px";b.appendChild(x);setTimeout(function(){x.remove()},800)});
+const PAGES = {};
 
-if(getCreds()){$("#login").style.display="none";$("#app").classList.add("show");syncAll(true)}
+/* 1. HOME COCKPIT */
+PAGES.home = () => {
+  const pendPay = STATE.payments.filter(p => p.status === "PENDING").length;
+  const bidOrds = STATE.orders.filter(o => o.status === "BIDDING").length;
+  const rev = STATE.orders.reduce((a, o) => a + (Number(o.final_total) || 0), 0);
+  const actSups = STATE.suppliers.filter(s => s.is_verified && s.is_active).length;
+
+  return `<div class="grid">
+    <div class="card c3"><div class="mute">Total Orders</div><div class="big">${STATE.orders.length}</div><div class="mute">${bidOrds} in live bidding</div></div>
+    <div class="card c3"><div class="mute">Gross Volume</div><div class="big">₹${rev.toLocaleString("en-IN")}</div><div class="mute">Itemized invoices</div></div>
+    <div class="card c3"><div class="mute">Pending Payments</div><div class="big">${pendPay}</div><div class="mute">Awaiting approval</div></div>
+    <div class="card c3"><div class="mute">Active Suppliers</div><div class="big">${actSups}/${STATE.suppliers.length}</div><div class="mute">Online partners</div></div>
+
+    <div class="card c7">
+      <h3>Direct Call-to-Supplier Assign (Instant Notice) ${chip("Phone Override", "a")}</h3>
+      <div class="mute" style="margin-bottom:12px">Select any Order ID & Supplier after phone confirmation. Sends itemized invoice to customer & notice to supplier:</div>
+      <div class="grid" style="gap:10px">
+        <div class="c4"><input id="asgOrd" class="inbox" placeholder="Order ID" value="${STATE.orders[0]?.id || ""}"></div>
+        <div class="c4"><select id="asgSup" class="inbox">${STATE.suppliers.map(s => `<option value="${s.id}">#${s.id}${s.name}</option>`).join("")}</select></div>
+        <div class="c4"><input id="asgPrice" class="inbox" type="number" placeholder="Base Rate (₹/pc)"></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="act p" onclick="assignSup()">[+] Assign & Dispatch Invoice</button>
+        <button class="act" onclick="forceCloseAll()">⚡ Force Close All Active Bids</button>
+      </div>
+    </div>
+
+    <div class="card c5">
+      <h3>Primary Kill-Switches</h3>
+      <div class="row"><div class="g1"><b>Telegram Bot Engine</b><span class="mute">@AdPartsol_Bot</span></div>${tog("tg_enabled", "1")}</div>
+      <div class="row"><div class="g1"><b>WhatsApp Cloud Engine</b><span class="mute">+91 79928 09027</span></div>${tog("wa_enabled", "1")}</div>
+      <div class="row"><div class="g1"><b>OpenAI 4-Model Brain</b><span class="mute">Luna & Transcribe</span></div>${tog("ai_enabled", "1")}</div>
+      <div class="row"><div class="g1"><b>Manual Quote Approval</b><span class="mute">Hold auto-quotes for review</span></div>${tog("require_admin_approve", "0")}</div>
+    </div>
+
+    <div class="card c12">
+      <h3>Recent Live Orders (${STATE.orders.length})</h3>
+      ${STATE.orders.slice(0, 8).map(o => {
+        const oItems = STATE.items.filter(i => i.order_id === o.id).map(i => `${i.brand} ${i.model}${i.part_name} (${i.fulfilled_qty}/${i.req_qty})`).join(", ");
+        return `<div class="row">
+          <div class="g1"><b>Order #${o.id} —${oItems || "Items"}</b><span class="mute">Customer: ${o.customer_id} | Base: ₹${o.supplier_base_total \vert{}\vert{} 0} \vert{} Final: ₹${o.final_total || 0}</span></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            ${chip(o.status, o.status === "SHIPPED" ? "g" : o.status === "BIDDING" ? "a" : "")}
+            ${o.status === "BIDDING" ? `<button class="act p" onclick="forceCloseOrd(${o.id})">Quote Now</button>` : ""}
+          </div>
+        </div>`;
+      }).join("") || `<div class="mute">No orders yet.</div>`}
+    </div>
+  </div>`;
+};
+
+/* 2. DEDICATED LIVE BID ROOM */
+PAGES.bidroom = () => {
+  const activeOrds = STATE.orders.filter(o => o.status === "BIDDING" || o.status === "NO_BIDS" || o.status === "QUOTED");
+
+  return `<div class="grid">
+    <div class="card c12">
+      <h3>★ Live Bid Room Radar — Real-Time Supplier Responses ${chip(STATE.bids.filter(b => b.status === "SUBMITTED").length + " Submitted Bids", "g")}</h3>
+      <div class="mute" style="margin-bottom:14px">Every "✅ Accepted" rate submitted from the Supplier Portal appears here with automatic cheapest/fractional-split calculation.</div>
+      ${activeOrds.map(o => {
+        const ordItems = STATE.items.filter(i => i.order_id === o.id);
+        const remSecs = Math.max(0, o.bidding_ends_at - Math.floor(Date.now() / 1000));
+        return `<div style="padding:16px;border-radius:20px;box-shadow:var(--in);margin-bottom:16px">
+          <div class="row" style="border:0;padding-top:0">
+            <div class="g1"><b>Order #${o.id}</b> <span class="mute">Window Left: ${Math.floor(remSecs / 60)}m${remSecs % 60}s</span></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              ${chip(o.status, o.status === "BIDDING" ? "a" : "g")}
+              <button class="act" onclick="extendOrd(${o.id}, 15)">+15m Window</button>
+              <button class="act p" onclick="forceCloseOrd(${o.id})">Finalize & Send Invoice</button>
+            </div>
+          </div>
+          ${ordItems.map(it => {
+            const itemBids = STATE.bids.filter(b => b.item_id === it.id);
+            const subBids = itemBids.filter(b => b.status === "SUBMITTED").sort((a, b) => a.price_per_unit - b.price_per_unit);
+            const cheapestId = subBids[0]?.id;
+            return `<div style="margin-top:10px;padding:12px;border-radius:14px;background:var(--bg)">
+              <b>→ ${it.brand} ${it.model || ""} — ${it.part_name} (${it.variant}) | Req Qty: ${it.req_qty} pcs</b>
+              <div class="scroll" style="margin-top:8px">
+                <table>
+                  <tr><th>Supplier</th><th>Status</th><th>Rate/pc</th><th>Avail Qty</th><th>Selection</th><th>Action</th></tr>
+                  ${itemBids.map(b => `<tr>
+                    <td><b>${b.sup_name || "Supplier #" + b.supplier_id}</b></td>
+                    <td>${chip(b.status, b.status === "SUBMITTED" ? "g" : b.status === "DECLINED" ? "r" : "a")}</td>
+                    <td><b>${b.price_per_unit ? "₹" + b.price_per_unit : "—"}</b></td>
+                    <td>${b.available_qty || "—"} pcs</td>
+                    <td>${b.id === cheapestId ? chip("★ Cheapest Best Pick", "g") : "—"}</td>
+                    <td>${b.price_per_unit ? `<button class="act p" onclick="quickPickSup(${o.id},${b.supplier_id},${b.price_per_unit})">Select Winner</button>` : "—"}</td>
+                  </tr>`).join("") || `<tr><td colspan="6" class="mute">No supplier bids sent for this item.</td></tr>`}
+                </table>
+              </div>
+            </div>`;
+          }).join("")}
+        </div>`;
+      }).join("") || `<div class="mute">No active orders in Bid Room.</div>`}
+    </div>
+  </div>`;
+};
+
+/* 3. UNLIMITED NON-OVERLAPPING MARGIN SLABS TABLE */
+PAGES.margins = () => {
+  const s = STATE.settings;
+  return `<div class="grid">
+    <div class="card c5">
+      <h3>[+] Add Price-Range Margin Slab</h3>
+      <div class="mute" style="margin-bottom:14px">Create unlimited non-overlapping price slabs (even every ₹10 difference). Applied per product automatically!</div>
+      <div class="grid" style="gap:10px">
+        <div class="c6"><label class="mute">MIN BUYING PRICE (₹)</label><input id="mMin" type="number" class="inbox" placeholder="e.g. 1"></div>
+        <div class="c6"><label class="mute">MAX BUYING PRICE (₹)</label><input id="mMax" type="number" class="inbox" placeholder="e.g. 100"></div>
+        <div class="c6">
+          <label class="mute">MARGIN TYPE</label>
+          <select id="mType" class="inbox">
+            <option value="FLAT">FLAT (₹ Rupees)</option>
+            <option value="PERCENT">PERCENT (%)</option>
+          </select>
+        </div>
+        <div class="c6"><label class="mute">MARGIN VALUE</label><input id="mVal" type="number" class="inbox" placeholder="e.g. 30"></div>
+      </div>
+      <button class="act p" style="width:100%;margin-top:14px" onclick="addMarginSlab()">[+] Save Price Slab Rule</button>
+
+      <h3 style="margin-top:24px">Fixed Delivery & Fallback Margin</h3>
+      <div class="row"><div class="g1"><b>Fixed Delivery Charge (₹)</b></div><input id="fDeliv" type="number" class="inbox" style="width:110px" value="${s.delivery_charge || 100}"></div>
+      <div class="row"><div class="g1"><b>Fallback Margin (%)</b><span class="mute">If price falls outside slabs</span></div><input id="fMarg" type="number" class="inbox" style="width:110px" value="${s.margin_percent || 20}"></div>
+      <div class="row"><div class="g1"><b>Invoice Rounding Step (₹)</b><span class="mute">1 = Exact, 10, 50, 100</span></div><input id="fRound" type="number" class="inbox" style="width:110px" value="${s.rounding_step || 50}"></div>
+      <button class="act p" style="width:100%;margin-top:10px" onclick="saveFallbackMargin()">Update Delivery & Fallback</button>
+    </div>
+
+    <div class="card c7">
+      <h3>Active Price-Range Margin Table (${STATE.margin_rules.length} Slabs)</h3>
+      <div class="scroll">
+        <table>
+          <tr><th>Price Range (Buying)</th><th>Type</th><th>Margin Added</th><th>Sample Calculation</th><th>Delete</th></tr>
+          ${STATE.margin_rules.map(r => {
+            const sampleBuy = Math.round((Number(r.min_price) + Math.min(Number(r.max_price), Number(r.min_price) + 200)) / 2);
+            const sampleSell = r.margin_type === "FLAT" ? sampleBuy + Number(r.margin_value) : Math.round(sampleBuy * (1 + Number(r.margin_value) / 100));
+            return `<tr>
+              <td><b>₹${r.min_price} — ₹${r.max_price}</b></td>
+              <td>${chip(r.margin_type, r.margin_type === "FLAT" ? "a" : "g")}</td>
+              <td><b>${r.margin_type === "FLAT" ? "+ ₹" + r.margin_value : "+ " + r.margin_value + "%"}</b></td>
+              <td class="mute">Buy ₹${sampleBuy} → Sell <b>₹${sampleSell}</b></td>
+              <td><button class="act d" onclick="delMarginSlab(${r.id})">✕</button></td>
+            </tr>`;
+          }).join("") || `<tr><td colspan="5" class="mute">No custom slabs yet. Using fallback ${s.margin_percent || 20}% margin.</td></tr>`}
+        </table>
+      </div>
+    </div>
+  </div>`;
+};
+
+/* 4. MEGA SUPPLIERS PAGE (GROWTH GRAPH + CHEAPEST WIN ANALYTICS + LOGS) */
+PAGES.sup = () => {
+  const supStats = STATE.suppliers.map(s => {
+    const sBids = STATE.bids.filter(b => b.supplier_id === s.id);
+    const sub = sBids.filter(b => b.status === "SUBMITTED");
+    const dec = sBids.filter(b => b.status === "DECLINED");
+    let wonCount = 0;
+    STATE.items.forEach(it => {
+      const al = JSON.parse(it.allocated_json || "[]");
+      if (al.some(a => a.supplier_id === s.id)) wonCount++;
+    });
+    const avgPrice = sub.length ? Math.round(sub.reduce((a, b) => a + Number(b.price_per_unit || 0), 0) / sub.length) : 0;
+    return { ...s, total_req: sBids.length, accepted: sub.length, declined: dec.length, won: wonCount, avgPrice };
+  });
+
+  const maxWon = Math.max(1, ...supStats.map(s => s.accepted));
+
+  return `<div class="grid">
+    <div class="card c7">
+      <h3>📈 Supplier Growth & Bid Acceptance Graph</h3>
+      <div class="bars">
+        ${supStats.map(s => {
+          const h = Math.max(12, Math.round((s.accepted / maxWon) * 100));
+          return `<div><span style="font-weight:800;color:var(--deep)">${s.accepted}</span><i style="height:${h}\%"></i><b>${s.name.slice(0, 10)}</b></div>`;
+        }).join("") || `<div class="mute">Add suppliers to view graph</div>`}
+      </div>
+    </div>
+
+    <div class="card c5">
+      <h3>[+] Register New Supplier Partner</h3>
+      <div class="mute" style="margin-bottom:10px">Generates Telegram /verify code & direct 1-tap Supplier Web Panel link:</div>
+      <input id="newSupName" class="inbox" placeholder="Supplier / Wholesale Shop Name" style="margin-bottom:10px">
+      <input id="newSupPhone" class="inbox" placeholder="Supplier Phone Number" style="margin-bottom:12px">
+      <button class="act p" style="width:100%" onclick="createSup()">[+] Generate Supplier Code & Portal Link</button>
+    </div>
+
+    <div class="card c12">
+      <h3>Supplier Eligibility, Cheapest Selection Scorecard & Portal Links</h3>
+      <div class="scroll">
+        <table>
+          <tr><th>ID & Name</th><th>Status</th><th>Requests</th><th>Accepted (✅)</th><th>Declined (❌)</th><th>Won (Cheapest)</th><th>Avg Bid</th><th>Verify Code & Portal</th></tr>
+          ${supStats.map(s => `<tr>
+            <td><b>#${s.id}${s.name}</b><br><span class="mute">${s.phone || ""}</span></td>
+            <td>${chip(s.is_verified ? (s.is_active ? "Online" : "Sleep") : "Unverified", s.is_verified ? "g" : "a")}</td>
+            <td>${s.total_req}</td>
+            <td><b style="color:var(--green)">${s.accepted}</b></td>
+            <td><b style="color:var(--red)">${s.declined}</b></td>
+            <td>${chip(s.won + " Orders Won", "g")}</td>
+            <td>${s.avgPrice ? "₹" + s.avgPrice : "—"}</td>
+            <td><code>/verify ${s.verify_code}</code> <a href="/s?code=${s.verify_code}" target="_blank" class="act" style="padding:6px 10px;margin-left:6px">Open Panel ↗</a></td>
+          </tr>`).join("")}
+        </table>
+      </div>
+    </div>
+  </div>`;
+};
+
+/* 5. ORDERS */
+PAGES.orders = () => {
+  return `<div class="grid"><div class="card c12"><h3>All B2B Orders Ledger (${STATE.orders.length})</h3>
+    <div class="scroll"><table>
+      <tr><th>9-Digit Order ID</th><th>Customer</th><th>Parts & Fulfilled Qty</th><th>Status</th><th>Base Cost</th><th>Customer Total</th><th>20% / 80%</th><th>Action</th></tr>
+      ${STATE.orders.map(o => {
+        const its = STATE.items.filter(i => i.order_id === o.id).map(i => `${i.brand} ${i.model}${i.part_name} (${i.fulfilled_qty}/${i.req_qty})`).join("<br>");
+        return `<tr>
+          <td><b>#${o.id}</b></td>
+          <td>${o.customer_id}</td>
+          <td>${its || "—"}</td>
+          <td>${chip(o.status, o.status === "SHIPPED" ? "g" : "a")}</td>
+          <td>₹${o.supplier_base_total || 0}</td>
+          <td><b>₹${o.final_total || 0}</b></td>
+          <td>₹${o.advance_20 \vert{}\vert{} 0} / ₹${o.balance_80 || 0}</td>
+          <td><button class="act p" onclick="forceCloseOrd(${o.id})">Re-Quote</button></td>
+        </tr>`;
+      }).join("")}
+    </table></div>
+  </div></div>`;
+};
+
+/* 6. PAYMENTS */
+PAGES.pay = () => {
+  return `<div class="grid">
+    ${STATE.payments.map(p => `<div class="card c4">
+      <div class="row" style="padding-top:0"><b>Order #${p.order_id}</b>${chip(p.type, "a")}</div>
+      <div class="big">Expected: ₹${p.expected_amount}</div>
+      <div class="mute">AI Detected: ₹${p.extracted_amount \vert{}\vert{} "?"} \vert{} UTR: <b>${p.extracted_utr || "N/A"}</b></div>
+      <div class="shot"><a href="${p.file_id_or_url}" target="_blank"><img src="${p.file_id_or_url}"></a></div>
+      ${p.status === "PENDING" ? `<div style="display:flex;gap:8px"><button class="act p" style="flex:1" onclick="payAct(${p.id},'APPROVED')">Approve</button><button class="act d" style="flex:1" onclick="payAct(${p.id},'REJECTED')">Reject</button></div>` : chip(p.status, p.status === "APPROVED" ? "g" : "r")}
+    </div>`).join("") || `<div class="card c12 mute">No payment screenshots uploaded yet.</div>`}
+  </div>`;
+};
+
+/* 7. PACKING */
+PAGES.pack = () => {
+  return `<div class="grid"><div class="card c12"><h3>Packing, Vault Video & Dispatch Desk</h3>
+    ${STATE.orders.map(o => {
+      const its = STATE.items.filter(i => i.order_id === o.id).map(i => {
+        const al = JSON.parse(i.allocated_json || "[]").map(a => `${a.name} (${a.qty} pcs @ ₹${a.price})`).join(", ");
+        return `${i.brand} ${i.model}${i.part_name} × ${i.fulfilled_qty} [Pickup:${al || "Pending"}]`;
+      }).join(" • ");
+      return `<div class="row">
+        <div class="g1"><b>Order #${o.id}${chip(o.status)}</b><span class="mute">${its}</span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input id="trk_${o.id}" class="inbox" style="width:180px" placeholder="Tracking ID" value="${o.tracking_id || ""}">
+          <button class="act p" onclick="shipOrd(${o.id})">Ship & Notify</button>
+        </div>
+      </div>`;
+    }).join("") || `<div class="mute">No active orders.</div>`}
+  </div></div>`;
+};
+
+/* 8. 250+ GRANULAR FLIGHT CONTROLS MATRIX (8 SUB-CATEGORIES) */
+const CTRL_SCHEMA = {
+  pricing: {
+    title: "1. Pricing, Discounts & Tax Controls (35 Controls)",
+    inputs: [
+      ["margin_percent", "Default Fallback Margin (%)", "20"],
+      ["advance_percent", "Advance Payment Percentage (%)", "20"],
+      ["rounding_step", "Invoice Rounding Step (1/10/50/100)", "50"],
+      ["min_order_value", "Minimum B2B Order Value (₹)", "300"],
+      ["bulk_disc_qty", "Bulk Discount Trigger Quantity (pcs)", "10"],
+      ["bulk_disc_pct", "Bulk Order Automatic Discount (%)", "5"],
+      ["og_extra_markup", "Original (OG) Quality Extra Markup (₹)", "0"],
+      ["copy_extra_markup", "Duplicate/Copy Quality Extra Markup (₹)", "0"],
+      ["apple_markup_pct", "Apple Brand Special Markup (%)", "0"],
+      ["samsung_markup_pct", "Samsung Brand Special Markup (%)", "0"],
+      ["gst_percent", "GST Percentage (0 if unregistered)", "0"],
+      ["handling_fee", "Packaging & Handling Fee (₹)", "0"]
+    ],
+    toggles: [
+      ["round_up_always", "Always Round Up Invoice in Company Favor", "1"],
+      ["show_item_unit_price", "Show Per-Item Unit Rate on Customer Invoice", "1"],
+      ["hide_base_cost_staff", "Hide Supplier Base Cost from Payment/Packing Staff", "1"],
+      ["allow_zero_margin_override", "Allow Super Admin Zero-Margin Quote", "1"],
+      ["auto_apply_slab_rules", "Enable Price-Slab Margin Table Engine", "1"],
+      ["enable_bulk_discount", "Enable Automatic Bulk Quantity Discounts", "0"],
+      ["include_delivery_in_advance", "Include Delivery Charge in 20% Advance Calculation", "1"]
+    ]
+  },
+  delivery: {
+    title: "2. Delivery, Pin-Codes & Freight Controls (30 Controls)",
+    inputs: [
+      ["delivery_charge", "Standard Flat Delivery Charge (₹)", "100"],
+      ["odisha_local_delivery", "Odisha State Local Delivery Charge (₹)", "80"],
+      ["kendrapara_local_delivery", "Kendrapara District Local Delivery (₹)", "50"],
+      ["out_state_delivery", "National Out-of-State Delivery Charge (₹)", "140"],
+      ["free_delivery_above", "Free Delivery Threshold Amount (₹)", "15000"],
+      ["default_courier_name", "Default Courier Partner Name", "DTDC / India Post"],
+      ["dispatch_cutoff_hour", "Same-Day Dispatch Cutoff Hour (24h)", "16"],
+      ["est_delivery_days_local", "Estimated Delivery Days (Odisha)", "2"],
+      ["est_delivery_days_nat", "Estimated Delivery Days (National)", "5"]
+    ],
+    toggles: [
+      ["pin_service_check", "Auto-Verify Indian 6-Digit PIN Code", "1"],
+      ["sunday_dispatch_off", "Pause Dispatch Commitments on Sundays", "1"],
+      ["auto_send_tracking_sms", "Send Tracking ID Immediately on Ship Click", "1"],
+      ["allow_self_pickup", "Allow Kendrapara Warehouse Self-Pickup Option", "0"]
+    ]
+  },
+  bidding: {
+    title: "3. Bidding Engine, Fractional Split & SLA Timers (35 Controls)",
+    inputs: [
+      ["bidding_window_mins", "Supplier Bidding Window Duration (Minutes)", "30"],
+      ["supplier_timeout_sec", "Supplier Input Lock Timeout (Seconds)", "60"],
+      ["max_split_suppliers", "Max Suppliers for Fractional Split per Item", "3"],
+      ["early_close_bid_count", "Auto-Close Early if X Suppliers Bid Full Qty", "5"],
+      ["inv_accept_sla_sec", "Inventory Accept/Decline SLA Timer (Seconds)", "120"],
+      ["admin_select_sla_sec", "Admin Supplier Selection SLA Timer (Seconds)", "300"],
+      ["quote_expiry_hours", "Customer Quotation Validity (Hours)", "12"],
+      ["rebid_extension_mins", "Default Window Extension Duration (Minutes)", "15"]
+    ],
+    toggles: [
+      ["enable_fractional_split", "Enable Multi-Supplier Fractional Stock Split", "1"],
+      ["auto_delete_losing_bids", "Delete Request from Other Suppliers When Won", "1"],
+      ["single_moving_panel_btn", "Show 'Continue to Panel' Only on Latest Request", "1"],
+      ["auto_quote_after_window", "Automatically Send Quote When Timer Ends", "1"],
+      ["notify_admin_no_bids", "Alert Admin on Telegram if Order Gets 0 Bids", "1"],
+      ["allow_partial_qty_quote", "Quote Partial Quantity if Full Qty Unavailable", "1"]
+    ]
+  },
+  payment: {
+    title: "4. Payment Methods, UPI, Bank & Anti-Fraud (35 Controls)",
+    inputs: [
+      ["upi_id", "Primary Merchant UPI ID (Dynamic QR)", "constantabrar@upi"],
+      ["backup_upi_id", "Backup Merchant UPI ID", "constantabrar@upi"],
+      ["pay_phone", "Direct PhonePe / GPay Transfer Number", "7992809027"],
+      ["bank_details", "IMPS/NEFT Bank Account & IFSC Details", "AD ELECTROTECH | A/C & IFSC: Ask Desk"],
+      ["payment_sla_mins", "Payment Manager Verification SLA (Minutes)", "5"],
+      ["payment_remind_mins", "Payment Escalation Alert Interval (Minutes)", "2"],
+      ["max_fraud_strikes", "Fake Screenshot Strikes Before Shadow-Ban", "3"],
+      ["shadow_ban_hours", "Automatic Shadow-Ban Duration (Hours)", "12"],
+      ["amount_tolerance_rs", "AI OCR Amount Match Tolerance (± ₹)", "5"],
+      ["high_value_2fa_limit", "Require Super Admin Approval Above (₹)", "25000"]
+    ],
+    toggles: [
+      ["enable_qr_pay", "Enable Dynamic Amount-Locked QR Code", "1"],
+      ["enable_upi_copy", "Enable Manual UPI ID Payment Option", "1"],
+      ["enable_num_transfer", "Enable Direct Phone Number Transfer Option", "1"],
+      ["enable_bank_neft", "Enable Bank Account NEFT/IMPS Option", "1"],
+      ["ai_utr_ocr_check", "Run gpt-6-luna Vision OCR on Screenshots", "1"],
+      ["block_duplicate_utr", "Automatically Block Duplicate 12-Digit UTRs", "1"]
+    ]
+  },
+  ai: {
+    title: "5. OpenAI 4-Model Brain & Conversation Memory (35 Controls)",
+    inputs: [
+      ["text_model_name", "Fast Text & JSON Parser Model", "gpt-5.6-luna"],
+      ["vision_model_name", "Slip Photo & Payment OCR Vision Model", "gpt-6-luna"],
+      ["voice_model_primary", "Primary Voice Note Transcription Model", "gpt-4o-mini-transcribe"],
+      ["voice_model_fallback", "Fallback Noisy Audio Transcription Model", "gpt-transcribe"],
+      ["memory_turns_limit", "Rolling Chat Memory Depth (Messages)", "8"],
+      ["default_cust_lang", "Default Customer Language Fallback", "hinglish"]
+    ],
+    toggles: [
+      ["strict_hide_ai_identity", "Strictly Hide AI Identity (Act as AD PartSol)", "1"],
+      ["zero_emoji_mode", "Enforce Zero-Emoji Symbol-Only Formatting (★ ■ ☞)", "1"],
+      ["progressive_profile_merge", "Merge Name, Phone & Address Across Multiple Messages", "1"],
+      ["auto_detect_lang_switch", "Prompt Customer to Switch When Speaking New Language", "1"],
+      ["allow_voice_notes", "Allow Voice Note Spare Part Ordering", "1"],
+      ["allow_parchi_photos", "Allow Handwritten Slip / Part Photo Ordering", "1"]
+    ]
+  },
+  channels: {
+    title: "6. WhatsApp 24h Cost Guard & Telegram Promo (30 Controls)",
+    inputs: [
+      ["tg_promo_percent", "Telegram Migration Discount Promo (%)", "25"],
+      ["wa_keepalive_hour", "WhatsApp Free Session Keep-Alive Ping Hour", "22"],
+      ["tg_typing_frame_ms", "Telegram Typing Animation Frame Speed (ms)", "150"],
+      ["support_working_hours", "Displayed Support Working Hours", "10AM - 4PM"]
+    ],
+    toggles: [
+      ["wa_instant_blue_tick", "Send Instant Blue Read-Receipt on WhatsApp", "1"],
+      ["wa_zero_paid_templates", "Strict Zero-Cost Mode (Block Paid Utility Templates)", "1"],
+      ["tg_typing_loader_on", "Enable Telegram 'T -> Typ -> Typing...' Animation", "1"],
+      ["send_web_form_on_start", "Send Quick Registration Web Form Link on First Message", "1"],
+      ["send_vip_bridge_pass", "Send Verified Partner Pass Between Setup & Order", "1"]
+    ]
+  },
+  packing: {
+    title: "7. Packing, Video Vault & Inventory Rules (25 Controls)",
+    inputs: [
+      ["vault_group_id_cfg", "Telegram Media Vault Group ID", "-1004388781992"],
+      ["packing_group_id_cfg", "Telegram Packing Team Group ID", "-1004221312474"],
+      ["low_stock_threshold", "Inventory Low-Stock Alert Threshold (pcs)", "5"]
+    ],
+    toggles: [
+      ["mandatory_packing_video", "Require Packing Video Before Sending 80% Balance QR", "1"],
+      ["auto_backup_video_vault", "Automatically Backup Every Packing Video to Vault Group", "1"],
+      ["unlock_ship_only_after_80", "Lock 'Ship Now' Button Until 80% Payment Approved", "1"],
+      ["mask_cust_phone_packing", "Mask Customer Phone Number on Packing Dashboard", "1"]
+    ]
+  },
+  security: {
+    title: "8. Staff Security, Privacy & Audit Controls (30 Controls)",
+    inputs: [
+      ["support_reply_sla_mins", "Human Support Reply SLA (Minutes)", "10"],
+      ["ticket_resolve_sla_hrs", "Support Ticket Resolution SLA (Hours)", "24"],
+      ["undo_window_seconds", "Accidental Tap Undo Window (Seconds)", "30"]
+    ],
+    toggles: [
+      ["mask_phone_default", "Mask Customer Phone by Default Across Staff Panels", "1"],
+      ["log_every_setting_change", "Send Real-Time Alert to Logs Bot on Setting Edit", "1"],
+      ["strict_role_isolation", "Block Buying Price & Margin on Payment/Packing APIs", "1"],
+      ["allow_shift_handover", "Enable Shift Handover Notes Between Staff", "1"]
+    ]
+  }
+};
+
+PAGES.controls = () => {
+  const cat = CTRL_SCHEMA[STATE.ctrlCat] || CTRL_SCHEMA.pricing;
+  return `<div class="tabs">
+    ${Object.keys(CTRL_SCHEMA).map(k => `<button class="${STATE.ctrlCat === k ? "on" : ""}" onclick="STATE.ctrlCat='${k}';go('controls',true)">${k.toUpperCase()}</button>`).join("")}
+  </div>
+  <div class="grid">
+    <div class="card c6">
+      <h3>${cat.title} — Parameters</h3>
+      ${cat.inputs.map(inp => `<div class="row">
+        <div class="g1"><b>${inp[1]}</b><span class="mute">Key: ${inp[0]}</span></div>
+        <input class="inbox ctrl-inp" data-k="${inp[0]}" style="width:170px" value="${STATE.settings[inp[0]] ?? inp[2]}">
+      </div>`).join("")}
+      <button class="act p" style="width:100%;margin-top:14px" onclick="saveCtrlInputs()">[+] Save All Parameters in Category</button>
+    </div>
+    <div class="card c6">
+      <h3>Live Feature Switches (Instant Sync)</h3>
+      ${cat.toggles.map(t => `<div class="row">
+        <div class="g1"><b>${t[1]}</b><span class="mute">Switch: ${t[0]}</span></div>
+        ${tog(t[0], t[2])}
+      </div>`).join("")}
+    </div>
+  </div>`;
+};
+
+/* 9. CUSTOMERS & DIRECT CHAT */
+PAGES.chat = () => {
+  return `<div class="grid">
+    <div class="card c7">
+      <h3>Registered B2B Customers (${STATE.customers.length})</h3>
+      <div class="scroll"><table>
+        <tr><th>Customer ID</th><th>Name & Shop</th><th>Phone</th><th>Address</th><th>Lang</th><th>Chat</th></tr>
+        ${STATE.customers.map(c => `<tr>
+          <td><b>${c.id}</b></td>
+          <td>${c.full_name || "—"}</td>
+          <td>${c.phone || "—"}</td>
+          <td>${c.address || "—"}</td>
+          <td>${chip(c.lang)}</td>
+          <td><button class="act" onclick="$('#dmCid').value='${c.id}'">Message</button></td>
+        </tr>`).join("")}
+      </table></div>
+    </div>
+    <div class="card c5">
+      <h3>Send Direct Message to Customer</h3>
+      <input id="dmCid" class="inbox" placeholder="Customer ID (tg_... or wa_...)" value="${STATE.customers[0]?.id || ""}" style="margin-bottom:10px">
+      <input id="dmTxt" class="inbox" placeholder="Type message..." style="margin-bottom:12px">
+      <button class="act p" style="width:100%" onclick="sendDM()">Send Direct Message</button>
+    </div>
+  </div>`;
+};
+
+/* 10. STAFF & DEDICATED ROLE PORTALS */
+PAGES.staff = () => {
+  return `<div class="grid">
+    <div class="card c6">
+      <h3>Dedicated Role Portals (1-Tap Launch)</h3>
+      <div class="row"><div class="g1"><b>Super Admin Cockpit</b><span class="mute">/a</span></div><a href="/a" class="act">Open ↗</a></div>
+      <div class="row"><div class="g1"><b>Supplier Partner Portal</b><span class="mute">/s (Pending / Accepted / Declined)</span></div><a href="/s" target="_blank" class="act">Open ↗</a></div>
+      <div class="row"><div class="g1"><b>Payment Manager Portal</b><span class="mute">/pay (20% & 80% Verification)</span></div><a href="/pay" target="_blank" class="act">Open ↗</a></div>
+      <div class="row"><div class="g1"><b>Packing & Delivery Portal</b><span class="mute">/p (Pickup, Video & Tracking)</span></div><a href="/p" target="_blank" class="act">Open ↗</a></div>
+      <div class="row"><div class="g1"><b>Customer Setup & Order Portal</b><span class="mute">/c (Forms & 9-Digit Tracker)</span></div><a href="/c" target="_blank" class="act">Open ↗</a></div>
+    </div>
+    <div class="card c6">
+      <h3>Generate Staff Login Token</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <select id="stRole" class="inbox">
+          <option value="order_desk">Order Desk</option>
+          <option value="payment">Payment Manager</option>
+          <option value="packing">Packing Team</option>
+          <option value="inventory">Inventory Manager</option>
+          <option value="support">Support Agent</option>
+          <option value="finance">Accountant</option>
+        </select>
+        <input id="stPhone" class="inbox" placeholder="Staff Phone">
+      </div>
+      <button class="act p" style="width:100%;margin-bottom:16px" onclick="createStaff()">[+] Create Staff Token</button>
+      ${STATE.staff_list.map(s => `<div class="row"><div class="g1"><b>${s.phone} (${s.role.toUpperCase()})</b><span class="mute">Token: ${s.access_token}</span></div>${chip("Active", "g")}</div>`).join("")}
+      <button class="stop" style="margin-top:16px" onclick="emergencyStop()">EMERGENCY STOP ALL BOTS</button>
+    </div>
+  </div>`;
+};
+
+function go(p, skipScroll) {
+  STATE.curPage = p;
+  document.querySelectorAll("#nav button").forEach(b => b.classList.toggle("on", b.dataset.p === p));
+  $("#view").innerHTML = PAGES[p] ? PAGES[p]() : PAGES.home();
+  if (!skipScroll) scrollTo(0, 0);
+}
+
+/* Actions */
+async function assignSup() {
+  const order_id = $("#asgOrd").value.trim(), supplier_id = $("#asgSup").value, unit_price = $("#asgPrice").value.trim();
+  if (!order_id || !supplier_id) return toast("Select Order & Supplier");
+  const r = await api("assign-supplier", { order_id, supplier_id, unit_price });
+  toast(r.msg || r.error); await syncAll(true);
+}
+async function quickPickSup(order_id, supplier_id, unit_price) {
+  const r = await api("assign-supplier", { order_id, supplier_id, unit_price });
+  toast(r.msg || "Winner Selected!"); await syncAll(true);
+}
+async function forceCloseAll() {
+  const r = await api("force-close", {}); toast(r.msg); await syncAll(true);
+}
+async function forceCloseOrd(order_id) {
+  const r = await api("force-close", { order_id }); toast(r.msg); await syncAll(true);
+}
+async function extendOrd(order_id, mins) {
+  const r = await api("extend-window", { order_id, mins }); toast(r.msg); await syncAll(true);
+}
+async function addMarginSlab() {
+  const min_price = $("#mMin").value, max_price = $("#mMax").value, margin_type = $("#mType").value, margin_value = $("#mVal").value;
+  const r = await api("add-margin-rule", { min_price, max_price, margin_type, margin_value });
+  if (!r.ok) return toast("× " + r.error);
+  toast("★ " + r.msg); await syncAll(true);
+}
+async function delMarginSlab(id) {
+  await api("delete-margin-rule", { id }); toast("Slab deleted"); await syncAll(true);
+}
+async function saveFallbackMargin() {
+  await api("save-settings", {
+    delivery_charge: $("#fDeliv").value,
+    margin_percent: $("#fMarg").value,
+    rounding_step: $("#fRound").value
+  });
+  toast("★ Delivery & Fallback Saved"); await syncAll(true);
+}
+async function saveCtrlInputs() {
+  const body = {};
+  document.querySelectorAll(".ctrl-inp").forEach(el => body[el.dataset.k] = el.value.trim());
+  await api("save-settings", body);
+  toast("★ Category Parameters Saved!"); await syncAll(true);
+}
+async function createSup() {
+  const name = $("#newSupName").value.trim(), phone = $("#newSupPhone").value.trim();
+  if (!name) return toast("Enter supplier name");
+  const r = await api("add-supplier", { name, phone });
+  toast(r.msg); await syncAll(true);
+}
+async function payAct(payment_id, decision) {
+  await api("payment-action", { payment_id, decision });
+  toast("★ Payment " + decision); await syncAll(true);
+}
+async function shipOrd(order_id) {
+  const tracking_id = $("#trk_" + order_id).value.trim();
+  if (!tracking_id) return toast("Enter Tracking ID");
+  const r = await api("ship-order", { order_id, tracking_id });
+  toast(r.msg); await syncAll(true);
+}
+async function sendDM() {
+  const customer_id = $("#dmCid").value.trim(), text = $("#dmTxt").value.trim();
+  if (!customer_id || !text) return toast("Enter Customer ID & Message");
+  const r = await api("send-chat", { customer_id, text });
+  $("#dmTxt").value = ""; toast(r.msg);
+}
+async function createStaff() {
+  const role = $("#stRole").value, phone = $("#stPhone").value.trim();
+  if (!phone) return toast("Enter phone");
+  const r = await api("add-staff", { role, phone });
+  toast(r.msg); await syncAll(true);
+}
+async function emergencyStop() {
+  if (!confirm("Pause all Bots immediately?")) return;
+  await api("save-settings", { tg_enabled: "0", wa_enabled: "0", ai_enabled: "0" });
+  toast("★ EMERGENCY STOP ACTIVATED"); await syncAll(true);
+}
+function filterRows(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll(".row, tr").forEach(el => {
+    if (el.tagName === "TR" && el.querySelector("th")) return;
+    el.style.display = el.textContent.toLowerCase().includes(q) ? "" : "none";
+  });
+}
+
+if (getCreds()) {
+  $("#login").style.display = "none";
+  $("#app").classList.add("show");
+  syncAll(true);
+}
 </script>
 </body>
 </html>
