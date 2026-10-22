@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AD PartSol — Supplier Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#e3e8f4;--hi:#ebeffa;--lo:#d8dfee;--sd:rgba(146,160,198,.78);--sl:rgba(255,255,255,.95);--ink:#2e3c5f;--mute:#70809f;--line:rgba(38,54,74,.07);--teal:#5b9dff;--teal2:#a8cdff;--deep:#4a8af0;--amber:#e99a2b;--red:#e0524a;--green:#25a862;--rz:9px 9px 20px var(--sd),-9px -9px 20px var(--sl);--rs:5px 5px 11px var(--sd),-5px -5px 11px var(--sl);--in:inset 5px 5px 11px var(--sd),inset -5px -5px 11px var(--sl);--cv:linear-gradient(145deg,var(--hi),var(--lo))}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Plus Jakarta Sans",sans-serif;color:var(--ink);background:var(--bg);padding:18px 16px 80px}
+.wrap{max-width:680px;margin:0 auto}
+.top{background:var(--cv);border-radius:26px;padding:18px 22px;box-shadow:var(--rz);display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.top h1{margin:0;font-size:20px;font-weight:800}
+.sec-title{font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin:24px 0 12px;display:flex;justify-content:space-between;align-items:center}
+.card{background:var(--cv);border-radius:24px;padding:18px 20px;box-shadow:var(--rz);margin-bottom:16px;transition:transform .3s,opacity .3s}
+.req-row{display:flex;justify-content:space-between;align-items:center;gap:14px}
+.req-info b{font-size:16px;display:block;margin-bottom:4px}
+.req-meta{font-size:12.5px;color:var(--mute);line-height:1.5}
+.btns{display:flex;gap:10px;flex:none}
+.ibtn{width:48px;height:48px;border-radius:16px;border:0;font-size:18px;font-weight:800;cursor:pointer;box-shadow:var(--rs);background:var(--cv);transition:transform .15s,box-shadow .15s;display:grid;place-items:center}
+.ibtn:active{box-shadow:var(--in);transform:scale(.95)}
+.ibtn.ok{color:var(--green)}
+.ibtn.no{color:var(--red)}
+.chip{display:inline-block;padding:4px 11px;border-radius:99px;font-size:11px;font-weight:700;box-shadow:var(--in);color:var(--deep)}
+.chip.g{color:var(--green)}.chip.r{color:var(--red)}.chip.a{color:var(--amber)}
+.inbox{background:var(--bg);box-shadow:var(--in);border:0;border-radius:16px;padding:14px 16px;color:var(--ink);font:inherit;font-weight:600;outline:0;width:100%}
+.btn{width:100%;padding:15px;border-radius:18px;border:0;background:linear-gradient(145deg,#7db4ff,#4a8af0);color:#fff;font:inherit;font-weight:800;cursor:pointer;box-shadow:6px 6px 14px var(--sd),-4px -4px 10px var(--sl)}
+/* Modal */
+#modal{position:fixed;inset:0;background:rgba(21,27,46,.55);backdrop-filter:blur(6px);display:none;place-items:center;padding:18px;z-index:50}
+#modal.on{display:grid}
+.mbox{width:min(420px,100%);background:var(--cv);border-radius:30px;padding:26px 22px;box-shadow:var(--rz)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1 id="supName">★ AD PartSol Partner Portal</h1>
+      <div id="supSub" style="font-size:12px;color:var(--mute)">Live Supply Feed</div>
+    </div>
+    <button onclick="loadFeed()" class="ibtn" style="width:auto;padding:0 16px;font-size:12px;color:var(--deep)">[↻] Sync</button>
+  </div>
+
+  <div id="loginCard" class="card" style="display:none">
+    <h3 style="margin:0 0 12px">Enter Supplier Verify Code</h3>
+    <input id="codeInput" class="inbox" placeholder="e.g. SUP8X92A" style="margin-bottom:12px">
+    <button class="btn" onclick="saveCode()">Open Supplier Portal</button>
+  </div>
+
+  <div id="mainFeed" style="display:none">
+    <div class="sec-title"><span>■ 1. PENDING REQUESTS (UPCOMING)</span><span class="chip a" id="cntPend">0</span></div>
+    <div id="listPending"></div>
+
+    <div class="sec-title"><span>■ 2. ACCEPTED BIDS (SENT TO BID ROOM)</span><span class="chip g" id="cntAcc">0</span></div>
+    <div id="listAccepted"></div>
+
+    <div class="sec-title"><span>■ 3. DECLINED REQUESTS</span><span class="chip r" id="cntDec">0</span></div>
+    <div id="listDeclined"></div>
+  </div>
+</div>
+
+<!-- Rate & Quantity Popup Modal -->
+<div id="modal">
+  <div class="mbox">
+    <h3 id="mTitle" style="margin:0 0 6px;font-size:18px">Enter Rate & Quantity</h3>
+    <div id="mSub" style="font-size:12.5px;color:var(--mute);margin-bottom:18px"></div>
+    <div style="display:grid;grid-template-columns:1fr 125px;gap:12px;margin-bottom:18px">
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--mute);display:block;margin-bottom:6px">PER PIECE PRICE (₹)</label>
+        <input id="mPrice" type="number" class="inbox" placeholder="₹ Rate/pc" inputmode="numeric">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--mute);display:block;margin-bottom:6px">AVAILABLE QTY</label>
+        <select id="mQty" class="inbox"></select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn" onclick="submitAccept()">Continue & Submit</button>
+      <button class="ibtn no" style="width:90px;font-size:13px" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const params = new URLSearchParams(location.search);
+let CODE = params.get("code") || localStorage.getItem("adp_sup_code") || "";
+let ITEMS = [];
+let ACTIVE_BID = null;
+
+if (CODE) { localStorage.setItem("adp_sup_code", CODE); loadFeed(); }
+else { document.getElementById("loginCard").style.display = "block"; }
+
+function saveCode() {
+  CODE = document.getElementById("codeInput").value.trim();
+  if (!CODE) return;
+  localStorage.setItem("adp_sup_code", CODE);
+  loadFeed();
+}
+
+async function loadFeed() {
+  const res = await fetch("/api/supplier/feed?code=" + encodeURIComponent(CODE));
+  const data = await res.json();
+  if (!data.ok) {
+    document.getElementById("loginCard").style.display = "block";
+    document.getElementById("mainFeed").style.display = "none";
+    return;
+  }
+  document.getElementById("loginCard").style.display = "none";
+  document.getElementById("mainFeed").style.display = "block";
+  document.getElementById("supName").textContent = "★ " + data.supplier.name;
+  ITEMS = data.requests || [];
+  renderSections();
+}
+
+function renderSections() {
+  const pend = ITEMS.filter(x => x.bid_status === "PENDING" && x.order_status === "BIDDING");
+  const acc  = ITEMS.filter(x => x.bid_status === "SUBMITTED");
+  const dec  = ITEMS.filter(x => x.bid_status === "DECLINED" || x.bid_status === "PASS");
+
+  document.getElementById("cntPend").textContent = pend.length;
+  document.getElementById("cntAcc").textContent  = acc.length;
+  document.getElementById("cntDec").textContent  = dec.length;
+
+  document.getElementById("listPending").innerHTML = pend.length ? pend.map(x => `
+    <div class="card" id="card_${x.bid_id}">
+      <div class="req-row">
+        <div class="req-info">
+          <b>${x.brand} ${x.model || ""} — ${x.part_name}</b>
+          <div class="req-meta">Quality: <b>${x.variant || "Standard"}</b> | Required: <b>${x.req_qty} pcs</b><br>Order #${x.order_id}</div>
+        </div>
+        <div class="btns">
+          <button class="ibtn ok" title="Accept" onclick="openAcceptModal(${x.bid_id})">✓</button>
+          <button class="ibtn no" title="Decline" onclick="declineItem(${x.bid_id})">✕</button>
+        </div>
+      </div>
+    </div>
+  `).join("") : `<div class="card req-meta">No pending requests right now.</div>`;
+
+  document.getElementById("listAccepted").innerHTML = acc.length ? acc.map(x => `
+    <div class="card">
+      <div class="req-row">
+        <div class="req-info">
+          <b>${x.brand} ${x.model || ""} — ${x.part_name}</b>
+          <div class="req-meta">Quality: ${x.variant || "Standard"} | Order #${x.order_id}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:18px;font-weight:800;color:var(--green)">₹${x.price_per_unit}/pc</div>
+          <span class="chip g">Qty: ${x.available_qty} pcs</span>
+        </div>
+      </div>
+    </div>
+  `).join("") : `<div class="card req-meta">No accepted bids yet.</div>`;
+
+  document.getElementById("listDeclined").innerHTML = dec.length ? dec.map(x => `
+    <div class="card" style="opacity:.75">
+      <div class="req-row">
+        <div class="req-info">
+          <b>${x.brand} ${x.model || ""} — ${x.part_name}</b>
+          <div class="req-meta">Quality: ${x.variant || "Standard"} | Req: ${x.req_qty} pcs</div>
+        </div>
+        ${x.order_status === "BIDDING" ? `<button class="ibtn" style="width:auto;padding:0 14px;font-size:12px" onclick="restoreItem(${x.bid_id})">↺ Restore</button>` : `<span class="chip r">Declined</span>`}
+      </div>
+    </div>
+  `).join("") : `<div class="card req-meta">No declined requests.</div>`;
+}
+
+function openAcceptModal(bidId) {
+  const item = ITEMS.find(x => x.bid_id === bidId);
+  if (!item) return;
+  ACTIVE_BID = item;
+  document.getElementById("mTitle").textContent = `${item.brand} ${item.model || ""} — ${item.part_name}`;
+  document.getElementById("mSub").textContent = `Quality: ${item.variant || "Standard"} | Customer Required: ${item.req_qty} Pieces`;
+  document.getElementById("mPrice").value = "";
+
+  const sel = document.getElementById("mQty");
+  let opts = "";
+  for (let i = item.req_qty; i >= 1; i--) {
+    opts += `<option value="${i}">${i} ${i === 1 ? "pc" : "pcs"}</option>`;
+  }
+  sel.innerHTML = opts;
+  document.getElementById("modal").classList.add("on");
+  setTimeout(() => document.getElementById("mPrice").focus(), 100);
+}
+
+function closeModal() {
+  document.getElementById("modal").classList.remove("on");
+  ACTIVE_BID = null;
+}
+
+async function submitAccept() {
+  if (!ACTIVE_BID) return;
+  const price = parseFloat(document.getElementById("mPrice").value);
+  const qty = parseInt(document.getElementById("mQty").value, 10);
+  if (!price || price <= 0) return alert("Please enter per piece price");
+
+  // Instant Zero-Refresh UI Move to Accepted Section!
+  ACTIVE_BID.bid_status = "SUBMITTED";
+  ACTIVE_BID.price_per_unit = price;
+  ACTIVE_BID.available_qty = qty;
+  const bidId = ACTIVE_BID.bid_id;
+  closeModal();
+  renderSections();
+
+  await fetch("/api/supplier/respond?code=" + encodeURIComponent(CODE), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ bid_id: bidId, decision: "ACCEPT", price, qty })
+  });
+}
+
+async function declineItem(bidId) {
+  const item = ITEMS.find(x => x.bid_id === bidId);
+  if (!item) return;
+  // Instant Zero-Refresh Move to Declined Section!
+  item.bid_status = "DECLINED";
+  renderSections();
+
+  await fetch("/api/supplier/respond?code=" + encodeURIComponent(CODE), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ bid_id: bidId, decision: "DECLINE" })
+  });
+}
+
+async function restoreItem(bidId) {
+  const item = ITEMS.find(x => x.bid_id === bidId);
+  if (!item) return;
+  item.bid_status = "PENDING";
+  renderSections();
+
+  await fetch("/api/supplier/respond?code=" + encodeURIComponent(CODE), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ bid_id: bidId, decision: "RESTORE" })
+  });
+}
+</script>
+</body>
+</html>
