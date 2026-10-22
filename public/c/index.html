@@ -2,42 +2,44 @@
 <html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>AD PartSol — B2B Order & Tracking Portal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>AD PartSol — Form</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#e3e8f4;--hi:#ebeffa;--lo:#d8dfee;--sd:rgba(146,160,198,.78);--sl:rgba(255,255,255,.95);--ink:#2e3c5f;--mute:#70809f;--teal:#5b9dff;--deep:#4a8af0;--green:#25a862;--rz:9px 9px 20px var(--sd),-9px -9px 20px var(--sl);--rs:5px 5px 11px var(--sd),-5px -5px 11px var(--sl);--in:inset 5px 5px 11px var(--sd),inset -5px -5px 11px var(--sl);--cv:linear-gradient(145deg,var(--hi),var(--lo))}
-*{box-sizing:border-box}
-body{margin:0;font-family:"Plus Jakarta Sans",sans-serif;color:var(--ink);background:var(--bg);padding:20px 14px 70px}
-.wrap{max-width:580px;margin:0 auto}
-.card{background:var(--cv);border-radius:28px;padding:24px;box-shadow:var(--rz);margin-bottom:20px}
-.tabs{display:flex;gap:10px;margin-bottom:20px}
-.tabs button{flex:1;padding:12px;border-radius:99px;border:0;background:var(--cv);box-shadow:var(--rs);font:inherit;font-weight:700;font-size:13px;color:var(--mute);cursor:pointer}
-.tabs button.on{box-shadow:var(--in);color:var(--deep)}
-.inbox{background:var(--bg);box-shadow:var(--in);border:0;border-radius:16px;padding:14px 16px;color:var(--ink);font:inherit;font-weight:600;outline:0;width:100%;margin-bottom:12px}
-.btn{width:100%;padding:16px;border-radius:18px;border:0;background:linear-gradient(145deg,#7db4ff,#4a8af0);color:#fff;font:inherit;font-weight:800;cursor:pointer;box-shadow:6px 6px 14px var(--sd),-4px -4px 10px var(--sl)}
-.lbl{font-size:11.5px;font-weight:700;color:var(--mute);margin-bottom:5px;display:block}
+:root{--bg:#e3e8f4;--hi:#ebeffa;--lo:#d8dfee;--sd:rgba(146,160,198,.78);--sl:rgba(255,255,255,.95);--ink:#2e3c5f;--mute:#70809f;--deep:#4a8af0;--green:#25a862;--red:#e0524a;--rz:9px 9px 20px var(--sd),-9px -9px 20px var(--sl);--rs:5px 5px 11px var(--sd),-5px -5px 11px var(--sl);--in:inset 5px 5px 11px var(--sd),inset -5px -5px 11px var(--sl);--cv:linear-gradient(145deg,var(--hi),var(--lo))}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:"Plus Jakarta Sans",sans-serif;color:var(--ink);background:var(--bg);padding:18px 14px 60px}
+.wrap{max-width:520px;margin:0 auto}
+.card{background:var(--cv);border-radius:28px;padding:24px 20px;box-shadow:var(--rz);margin-bottom:18px}
+.inbox{background:var(--bg);box-shadow:var(--in);border:0;border-radius:16px;padding:14px 16px;color:var(--ink);font:inherit;font-size:16px;font-weight:600;outline:0;width:100%;margin-bottom:14px}
+.btn{width:100%;padding:16px;border-radius:18px;border:0;background:linear-gradient(145deg,#7db4ff,#4a8af0);color:#fff;font:inherit;font-size:15px;font-weight:800;cursor:pointer;box-shadow:6px 6px 14px var(--sd),-4px -4px 10px var(--sl)}
+.btn:active{box-shadow:var(--in)}
+.lbl{font-size:11.5px;font-weight:800;color:var(--mute);margin-bottom:6px;display:block;letter-spacing:.03em}
+.done-box{text-align:center;padding:30px 16px;display:none}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="tabs">
-    <button id="t1" class="on" onclick="showTab(1)">1. Shop Setup</button>
-    <button id="t2" onclick="showTab(2)">2. Order Form</button>
-    <button id="t3" onclick="showTab(3)">3. Track Order</button>
-  </div>
 
-  <!-- STEP 1: REGISTRATION FORM -->
-  <div id="sec1" class="card">
-    <h2 style="margin:0 0 6px">★ Step 1: Quick Shop Registration</h2>
-    <p style="font-size:13px;color:var(--mute);margin:0 0 18px">Fill your delivery details once for instant wholesale quotes.</p>
-    <label class="lbl">FULL NAME / SHOP NAME *</label>
-    <input id="fName" class="inbox" placeholder="e.g. Abrar Mobile Care">
-    <label class="lbl">10-DIGIT WHATSAPP / PHONE NUMBER *</label>
-    <input id="fPhone" class="inbox" type="tel" placeholder="e.g. 8637213741">
-    <label class="lbl">COMPLETE DELIVERY ADDRESS & PIN CODE *</label>
-    <input id="fAddr" class="inbox" placeholder="Shop/Street, Locality, District, PIN">
-    <label class="lbl">PREFERRED CHAT LANGUAGE *</label>
+  <!-- STANDALONE FORM 1: SHOP & PROFILE REGISTRATION ONLY -->
+  <div id="formSetup" class="card" style="display:none">
+    <h2 style="margin:0 0 6px;font-size:21px">★ Shop & Delivery Setup</h2>
+    <p style="font-size:12.5px;color:var(--mute);margin:0 0 20px">Enter your shop & delivery details to activate wholesale ordering.</p>
+
+    <label class="lbl">SHOP NAME *</label>
+    <input id="fShop" class="inbox" placeholder="e.g. Abrar Mobile Care">
+
+    <label class="lbl">YOUR FULL NAME *</label>
+    <input id="fName" class="inbox" placeholder="e.g. Abrar Khan">
+
+    <label class="lbl">10-DIGIT PHONE NUMBER *</label>
+    <input id="fPhone" class="inbox" type="tel" inputmode="numeric" placeholder="e.g. 8637213741">
+
+    <label class="lbl">DELIVERY ADDRESS & PIN CODE *</label>
+    <input id="fAddr" class="inbox" placeholder="Village/Street, Post, District, PIN">
+
+    <label class="lbl">PREFERRED LANGUAGE *</label>
     <select id="fLang" class="inbox">
       <option value="hinglish">Hinglish (Hindi + English)</option>
       <option value="english">English</option>
@@ -45,90 +47,123 @@ body{margin:0;font-family:"Plus Jakarta Sans",sans-serif;color:var(--ink);backgr
       <option value="odia">Odia (ଓଡ଼ିଆ)</option>
       <option value="odia_eng">Odia + English</option>
     </select>
-    <label class="lbl">EMAIL ADDRESS (OPTIONAL — FOR WHOLESALE OFFERS)</label>
+
+    <label class="lbl">EMAIL ADDRESS (OPTIONAL — FOR OFFERS)</label>
     <input id="fEmail" class="inbox" type="email" placeholder="optional@shop.com">
-    <button class="btn" onclick="submitStep1()">Save Profile & Unlock VIP Pass →</button>
+
+    <button type="button" class="btn" id="btnSetup" onclick="submitSetupForm()">Save Details & Continue</button>
   </div>
 
-  <!-- STEP 2: BRIDGE VIP PASS + REQUIREMENTS FORM -->
-  <div id="sec2" class="card" style="display:none">
-    <div id="vipBridge" style="padding:14px;border-radius:18px;box-shadow:var(--in);margin-bottom:18px;font-size:13px">
-      <b>★ Verified AD PartSol Partner</b><br>
-      <span style="color:var(--mute)">You can either return to WhatsApp/Telegram to send a Voice Note or Photo, OR add parts right below:</span>
-    </div>
-    <h3 style="margin:0 0 14px">★ Add Required Spare Parts</h3>
+  <!-- STANDALONE FORM 2: PRODUCTS REQUIREMENT ONLY -->
+  <div id="formOrder" class="card" style="display:none">
+    <h2 style="margin:0 0 6px;font-size:21px">★ Spare Parts Order Form</h2>
+    <p style="font-size:12.5px;color:var(--mute);margin:0 0 18px">Add all mobile spare parts you need in this order.</p>
+
     <div id="itemsContainer"></div>
-    <button onclick="addItemRow()" style="width:100%;padding:12px;border-radius:14px;border:0;box-shadow:var(--rs);background:var(--cv);font-weight:700;margin-bottom:14px;cursor:pointer">[+] Add Another Part</button>
-    <button class="btn" onclick="submitOrderForm()">Submit Order Request →</button>
+
+    <button type="button" onclick="addItemRow()" style="width:100%;padding:13px;border-radius:16px;border:0;box-shadow:var(--rs);background:var(--cv);font-weight:800;font-size:13px;color:var(--deep);margin-bottom:16px;cursor:pointer">[+] Add Another Product</button>
+    <button type="button" class="btn" id="btnOrder" onclick="submitProductForm()">Submit Order Request</button>
   </div>
 
-  <!-- STEP 3: 9-DIGIT ORDER TRACKER -->
-  <div id="sec3" class="card" style="display:none">
-    <h2 style="margin:0 0 8px">★ Track 9-Digit Order ID</h2>
-    <input id="trkId" class="inbox" type="number" placeholder="Enter 9-Digit Order ID">
-    <button class="btn" onclick="trackNow()">Check Live Status</button>
+  <!-- STANDALONE MODE 3: PUBLIC 9-DIGIT ORDER TRACKER (If someone opens /c directly) -->
+  <div id="formTrack" class="card" style="display:none">
+    <h2 style="margin:0 0 8px;font-size:21px">★ Track 9-Digit Order ID</h2>
+    <p style="font-size:12.5px;color:var(--mute);margin:0 0 16px">Enter your 9-digit Order ID to check live status & tracking.</p>
+    <input id="trkId" class="inbox" type="number" placeholder="e.g. 948271635">
+    <button type="button" class="btn" onclick="trackNow()">Check Live Status</button>
     <div id="trkOut" style="margin-top:18px"></div>
   </div>
+
+  <!-- SUCCESS SCREEN AFTER SUBMISSION -->
+  <div id="doneBox" class="card done-box">
+    <div style="font-size:36px;color:var(--green);font-weight:800;margin-bottom:10px">★</div>
+    <h2 id="doneTitle" style="margin:0 0 8px">Submitted Successfully!</h2>
+    <p id="doneSub" style="font-size:13.5px;color:var(--mute);margin:0 0 20px">Please return to your Telegram chat to continue.</p>
+    <button type="button" class="btn" onclick="closeWebApp()">Return to Chat</button>
+  </div>
+
 </div>
 
 <script>
-const params = new URLSearchParams(location.search);
-let CID = params.get("cid") || localStorage.getItem("adp_cid") || "";
+const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+if (tg) { tg.ready(); tg.expand(); }
 
-function showTab(n) {
-  [1,2,3].forEach(i => {
-    document.getElementById("sec"+i).style.display = i===n ? "block" : "none";
-    document.getElementById("t"+i).classList.toggle("on", i===n);
-  });
+const params = new URLSearchParams(location.search);
+const MODE = params.get("mode") || "track"; // 'setup', 'order', or 'track'
+let CID = params.get("cid") || localStorage.getItem("adp_cid") || "";
+if (CID) localStorage.setItem("adp_cid", CID);
+
+if (MODE === "setup") {
+  document.getElementById("formSetup").style.display = "block";
+} else if (MODE === "order") {
+  document.getElementById("formOrder").style.display = "block";
+} else {
+  document.getElementById("formTrack").style.display = "block";
 }
 
 function addItemRow() {
+  const idx = document.querySelectorAll(".it-row").length + 1;
   const div = document.createElement("div");
-  div.style.cssText = "padding:14px;border-radius:18px;box-shadow:var(--in);margin-bottom:14px";
+  div.className = "it-row";
+  div.style.cssText = "padding:15px;border-radius:20px;box-shadow:var(--in);margin-bottom:14px";
   div.innerHTML = `
+    <div style="font-size:11.5px;font-weight:800;color:var(--deep);margin-bottom:8px">PRODUCT #${idx}</div>
     <input class="inbox it-brand" placeholder="Brand & Model (e.g. Apple iPhone 15 Plus)">
     <input class="inbox it-part" placeholder="Part Name (e.g. Display Folder / Battery)">
     <div style="display:grid;grid-template-columns:1fr 110px;gap:10px">
       <select class="inbox it-qual" style="margin:0">
         <option value="Original">Original (OG)</option>
         <option value="Duplicate">Duplicate / Copy</option>
-        <option value="Standard">Standard Best Price</option>
+        <option value="Standard">Standard</option>
       </select>
-      <input type="number" class="inbox it-qty" value="1" min="1" placeholder="Qty" style="margin:0">
+      <input type="number" class="inbox it-qty" value="1" min="1" placeholder="Qty" inputmode="numeric" style="margin:0">
     </div>
   `;
   document.getElementById("itemsContainer").appendChild(div);
 }
 addItemRow();
 
-async function submitStep1() {
+async function submitSetupForm() {
+  const shop_name = document.getElementById("fShop").value.trim();
   const full_name = document.getElementById("fName").value.trim();
   const phone = document.getElementById("fPhone").value.trim();
   const address = document.getElementById("fAddr").value.trim();
   const lang = document.getElementById("fLang").value;
   const email = document.getElementById("fEmail").value.trim();
-  if (!full_name || !phone || !address) return alert("Please fill Name, Phone, and Address");
 
+  if (!shop_name || !full_name || !phone || !address) {
+    return alert("Please fill Shop Name, Full Name, Phone Number, and Address.");
+  }
+
+  const btn = document.getElementById("btnSetup");
+  btn.textContent = "Saving..."; btn.disabled = true;
+
+  const combinedName = `${full_name} (${shop_name})`;
   const res = await fetch("/api/customer/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ cid: CID, full_name, phone, address, lang, email })
+    body: JSON.stringify({ cid: CID, full_name: combinedName, phone, address, lang, email })
   });
   const d = await res.json();
   if (d.ok) {
-    CID = d.cid;
-    localStorage.setItem("adp_cid", CID);
-    showTab(2);
+    document.getElementById("formSetup").style.display = "none";
+    document.getElementById("doneTitle").textContent = "Shop Profile Verified!";
+    document.getElementById("doneSub").textContent = "We have sent your Verified Partner Pass & Product Order Button in your chat.";
+    document.getElementById("doneBox").style.display = "block";
+    if (tg) setTimeout(() => tg.close(), 900);
+  } else {
+    btn.textContent = "Save Details & Continue"; btn.disabled = false;
+    alert(d.error || "Error saving profile");
   }
 }
 
-async function submitOrderForm() {
-  if (!CID) return showTab(1);
+async function submitProductForm() {
   const brands = document.querySelectorAll(".it-brand");
   const parts  = document.querySelectorAll(".it-part");
   const quals  = document.querySelectorAll(".it-qual");
   const qtys   = document.querySelectorAll(".it-qty");
   const items = [];
+
   for (let i = 0; i < brands.length; i++) {
     if (brands[i].value.trim() && parts[i].value.trim()) {
       items.push({
@@ -140,7 +175,11 @@ async function submitOrderForm() {
       });
     }
   }
-  if (!items.length) return alert("Please enter at least 1 part");
+  if (!items.length) return alert("Please enter at least 1 product.");
+
+  const btn = document.getElementById("btnOrder");
+  btn.textContent = "Submitting Order..."; btn.disabled = true;
+
   const res = await fetch("/api/customer/submit-order", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -148,11 +187,20 @@ async function submitOrderForm() {
   });
   const d = await res.json();
   if (d.ok) {
-    alert("★ Order Request Submitted! Check your WhatsApp/Telegram chat for live quotation.");
+    document.getElementById("formOrder").style.display = "none";
+    document.getElementById("doneTitle").textContent = "Order Summary Sent to Chat!";
+    document.getElementById("doneSub").textContent = "Check your Telegram chat to confirm your order summary.";
+    document.getElementById("doneBox").style.display = "block";
+    if (tg) setTimeout(() => tg.close(), 900);
   } else {
-    alert(d.error || "Please register first");
-    showTab(1);
+    btn.textContent = "Submit Order Request"; btn.disabled = false;
+    alert(d.error || "Error submitting order");
   }
+}
+
+function closeWebApp() {
+  if (tg) tg.close();
+  else history.back();
 }
 
 async function trackNow() {
@@ -161,7 +209,7 @@ async function trackNow() {
   const r = await fetch("/api/panel/track?order_id=" + id);
   const d = await r.json();
   if (!d.ok) {
-    document.getElementById("trkOut").innerHTML = `<div style="color:#e0524a;font-weight:700">× Order #${id} not found.</div>`;
+    document.getElementById("trkOut").innerHTML = `<div style="color:var(--red);font-weight:700">× Order #${id} not found.</div>`;
     return;
   }
   const o = d.order;
