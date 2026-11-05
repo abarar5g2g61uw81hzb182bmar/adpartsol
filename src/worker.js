@@ -3,12 +3,25 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, x-staff-phone, x-staff-token, x-login-attempt, x-supplier-code"
+        }
+      });
+    }
+
     try {
+      // 1. One-Click Database & New Tables Initializer
       if (path === "/api/init-db") {
         await initDB(env.DB);
-        return jsonRes({ ok: true, msg: "Database tables, margin_rules & columns initialized!" });
+        return jsonRes({ ok: true, msg: "All 12 Database tables, margin_rules, inventory & columns initialized!" });
       }
 
+      // 2. One-Click 6 Telegram Bots Webhook Setup
       if (path === "/api/setup-webhooks") {
         const base = `${url.protocol}//${url.host}`;
         const results = {
@@ -22,6 +35,7 @@ export default {
         return jsonRes({ ok: true, webhooks: results });
       }
 
+      // 3. Telegram Webhooks Router
       if (path.startsWith("/webhook/tg/") && request.method === "POST") {
         const botType = path.split("/").pop();
         const update = await request.json();
@@ -29,6 +43,7 @@ export default {
         return new Response("OK", { status: 200 });
       }
 
+      // 4. Meta WhatsApp Webhook Verification (GET)
       if (path === "/webhook/whatsapp" && request.method === "GET") {
         const mode = url.searchParams.get("hub.mode");
         const token = url.searchParams.get("hub.verify_token");
@@ -39,29 +54,34 @@ export default {
         return new Response("WhatsApp Webhook Active (Forbidden Token)", { status: 403 });
       }
 
+      // 5. Meta WhatsApp Webhook Events (POST)
       if (path === "/webhook/whatsapp" && request.method === "POST") {
         const body = await request.json();
         ctx.waitUntil(handleWhatsAppUpdate(body, env, `${url.protocol}//${url.host}`));
         return new Response("OK", { status: 200 });
       }
 
+      // 6. Supplier Portal API (/s)
       if (path.startsWith("/api/supplier/")) {
         return await handleSupplierPortalAPI(request, url, env);
       }
 
+      // 7. Customer Forms & Tracker Portal API (/c)
       if (path.startsWith("/api/customer/")) {
         return await handleCustomerPortalAPI(request, url, env, `${url.protocol}//${url.host}`);
       }
 
+      // 8. Admin & Dedicated Staff Panels REST API (/a, /pay, /p, /desk, /inv, /chat, /fin)
       if (path.startsWith("/api/panel/")) {
         return await handlePanelAPI(request, url, env, `${url.protocol}//${url.host}`);
       }
 
+      // 9. Static Assets (Main Website + Staff Panels)
       if (env.ASSETS) {
         return await env.ASSETS.fetch(request);
       }
 
-      return new Response("AD PARTSOL Engine Active", { status: 200 });
+      return new Response("AD PARTSOL Ultimate Engine Active", { status: 200 });
     } catch (err) {
       ctx.waitUntil(sendLog(env, `★ CRITICAL WORKER ERROR\nPath: ${path}\nError: ${err.message}`));
       return jsonRes({ ok: false, error: err.message }, 500);
@@ -73,10 +93,16 @@ export default {
   }
 };
 
+// ==========================================
+// CORE HELPERS & LOGGING
+// ==========================================
 function jsonRes(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*"
+    }
   });
 }
 
@@ -204,7 +230,7 @@ Output strictly JSON:
   return JSON.parse(data.choices[0].message.content);
 }
 
-// Progressive Multi-Message Profile Extractor
+// Progressive Multi-Message Profile Extractor (Never forgets previous message!)
 async function extractCustomerProfileAI(env, textInput, lang = "hinglish", prevProfile = {}) {
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -282,7 +308,7 @@ async function transcribeVoice(env, audioBuffer, filename = "voice.ogg") {
 }
 
 // ==========================================
-// TELEGRAM & WHATSAPP HELPERS
+// TELEGRAM & WHATSAPP SENDERS
 // ==========================================
 async function tgCall(token, method, payload) {
   const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
@@ -315,7 +341,6 @@ async function markWhatsAppRead(env, messageId) {
   } catch (_) {}
 }
 
-// Send Native WhatsApp Flow (v7.3 JSON Compatible)
 async function sendWhatsAppNativeFlow(env, toPhone, bodyText, buttonText, flowId, screenId, flowToken) {
   const payload = {
     messaging_product: "whatsapp",
@@ -348,6 +373,7 @@ async function sendWhatsAppNativeFlow(env, toPhone, bodyText, buttonText, flowId
 }
 
 async function notifyCustomer(env, customer, text, buttons = null, photoUrl = null, videoFileId = null, editMsgId = null) {
+  if (!customer) return;
   if (customer.platform === "telegram") {
     const reply_markup = buttons ? { inline_keyboard: buttons } : undefined;
     if (editMsgId && !photoUrl && !videoFileId) {
@@ -409,7 +435,7 @@ async function notifyCustomer(env, customer, text, buttons = null, photoUrl = nu
 }
 
 // ==========================================
-// 5. TELEGRAM UPDATES ROUTER
+// 5. TELEGRAM UPDATES ROUTER (6 BOTS)
 // ==========================================
 async function handleTelegramUpdate(botType, update, env, baseUrl) {
   if (botType === "customer") return await handleCustomerBot(update, env, baseUrl);
@@ -462,9 +488,7 @@ async function handleCustomerBot(update, env, baseUrl) {
         chat_id: chatId,
         text: `${greet}\n━━━━━━━━━━━━━━━━━\n☞ Tap the button below to complete your 10-second Shop Setup (or simply type your requirement directly in chat):`,
         reply_markup: {
-          inline_keyboard: [
-            [{ text: "☞ Fill Shop Setup Form", url: setupFormUrl }]
-          ]
+          inline_keyboard: [[{ text: "☞ Fill Shop Setup Form", url: setupFormUrl }]]
         }
       });
     } else {
@@ -472,9 +496,7 @@ async function handleCustomerBot(update, env, baseUrl) {
         chat_id: chatId,
         text: `${greet}\n━━━━━━━━━━━━━━━━━\nWelcome back, ${cust.full_name}!\n☞ Tap below to open the Product Order Form, or send a Voice Note / Photo / Text right here:`,
         reply_markup: {
-          inline_keyboard: [
-            [{ text: "☞ Open Product Order Form", url: orderFormUrl }]
-          ]
+          inline_keyboard: [[{ text: "☞ Open Product Order Form", url: orderFormUrl }]]
         }
       });
     }
@@ -517,6 +539,21 @@ async function processCustomerAction(env, cust, data, msgId = null, baseUrl = "h
     await env.DB.prepare("UPDATE customers SET lang = ? WHERE id = ?").bind(lang, cust.id).run();
     cust.lang = lang;
     return await notifyCustomer(env, cust, `★ Language changed to ${lang.toUpperCase()}. Please continue:`, null, null, null, msgId);
+  }
+
+  // File 6: Customer Replies to Option A (Proceed with Available Only) or Option B (Outsource Missing)
+  if (data.startsWith("optA_")) {
+    const ordId = Number(data.split("_")[1]);
+    await env.DB.prepare("UPDATE orders SET bidding_ends_at = 0, status = 'BIDDING' WHERE id = ?").bind(ordId).run();
+    await runAutomatedEngine(env);
+    return await notifyCustomer(env, cust, `★ Option A Confirmed for Order #${ordId}. Proceeding with available stock only.`, null, null, null, msgId);
+  }
+
+  if (data.startsWith("optB_")) {
+    const ordId = Number(data.split("_")[1]);
+    await env.DB.prepare("UPDATE orders SET outsource_region = 'External_National', status = 'OUTSOURCE_REVIEW' WHERE id = ?").bind(ordId).run();
+    await sendLog(env, `★ Customer chose Option B (External State Sourcing) for Order #${ordId}`);
+    return await notifyCustomer(env, cust, `★ Option B Confirmed for Order #${ordId}. Our national sourcing desk is checking rates from Delhi/Mumbai/Kolkata hubs.`, null, null, null, msgId);
   }
 
   if (data === "req_add_more") {
@@ -637,7 +674,6 @@ async function showCombinedFinalConfirmation(env, cust, editMsgId = null, baseUr
 async function processCustomerInput(env, cust, text, mediaUrl, baseUrl = "https://adpartsol.storzen.io") {
   const now = Math.floor(Date.now() / 1000);
 
-  // Check if customer has an active BIDDING order and is asking for status
   const activeBidOrder = await env.DB.prepare(
     "SELECT * FROM orders WHERE customer_id = ? AND status = 'BIDDING' AND bidding_ends_at > ? ORDER BY id DESC LIMIT 1"
   ).bind(cust.id, now).first();
@@ -798,7 +834,7 @@ async function applyFraudStrike(env, cust, reason, editMsgId = null) {
 }
 
 // ==========================================
-// 6. LAUNCH ORDER & SUPPLIER "CONTINUE TO PANEL" BUTTON
+// 6. LAUNCH ORDER & PIGGYBACK GHOST QUERIES
 // ==========================================
 async function launchOrderBidding(env, cust, editMsgId = null, baseUrl = "https://adpartsol.storzen.io") {
   const mem = parseSessionMemory(cust.temp_data);
@@ -810,26 +846,51 @@ async function launchOrderBidding(env, cust, editMsgId = null, baseUrl = "https:
   const margin = Number(await getSetting(env.DB, "margin_percent", "20"));
   const delivery = Number(await getSetting(env.DB, "delivery_charge", "100"));
   const orderId = Math.floor(100000000 + Math.random() * 900000000);
+  const masterId = "MO-" + Math.floor(10000 + Math.random() * 90000);
 
   await env.DB.prepare(
-    "INSERT INTO orders (id, customer_id, status, margin_percent, delivery_charge, bidding_ends_at) VALUES (?, ?, 'BIDDING', ?, ?, ?)"
-  ).bind(orderId, cust.id, margin, delivery, endsAt).run();
+    "INSERT INTO orders (id, customer_id, master_id, status, dispatch_stage, margin_percent, delivery_charge, bidding_ends_at) VALUES (?, ?, ?, 'BIDDING', 'COLLECTING_PRICES', ?, ?, ?)"
+  ).bind(orderId, cust.id, masterId, margin, delivery, endsAt).run();
 
   const suppliers = await env.DB.prepare("SELECT * FROM suppliers WHERE is_verified = 1 AND is_active = 1").all();
 
-  for (const it of items) {
+  // Check if Admin has any queued Ghost Orders (File 13 Mode 2) to piggyback transparently!
+  const ghostList = await env.DB.prepare("SELECT * FROM ghost_queries WHERE status = 'PIGGYBACK_QUEUED'").all();
+  const broadcastItems = [...items];
+  for (const g of (ghostList.results || [])) {
+    broadcastItems.push({
+      brand: g.item_name,
+      model: "",
+      part_name: g.note || "Market Check",
+      variant: "Original",
+      qty: g.qty || 1,
+      is_ghost: true,
+      ghost_id: g.id
+    });
+    await env.DB.prepare("UPDATE ghost_queries SET status = 'BROADCASTED_WITH_" + orderId + "' WHERE id = ?").bind(g.id).run();
+  }
+
+  for (const it of broadcastItems) {
     const reqQty = Number(it.qty) || 1;
-    const itemRes = await env.DB.prepare(
-      "INSERT INTO order_items (order_id, brand, model, part_name, variant, req_qty) VALUES (?, ?, ?, ?, ?, ?)"
-    ).bind(orderId, it.brand, it.model || "", it.part_name, it.variant || "Standard", reqQty).run();
-    const itemId = itemRes.meta.last_row_id;
+    let itemId = 0;
+
+    if (!it.is_ghost) {
+      const itemRes = await env.DB.prepare(
+        "INSERT INTO order_items (order_id, brand, model, part_name, variant, req_qty) VALUES (?, ?, ?, ?, ?, ?)"
+      ).bind(orderId, it.brand, it.model || "", it.part_name, it.variant || "Standard", reqQty).run();
+      itemId = itemRes.meta.last_row_id;
+    } else {
+      const ghostRes = await env.DB.prepare(
+        "INSERT INTO order_items (order_id, brand, model, part_name, variant, req_qty, qc_status) VALUES (0, ?, '', ?, 'Ghost', ?, 'GHOST')"
+      ).bind(it.brand, it.part_name, reqQty).run();
+      itemId = ghostRes.meta.last_row_id;
+    }
 
     const cardText = formatSupplierCard(`★ New Product Request (#${orderId})`, {
       brand: it.brand, model: it.model, part_name: it.part_name, variant: it.variant, req_qty: reqQty
     });
 
     for (const sup of (suppliers.results || [])) {
-      // Remove "Continue to Panel" button from previous latest message so only newest message has it
       if (sup.last_panel_msg_id) {
         await tgCall(env.BOT_TOKEN_SUPPLIER, "editMessageReplyMarkup", {
           chat_id: sup.tg_chat_id,
@@ -851,7 +912,7 @@ async function launchOrderBidding(env, cust, editMsgId = null, baseUrl = "https:
         const newMsgId = msgRes.result.message_id;
         await env.DB.prepare(
           "INSERT INTO bids (order_id, item_id, supplier_id, tg_msg_id, status) VALUES (?, ?, ?, ?, 'PENDING')"
-        ).bind(orderId, itemId, sup.id, newMsgId).run();
+        ).bind(it.is_ghost ? 0 : orderId, itemId, sup.id, newMsgId).run();
         await env.DB.prepare("UPDATE suppliers SET last_panel_msg_id = ? WHERE id = ?").bind(newMsgId, sup.id).run();
         sup.last_panel_msg_id = newMsgId;
       }
@@ -869,7 +930,7 @@ async function launchOrderBidding(env, cust, editMsgId = null, baseUrl = "https:
     `★ Order Request Successful (ID: #${orderId})\n☞ We are verifying stock and final price. Please wait up to ${windowMins} minutes.${waPromo}`
   );
   await notifyCustomer(env, cust, confirmBox, null, null, null, editMsgId);
-  await sendLog(env, `★ Order Request #${orderId} launched (${items.length} items). Broadcasted to ${(suppliers.results || []).length} suppliers.`);
+  await sendLog(env, `★ Order Request #${orderId} (${masterId}) launched (${items.length} items). Broadcasted to ${(suppliers.results || []).length} suppliers.`);
 }
 
 // ==========================================
@@ -931,12 +992,12 @@ async function handleSupplierPortalAPI(request, url, env) {
 
   if (action === "feed") {
     const bids = await env.DB.prepare(
-      `SELECT b.id as bid_id, b.order_id, b.item_id, b.price_per_unit, b.available_qty, b.status as bid_status, b.created_at,
+      `SELECT b.id as bid_id, b.order_id, b.item_id, b.price_per_unit, b.available_qty, b.response_sec, b.status as bid_status, b.created_at,
               i.brand, i.model, i.part_name, i.variant, i.req_qty, i.fulfilled_qty, i.allocated_json,
-              o.status as order_status, o.bidding_ends_at
+              COALESCE(o.status, 'BIDDING') as order_status, COALESCE(o.bidding_ends_at, 9999999999) as bidding_ends_at
        FROM bids b
        JOIN order_items i ON b.item_id = i.id
-       JOIN orders o ON b.order_id = o.id
+       LEFT JOIN orders o ON b.order_id = o.id
        WHERE b.supplier_id = ?
        ORDER BY b.id DESC LIMIT 100`
     ).bind(sup.id).all();
@@ -965,12 +1026,19 @@ async function handleSupplierPortalAPI(request, url, env) {
       return jsonRes({ ok: false, error: "Enter valid price and quantity" }, 400);
     }
 
-    await env.DB.prepare(
-      "UPDATE bids SET price_per_unit = ?, available_qty = ?, status = 'SUBMITTED' WHERE id = ?"
-    ).bind(unitPrice, availQty, bid.id).run();
+    const nowSec = Math.floor(Date.now() / 1000);
+    const respSec = Math.max(5, nowSec - Number(bid.created_at || nowSec));
 
-    await sendLog(env, `★ Bid Room Update: ${sup.name} accepted Item #${bid.item_id} (Order #${bid.order_id}) — Rs.${unitPrice}/pc × ${availQty} pcs`);
-    return jsonRes({ ok: true, status: "SUBMITTED" });
+    await env.DB.prepare(
+      "UPDATE bids SET price_per_unit = ?, available_qty = ?, response_sec = ?, status = 'SUBMITTED' WHERE id = ?"
+    ).bind(unitPrice, availQty, respSec, bid.id).run();
+
+    await env.DB.prepare(
+      "UPDATE suppliers SET avg_resp_sec = CAST((COALESCE(avg_resp_sec, 45) + ?) / 2 AS INTEGER), orders_freq = COALESCE(orders_freq, 1) + 1 WHERE id = ?"
+    ).bind(respSec, sup.id).run();
+
+    await sendLog(env, `★ Bid Room Update: ${sup.name} accepted Item #${bid.item_id} (Order #${bid.order_id}) — Rs.${unitPrice}/pc × ${availQty} pcs in ${respSec}s`);
+    return jsonRes({ ok: true, status: "SUBMITTED", response_sec: respSec });
   }
 
   if (action === "toggle-active" && request.method === "POST") {
@@ -994,7 +1062,6 @@ async function handleCustomerPortalAPI(request, url, env, baseUrl) {
     return jsonRes({ ok: !!cust, customer: cust });
   }
 
-  // Form 1: Registration Submit -> Sends Bridge Pass + Hidden Button for Form 2
   if (action === "register" && request.method === "POST") {
     const { cid, full_name, phone, address, lang, email } = await request.json();
     let custId = cid || `wa_91${String(phone).replace(/\D/g, "").slice(-10)}`;
@@ -1045,7 +1112,6 @@ async function handleCustomerPortalAPI(request, url, env, baseUrl) {
     return jsonRes({ ok: true, cid: custId });
   }
 
-  // Form 2: Standalone Product Order Submit -> Sends Order Summary to Chat
   if (action === "submit-order" && request.method === "POST") {
     const { cid, items } = await request.json();
     const cust = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(cid).first();
@@ -1105,8 +1171,8 @@ async function processPaymentDecision(env, payId, decision, source = "Web Panel"
   }
 
   if (pay.type === "ADVANCE_20") {
-    await env.DB.prepare("UPDATE orders SET status = 'COLLECTING' WHERE id = ?").bind(order.id).run();
-    await notifyCustomer(env, cust, `★ 20% Advance Verified — Order #${order.id}\n━━━━━━━━━━━━━━━━━\n☞ Your order is now being packed at our warehouse.`);
+    await env.DB.prepare("UPDATE orders SET status = 'COLLECTING', dispatch_stage = 'WE_ARE_COLLECTING' WHERE id = ?").bind(order.id).run();
+    await notifyCustomer(env, cust, `★ 20% Advance Verified — Order #${order.id}\n━━━━━━━━━━━━━━━━━\n☞ Your order is now being collected and packed at our warehouse.`);
 
     await tgCall(env.BOT_TOKEN_DELIVERY, "sendMessage", {
       chat_id: env.PACKING_GROUP_ID,
@@ -1116,8 +1182,8 @@ async function processPaymentDecision(env, payId, decision, source = "Web Panel"
       }
     });
   } else if (pay.type === "BALANCE_80") {
-    await env.DB.prepare("UPDATE orders SET status = 'READY_TO_SHIP' WHERE id = ?").bind(order.id).run();
-    await notifyCustomer(env, cust, `★ 80% Balance Verified — Order #${order.id}\n━━━━━━━━━━━━━━━━━\n☞ Your parcel is being handed over to the courier. Tracking ID will be shared shortly.`);
+    await env.DB.prepare("UPDATE orders SET status = 'READY_TO_SHIP', dispatch_stage = 'OUT_FOR_BUS_STAND' WHERE id = ?").bind(order.id).run();
+    await notifyCustomer(env, cust, `★ 80% Balance Verified — Order #${order.id}\n━━━━━━━━━━━━━━━━━\n☞ Your parcel is being handed over to the courier / Bus Stand dispatch. Tracking ID will be shared shortly.`);
 
     await tgCall(env.BOT_TOKEN_DELIVERY, "sendMessage", {
       chat_id: env.PACKING_GROUP_ID,
@@ -1148,7 +1214,7 @@ async function handleDeliveryBot(update, env) {
         const supStr = alloc.map(a => `${a.name} (${a.qty} pcs)`).join(", ");
         listTxt += `→ ${it.brand} ${it.model} - ${it.part_name} (${it.fulfilled_qty} pcs)\n└ Collect from: ${supStr}\n\n`;
       }
-      await env.DB.prepare("UPDATE orders SET status = 'PACKING' WHERE id = ?").bind(orderId).run();
+      await env.DB.prepare("UPDATE orders SET status = 'PACKING', dispatch_stage = 'CHECKING_HUB' WHERE id = ?").bind(orderId).run();
       return await tgCall(env.BOT_TOKEN_DELIVERY, "sendMessage", {
         chat_id: cb.message.chat.id,
         text: listTxt,
@@ -1193,7 +1259,7 @@ async function handleDeliveryBot(update, env) {
     const upiUri = `upi://pay?pa=${encodeURIComponent(upi)}&pn=AD%20PARTSOL&am=${order.balance_80}&cu=INR&tn=BAL${order.id}`;
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(upiUri)}`;
 
-    await env.DB.prepare("UPDATE orders SET status = 'AWAITING_80_PAYMENT', packing_video_file_id = ?, vault_msg_id = ? WHERE id = ?")
+    await env.DB.prepare("UPDATE orders SET status = 'AWAITING_80_PAYMENT', dispatch_stage = 'PACKAGED_AND_LABELLED', packing_video_file_id = ?, vault_msg_id = ? WHERE id = ?")
       .bind(videoFileId, String(vaultMsg.result?.message_id || ""), activeOrdId).run();
     await env.DB.prepare("DELETE FROM settings WHERE key = 'active_video_order'").run();
     await env.DB.prepare("UPDATE customers SET state = ? WHERE id = ?").bind(`AWAITING_80_SS_${activeOrdId}`, cust.id).run();
@@ -1219,7 +1285,7 @@ async function handleDeliveryBot(update, env) {
     const order = await env.DB.prepare("SELECT * FROM orders WHERE id = ?").bind(shipOrdId).first();
     const cust = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(order.customer_id).first();
 
-    await env.DB.prepare("UPDATE orders SET status = 'SHIPPED', tracking_id = ? WHERE id = ?").bind(trackingId, shipOrdId).run();
+    await env.DB.prepare("UPDATE orders SET status = 'SHIPPED', dispatch_stage = 'OUT_FOR_DELIVERY', tracking_id = ? WHERE id = ?").bind(trackingId, shipOrdId).run();
     await env.DB.prepare("DELETE FROM settings WHERE key = 'active_ship_order'").run();
 
     await notifyCustomer(env, cust, `★ Order #${shipOrdId} Dispatched\n━━━━━━━━━━━━━━━━━\n→ Tracking ID: ${trackingId}\nThank you for ordering with AD PARTSOL.`);
@@ -1262,7 +1328,6 @@ async function handleAdminBot(update, env, baseUrl) {
     return await tgCall(env.BOT_TOKEN_ADMIN, "sendMessage", { chat_id: chatId, text: "★ All active bidding windows closed & item-wise invoices dispatched." });
   }
 
-  // Save WhatsApp Flow IDs directly from Admin Bot: /setflow setup 123456789 OR /setflow order 987654321
   if (text.startsWith("/setflow ")) {
     const [_, type, flowId] = text.split(/\s+/);
     if (!type || !flowId) {
@@ -1292,7 +1357,7 @@ async function handleAdminBot(update, env, baseUrl) {
   if (text.startsWith("/addstaff ")) {
     const [_, role, phone] = text.split(/\s+/);
     if (!role || !phone) {
-      return await tgCall(env.BOT_TOKEN_ADMIN, "sendMessage", { chat_id: chatId, text: "Usage: /addstaff <admin|order_desk|payment|packing|inventory|support|finance> <phone>" });
+      return await tgCall(env.BOT_TOKEN_ADMIN, "sendMessage", { chat_id: chatId, text: "Usage: /addstaff <admin|order_desk|payment|packing|inventory|support|finance|collection|hub|dispatch|delivery> <phone>" });
     }
     const token = "ADP-" + Math.random().toString(36).substring(2, 8).toUpperCase();
     await env.DB.prepare("INSERT INTO staff_users (role, phone, access_token) VALUES (?, ?, ?)").bind(role.toLowerCase(), phone, token).run();
@@ -1323,8 +1388,8 @@ async function adminAssignSupplierToOrder(env, orderId, supplierId, manualUnitPr
     baseTotal += it.req_qty * unitP;
     itemsSellSubtotal += lineTotal;
 
-    await env.DB.prepare("UPDATE order_items SET fulfilled_qty = ?, allocated_json = ? WHERE id = ?")
-      .bind(it.req_qty, JSON.stringify(alloc), it.id).run();
+    await env.DB.prepare("UPDATE order_items SET fulfilled_qty = ?, sup_qty = ?, allocated_json = ? WHERE id = ?")
+      .bind(it.req_qty, it.req_qty, JSON.stringify(alloc), it.id).run();
 
     invoiceLines.push(
       `${idx + 1}. Brand: ${it.brand} ${it.model || ""}\n└ Part: ${it.part_name}\n└ Quality: ${it.variant || "Standard"}\n└ Qty: ${it.req_qty} × Rs.${sellUnit} = Rs.${lineTotal}`
@@ -1357,7 +1422,7 @@ async function adminAssignSupplierToOrder(env, orderId, supplierId, manualUnitPr
   const bal80 = finalTotal - adv20;
 
   await env.DB.prepare(
-    "UPDATE orders SET status = 'QUOTED', supplier_base_total = ?, final_total = ?, advance_20 = ?, balance_80 = ? WHERE id = ?"
+    "UPDATE orders SET status = 'QUOTED', dispatch_stage = 'CONFIRMATION_PENDING', supplier_base_total = ?, final_total = ?, advance_20 = ?, balance_80 = ? WHERE id = ?"
   ).bind(baseTotal, finalTotal, adv20, bal80, orderId).run();
 
   const cust = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(order.customer_id).first();
@@ -1431,12 +1496,10 @@ async function handleWhatsAppUpdate(body, env, baseUrl) {
     }
     if (btnId) return await processCustomerAction(env, cust, btnId, null, baseUrl);
 
-    // Handle WhatsApp Native Flow v7.3 Submissions (nfm_reply)
     if (msg.interactive?.type === "nfm_reply") {
       const rawJson = msg.interactive.nfm_reply?.response_json || "{}";
       const formData = JSON.parse(rawJson);
 
-      // 1. Native Setup Flow (SHOP_SETUP) Submitted
       if (formData.form_type === "setup" || formData.shop_name) {
         const fullName = `${formData.full_name || "Partner"} (${formData.shop_name || "Shop"})`;
         const phone = formData.phone || from;
@@ -1463,7 +1526,6 @@ async function handleWhatsAppUpdate(body, env, baseUrl) {
         return await notifyCustomer(env, cust, bridgeMsg);
       }
 
-      // 2. Native Product Order Flow (PRODUCT_ORDER) Submitted
       if (formData.form_type === "order" || formData.brand) {
         const mem = parseSessionMemory(cust.temp_data);
         mem.items = mem.items || [];
@@ -1489,7 +1551,6 @@ async function handleWhatsAppUpdate(body, env, baseUrl) {
     }
   }
 
-  // First Message / Greeting on WhatsApp -> Send Native Flow 1 (or Flow 2 if already registered)
   if (msg.type === "text") {
     const t = (msg.text.body || "").trim();
     const isGreeting = ["hi", "hello", "/start", "hey", "start"].includes(t.toLowerCase());
@@ -1553,10 +1614,11 @@ async function handleWhatsAppUpdate(body, env, baseUrl) {
 }
 
 // ==========================================
-// 12. CRON ENGINE: ITEM-WISE SLAB MARGIN & QTY FIX
+// 12. CRON ENGINE: SLAB MARGIN, CHEAPEST vs FREQUENCY ALLOCATION & QTY FIX
 // ==========================================
 async function runAutomatedEngine(env) {
   const now = Math.floor(Date.now() / 1000);
+  const allocLogic = await getSetting(env.DB, "allocation_logic", "cheapest"); // 'cheapest' or 'frequency'
 
   const dueOrders = await env.DB.prepare("SELECT * FROM orders WHERE status = 'BIDDING' AND bidding_ends_at <= ?").bind(now).all();
 
@@ -1569,8 +1631,14 @@ async function runAutomatedEngine(env) {
 
     for (let idx = 0; idx < (items.results || []).length; idx++) {
       const item = items.results[idx];
+      const orderBySql = allocLogic === "frequency"
+        ? "ORDER BY s.orders_freq DESC, b.price_per_unit ASC"
+        : "ORDER BY b.price_per_unit ASC, b.response_sec ASC";
+
       const validBids = await env.DB.prepare(
-        "SELECT b.*, s.name as sup_name, s.tg_chat_id FROM bids b JOIN suppliers s ON b.supplier_id = s.id WHERE b.item_id = ? AND b.status = 'SUBMITTED' ORDER BY b.price_per_unit ASC"
+        `SELECT b.*, s.name as sup_name, s.tg_chat_id, s.orders_freq
+         FROM bids b JOIN suppliers s ON b.supplier_id = s.id
+         WHERE b.item_id = ? AND b.status = 'SUBMITTED' ${orderBySql}`
       ).bind(item.id).all();
 
       let needed = Number(item.req_qty) || 1;
@@ -1606,8 +1674,8 @@ async function runAutomatedEngine(env) {
         const itemSellTotal = sellUnit * fulfilled;
         itemsSellSubtotal += itemSellTotal;
 
-        await env.DB.prepare("UPDATE order_items SET fulfilled_qty = ?, allocated_json = ? WHERE id = ?")
-          .bind(fulfilled, JSON.stringify(allocations), item.id).run();
+        await env.DB.prepare("UPDATE order_items SET fulfilled_qty = ?, sup_qty = ?, allocated_json = ? WHERE id = ?")
+          .bind(fulfilled, fulfilled, JSON.stringify(allocations), item.id).run();
 
         invoiceLines.push(
           `${idx + 1}. Brand: ${item.brand} ${item.model || ""}\n└ Part: ${item.part_name}\n└ Quality: ${item.variant || "Standard"}\n└ Qty: ${fulfilled} × Rs.${sellUnit} = Rs.${itemSellTotal}`
@@ -1636,8 +1704,8 @@ async function runAutomatedEngine(env) {
     const cust = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(order.customer_id).first();
 
     if (!anyFulfilled) {
-      await env.DB.prepare("UPDATE orders SET status = 'NO_BIDS' WHERE id = ?").bind(order.id).run();
-      await sendLog(env, `ⓘ Order #${order.id} received NO BIDS.`);
+      await env.DB.prepare("UPDATE orders SET status = 'NO_BIDS', dispatch_stage = 'NEEDS_SOURCING_REVIEW' WHERE id = ?").bind(order.id).run();
+      await sendLog(env, `ⓘ Order #${order.id} received NO BIDS. Ready for Out-of-Odisha Sourcing.`);
       continue;
     }
 
@@ -1649,7 +1717,7 @@ async function runAutomatedEngine(env) {
     const bal80 = finalTotal - adv20;
 
     await env.DB.prepare(
-      "UPDATE orders SET status = 'QUOTED', supplier_base_total = ?, final_total = ?, advance_20 = ?, balance_80 = ? WHERE id = ?"
+      "UPDATE orders SET status = 'QUOTED', dispatch_stage = 'CONFIRMATION_PENDING', supplier_base_total = ?, final_total = ?, advance_20 = ?, balance_80 = ? WHERE id = ?"
     ).bind(baseTotal, finalTotal, adv20, bal80, order.id).run();
 
     const invoiceBox = `ORDER SUMMARY & INVOICE (#${order.id})\n━━━━━━━━━━━━━━━━━\n${invoiceLines.join("\n\n")}\n━━━━━━━━━━━━━━━━━\n→ Products Subtotal: Rs.${itemsSellSubtotal}\n→ Delivery Charges: Rs.${order.delivery_charge}\n★ Total Price: Rs.${finalTotal} (Delivery Included)\n→ ${advPct}% Advance: Rs.${adv20}\n└ ${100 - advPct}% After Packing Video: Rs.${bal80}`;
@@ -1662,7 +1730,7 @@ async function runAutomatedEngine(env) {
 }
 
 // ==========================================
-// 13. STAFF & ADMIN PANEL REST API
+// 13. ADMIN & DEDICATED STAFF PANELS REST API (ALL 14 CLIENT FILES SUPPORTED)
 // ==========================================
 async function handlePanelAPI(request, url, env, baseUrl) {
   const action = url.pathname.replace("/api/panel/", "");
@@ -1681,9 +1749,10 @@ async function handlePanelAPI(request, url, env, baseUrl) {
     return jsonRes({ ok: true });
   }
 
+  // Public Order & 5-Stage Bus-Stand Timeline Tracker (/c)
   if (action === "track") {
     const id = Number(url.searchParams.get("order_id"));
-    const order = await env.DB.prepare("SELECT id, status, final_total, advance_20, balance_80, tracking_id, created_at FROM orders WHERE id = ?").bind(id).first();
+    const order = await env.DB.prepare("SELECT id, master_id, status, dispatch_stage, hold_reason, final_total, advance_20, balance_80, tracking_id, created_at FROM orders WHERE id = ?").bind(id).first();
     const items = await env.DB.prepare("SELECT brand, model, part_name, variant, req_qty, fulfilled_qty FROM order_items WHERE order_id = ?").bind(id).all();
     return jsonRes({ ok: !!order, order, items: items.results || [] });
   }
@@ -1738,6 +1807,9 @@ async function handlePanelAPI(request, url, env, baseUrl) {
     const customers = await env.DB.prepare("SELECT * FROM customers ORDER BY last_msg_at DESC LIMIT 60").all();
     const staffList = await env.DB.prepare("SELECT id, role, phone, access_token, is_active, created_at FROM staff_users ORDER BY id DESC").all();
     const marginRules = await env.DB.prepare("SELECT * FROM margin_rules ORDER BY min_price ASC").all();
+    const inventory = await env.DB.prepare("SELECT * FROM inventory ORDER BY id ASC").all();
+    const invLogs = await env.DB.prepare("SELECT * FROM inventory_logs ORDER BY id DESC LIMIT 80").all();
+    const ghostQueries = await env.DB.prepare("SELECT * FROM ghost_queries ORDER BY id DESC LIMIT 30").all();
 
     return jsonRes({
       ok: true,
@@ -1750,7 +1822,10 @@ async function handlePanelAPI(request, url, env, baseUrl) {
       bids: bids.results || [],
       customers: customers.results || [],
       staff_list: staff.role === "admin" ? (staffList.results || []) : [],
-      margin_rules: marginRules.results || []
+      margin_rules: marginRules.results || [],
+      inventory: inventory.results || [],
+      inventory_logs: invLogs.results || [],
+      ghost_queries: ghostQueries.results || []
     });
   }
 
@@ -1788,6 +1863,144 @@ async function handlePanelAPI(request, url, env, baseUrl) {
     return jsonRes({ ok: true, msg: "Margin rule removed" });
   }
 
+  // FILE 3: Category-Wise Bulk Price Multiplier
+  if (action === "bulk-price-update" && request.method === "POST") {
+    const { category, mode, value } = await request.json();
+    const val = parseFloat(value);
+    if (isNaN(val) || val === 0) return jsonRes({ ok: false, error: "Invalid multiplier value" }, 400);
+
+    const allInv = await env.DB.prepare("SELECT * FROM inventory").all();
+    const stmts = [];
+    let count = 0;
+
+    for (const it of (allInv.results || [])) {
+      if (category === "All Categories" || it.category === category) {
+        count++;
+        const nextPrice = mode === "percentage" ? Math.round(it.price * (1 + val / 100)) : Math.round(it.price + val);
+        stmts.push(env.DB.prepare("UPDATE inventory SET price = ? WHERE id = ?").bind(nextPrice, it.id));
+      }
+    }
+    if (stmts.length) await env.DB.batch(stmts);
+    await sendLog(env, `★ Bulk Price Multiplier: Updated ${count} items in "${category}" (${mode}: +${val})`);
+    return jsonRes({ ok: true, msg: `Updated prices for ${count} items in ${category}!` });
+  }
+
+  // FILE 10 & 12: Add/Deduct Stock or Commit DOA Receiving with Audit Log
+  if (action === "adjust-stock" && request.method === "POST") {
+    const { sku, name, category, price, in_house_cost, good_delta, faulty_delta, trigger_reason } = await request.json();
+    let existing = await env.DB.prepare("SELECT * FROM inventory WHERE sku = ? OR name = ?").bind(sku || "", name || "").first();
+    const gDelta = parseInt(good_delta || 0, 10);
+    const fDelta = parseInt(faulty_delta || 0, 10);
+
+    if (existing) {
+      const oldGood = Number(existing.good_qty || 0);
+      const newGood = Math.max(0, oldGood + gDelta);
+      const newFaulty = Math.max(0, Number(existing.faulty_qty || 0) + fDelta);
+      await env.DB.prepare("UPDATE inventory SET good_qty = ?, faulty_qty = ?, updated_at = strftime('%s','now') WHERE id = ?")
+        .bind(newGood, newFaulty, existing.id).run();
+      if (gDelta !== 0) {
+        await env.DB.prepare(
+          "INSERT INTO inventory_logs (item_name, action, qty, old_stock, new_stock, triggered_by) VALUES (?, ?, ?, ?, ?, ?)"
+        ).bind(existing.name, gDelta > 0 ? "ADD" : "DEDUCT", Math.abs(gDelta), oldGood, newGood, trigger_reason || `Admin (${staff.phone})`).run();
+      }
+    } else {
+      const newSku = sku || ("SKU-" + Math.floor(100 + Math.random() * 900));
+      await env.DB.prepare(
+        "INSERT INTO inventory (sku, name, category, price, in_house_cost, good_qty, faulty_qty) VALUES (?, ?, ?, ?, ?, ?, ?)"
+      ).bind(newSku, name, category || "Displays", Number(price || 1000), Number(in_house_cost || 750), Math.max(0, gDelta), Math.max(0, fDelta)).run();
+      await env.DB.prepare(
+        "INSERT INTO inventory_logs (item_name, action, qty, old_stock, new_stock, triggered_by) VALUES (?, 'ADD', ?, 0, ?, ?)"
+      ).bind(name, Math.max(0, gDelta), Math.max(0, gDelta), trigger_reason || `Admin (${staff.phone})`).run();
+    }
+    return jsonRes({ ok: true, msg: "Inventory & Audit Log updated!" });
+  }
+
+  // FILE 1, 4 & 5: Barcode Scan & 4-Stage Physical Hub / Bus-Stand Update + QC Pass/Hold
+  if (action === "scan-stage" && request.method === "POST") {
+    const { order_id, stage, hold_reason } = await request.json();
+    const order = await env.DB.prepare("SELECT * FROM orders WHERE id = ?").bind(Number(order_id)).first();
+    if (!order) return jsonRes({ ok: false, error: "Order #" + order_id + " not found!" }, 404);
+
+    let nextStatus = order.status;
+    if (stage === "ON_HOLD") nextStatus = "ON_HOLD";
+    else if (stage === "QC_PASSED") nextStatus = "PACKING";
+    else if (stage === "BUS_STAND_DROPPED") nextStatus = "SHIPPED";
+
+    await env.DB.prepare("UPDATE orders SET dispatch_stage = ?, status = ?, hold_reason = ? WHERE id = ?")
+      .bind(stage, nextStatus, hold_reason || null, order.id).run();
+
+    const cust = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(order.customer_id).first();
+    if (cust) {
+      const stageLabels = {
+        COLLECTION_DONE: "★ Collection Complete: Items picked up and arrived at Checking Hub.",
+        QC_PASSED: "★ 100% Quality Check Passed: Your order is now at the Packing Station.",
+        ON_HOLD: `ⓘ QC Hold Alert: ${hold_reason || "Replacement item being re-collected for quality assurance."}`,
+        DISPATCH_HANDOVER: "★ Handed to Dispatch Team: Parcel is on the way to the Bus Stand / Courier Hub.",
+        BUS_STAND_DROPPED: "★ Parcel Dropped at Bus Stand / Courier Hub! Final transit started."
+      };
+      if (stageLabels[stage]) {
+        await notifyCustomer(env, cust, `Order #${order.id} Update\n━━━━━━━━━━━━━━━━━\n${stageLabels[stage]}`);
+      }
+    }
+    return jsonRes({ ok: true, msg: `Order #${order.id} updated to ${stage}` });
+  }
+
+  // FILE 6: Missing Odisha Stock -> Option A (Available Only) vs Option B (Outsource Delhi/Mumbai/Kolkata/Raigarh)
+  if (action === "outsource-options" && request.method === "POST") {
+    const { order_id, mode, region } = await request.json();
+    const order = await env.DB.prepare("SELECT * FROM orders WHERE id = ?").bind(Number(order_id)).first();
+    if (!order) return jsonRes({ ok: false, error: "Order not found" }, 404);
+    const cust = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(order.customer_id).first();
+    const items = await env.DB.prepare("SELECT * FROM order_items WHERE order_id = ?").bind(order.id).all();
+
+    if (mode === "ask_customer" && cust) {
+      const found = (items.results || []).filter(i => i.fulfilled_qty > 0).map(i => `• ${i.fulfilled_qty}x ${i.brand} ${i.part_name}`).join("\n") || "None";
+      const missing = (items.results || []).filter(i => i.fulfilled_qty < i.req_qty).map(i => `• ${i.req_qty - i.fulfilled_qty}x ${i.brand} ${i.part_name}`).join("\n") || "Partial items";
+
+      const msgTxt = `★ Stock Availability Update — Order #${order.id}\n━━━━━━━━━━━━━━━━━\nWe have secured in Odisha:\n${found}\n\nCurrently out of stock locally:\n${missing}\n━━━━━━━━━━━━━━━━━\n[?] How would you like to proceed?\nOption A: Proceed with available items only.\nOption B: Source missing items from outside Odisha (Delhi / Mumbai / Kolkata / Raigarh).`;
+      await notifyCustomer(env, cust, msgTxt, [
+        [{ text: "Option A: Available Only", callback_data: `optA_${order.id}` }],
+        [{ text: "Option B: Outsource Missing", callback_data: `optB_${order.id}` }]
+      ]);
+      return jsonRes({ ok: true, msg: "Option A / Option B sent to customer on " + cust.platform.toUpperCase() });
+    }
+
+    if (mode === "broadcast_region") {
+      await env.DB.prepare("UPDATE orders SET outsource_region = ?, status = 'BIDDING', bidding_ends_at = ? WHERE id = ?")
+        .bind(region || "Delhi", Math.floor(Date.now() / 1000) + 1800, order.id).run();
+      await sendLog(env, `★ Order #${order.id} outsourced to ${region} suppliers.`);
+      return jsonRes({ ok: true, msg: `Broadcasted missing items for #${order.id} to ${region} suppliers!` });
+    }
+  }
+
+  // FILE 8: Manual Force Follow-Up Pin (7-Day Column Override)
+  if (action === "force-followup" && request.method === "POST") {
+    const { order_id } = await request.json();
+    await env.DB.prepare("UPDATE orders SET force_followup = 1 WHERE id = ?").bind(Number(order_id)).run();
+    return jsonRes({ ok: true, msg: `Order #${order_id} pinned to 1st Follow-Up (7 Days)!` });
+  }
+
+  // FILE 13: Dual-Mode Demo / Ghost Query Injector
+  if (action === "inject-query" && request.method === "POST") {
+    const { mode, item_name, qty, note } = await request.json();
+    await env.DB.prepare("INSERT INTO ghost_queries (mode, item_name, qty, note, status) VALUES (?, ?, ?, ?, ?)")
+      .bind(mode, item_name, Number(qty || 1), note || "", mode === "direct" ? "POLLED" : "PIGGYBACK_QUEUED").run();
+
+    if (mode === "direct") {
+      const sups = await env.DB.prepare("SELECT * FROM suppliers WHERE is_verified = 1 AND is_active = 1").all();
+      for (const s of (sups.results || [])) {
+        if (s.tg_chat_id) {
+          await tgCall(env.BOT_TOKEN_SUPPLIER, "sendMessage", {
+            chat_id: s.tg_chat_id,
+            text: `★ Market Rate Check\n━━━━━━━━━━━━━━━━━\n→ Item: ${item_name}\n└ Spec: ${note || "Standard"}\n└ Qty: ${qty} Pieces\n━━━━━━━━━━━━━━━━━`,
+            reply_markup: { inline_keyboard: [[{ text: "☞ Continue to Panel", url: `${baseUrl}/s?code=${s.verify_code}` }]] }
+          });
+        }
+      }
+    }
+    return jsonRes({ ok: true, msg: mode === "direct" ? "Direct Market Poll broadcasted to suppliers!" : "Ghost Order queued to piggyback on next live customer request!" });
+  }
+
   if (action === "assign-supplier" && request.method === "POST") {
     const { order_id, supplier_id, unit_price } = await request.json();
     return jsonRes(await adminAssignSupplierToOrder(env, Number(order_id), Number(supplier_id), Number(unit_price || 0)));
@@ -1821,15 +2034,15 @@ async function handlePanelAPI(request, url, env, baseUrl) {
     const order = await env.DB.prepare("SELECT * FROM orders WHERE id = ?").bind(order_id).first();
     if (!order) return jsonRes({ ok: false, error: "Order not found" });
     const cust = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(order.customer_id).first();
-    await env.DB.prepare("UPDATE orders SET status = 'SHIPPED', tracking_id = ? WHERE id = ?").bind(tracking_id, order_id).run();
+    await env.DB.prepare("UPDATE orders SET status = 'SHIPPED', dispatch_stage = 'OUT_FOR_DELIVERY', tracking_id = ? WHERE id = ?").bind(tracking_id, order_id).run();
     if (cust) await notifyCustomer(env, cust, `★ Order #${order_id} Dispatched\n━━━━━━━━━━━━━━━━━\n→ Tracking ID: ${tracking_id}`);
     return jsonRes({ ok: true, msg: `Order #${order_id} shipped!` });
   }
 
   if (action === "add-supplier" && request.method === "POST") {
-    const { name, phone } = await request.json();
+    const { name, phone, region } = await request.json();
     const code = "SUP" + Math.random().toString(36).substring(2, 7).toUpperCase();
-    await env.DB.prepare("INSERT INTO suppliers (name, phone, verify_code) VALUES (?, ?, ?)").bind(name || "Supplier", phone || "", code).run();
+    await env.DB.prepare("INSERT INTO suppliers (name, phone, region, verify_code) VALUES (?, ?, ?, ?)").bind(name || "Supplier", phone || "", region || "Odisha", code).run();
     return jsonRes({ ok: true, code, msg: `Supplier added! Link: ${baseUrl}/s?code=${code}` });
   }
 
@@ -1838,6 +2051,12 @@ async function handlePanelAPI(request, url, env, baseUrl) {
     const tok = "ADP-" + Math.random().toString(36).substring(2, 8).toUpperCase();
     await env.DB.prepare("INSERT INTO staff_users (role, phone, access_token) VALUES (?, ?, ?)").bind(role, phone, tok).run();
     return jsonRes({ ok: true, token: tok, msg: `Staff added! Token: ${tok}` });
+  }
+
+  if (action === "delete-staff" && request.method === "POST") {
+    const { id } = await request.json();
+    await env.DB.prepare("DELETE FROM staff_users WHERE id = ?").bind(Number(id)).run();
+    return jsonRes({ ok: true, msg: "Staff user deleted" });
   }
 
   if (action === "send-chat" && request.method === "POST") {
@@ -1851,19 +2070,57 @@ async function handlePanelAPI(request, url, env, baseUrl) {
   return jsonRes({ ok: false, error: "Unknown endpoint" }, 404);
 }
 
+// ==========================================
+// 14. DATABASE INITIALIZER & SCHEMA MIGRATIONS
+// ==========================================
 async function initDB(DB) {
   await DB.batch([
     DB.prepare("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)"),
-    DB.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('tg_enabled', '1'), ('wa_enabled', '1'), ('ai_enabled', '1'), ('margin_percent', '20'), ('delivery_charge', '100'), ('rounding_step', '50'), ('advance_percent', '20')"),
+    DB.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('tg_enabled', '1'), ('wa_enabled', '1'), ('ai_enabled', '1'), ('margin_percent', '20'), ('delivery_charge', '100'), ('rounding_step', '50'), ('advance_percent', '20'), ('auto_flag_mins', '120'), ('rush_window_sec', '60'), ('allocation_logic', 'cheapest')"),
     DB.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('upi_id', 'constantabrar@upi')"),
     DB.prepare("CREATE TABLE IF NOT EXISTS margin_rules (id INTEGER PRIMARY KEY AUTOINCREMENT, min_price REAL NOT NULL, max_price REAL NOT NULL, margin_type TEXT NOT NULL, margin_value REAL NOT NULL, created_at INTEGER DEFAULT (strftime('%s', 'now')))"),
-    DB.prepare("CREATE TABLE IF NOT EXISTS customers (id TEXT PRIMARY KEY, platform TEXT NOT NULL, chat_id TEXT NOT NULL, lang TEXT DEFAULT 'hinglish', full_name TEXT, phone TEXT, address TEXT, state TEXT DEFAULT 'IDLE', temp_data TEXT, fraud_strikes INTEGER DEFAULT 0, banned_until INTEGER DEFAULT 0, last_msg_at INTEGER DEFAULT 0, warned_22h INTEGER DEFAULT 0, created_at INTEGER DEFAULT (strftime('%s', 'now')))"),
-    DB.prepare("CREATE TABLE IF NOT EXISTS suppliers (id INTEGER PRIMARY KEY AUTOINCREMENT, tg_chat_id TEXT UNIQUE, name TEXT, phone TEXT, verify_code TEXT UNIQUE, is_verified INTEGER DEFAULT 0, is_active INTEGER DEFAULT 1, current_bid_item_id INTEGER, bid_step TEXT, bid_started_at INTEGER DEFAULT 0, last_panel_msg_id INTEGER, created_at INTEGER DEFAULT (strftime('%s', 'now')))"),
+    DB.prepare("CREATE TABLE IF NOT EXISTS customers (id TEXT PRIMARY KEY, platform TEXT NOT NULL, chat_id TEXT NOT NULL, lang TEXT DEFAULT 'hinglish', full_name TEXT, phone TEXT, address TEXT, state TEXT DEFAULT 'IDLE', temp_data TEXT, fraud_strikes INTEGER DEFAULT 0, banned_until INTEGER DEFAULT 0, last_msg_at INTEGER DEFAULT 0, warned_22h INTEGER DEFAULT 0, force_followup INTEGER DEFAULT 0, created_at INTEGER DEFAULT (strftime('%s', 'now')))"),
+    DB.prepare("CREATE TABLE IF NOT EXISTS suppliers (id INTEGER PRIMARY KEY AUTOINCREMENT, tg_chat_id TEXT UNIQUE, name TEXT, phone TEXT, region TEXT DEFAULT 'Odisha', verify_code TEXT UNIQUE, is_verified INTEGER DEFAULT 0, is_active INTEGER DEFAULT 1, avg_resp_sec INTEGER DEFAULT 45, orders_freq INTEGER DEFAULT 1, current_bid_item_id INTEGER, bid_step TEXT, bid_started_at INTEGER DEFAULT 0, last_panel_msg_id INTEGER, created_at INTEGER DEFAULT (strftime('%s', 'now')))"),
     DB.prepare("CREATE TABLE IF NOT EXISTS staff_users (id INTEGER PRIMARY KEY AUTOINCREMENT, role TEXT NOT NULL, phone TEXT NOT NULL, access_token TEXT UNIQUE NOT NULL, is_active INTEGER DEFAULT 1, created_at INTEGER DEFAULT (strftime('%s', 'now')))"),
-    DB.prepare("CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY AUTOINCREMENT, customer_id TEXT NOT NULL, status TEXT DEFAULT 'BIDDING', supplier_base_total REAL DEFAULT 0, margin_percent REAL DEFAULT 20, delivery_charge REAL DEFAULT 100, final_total REAL DEFAULT 0, advance_20 REAL DEFAULT 0, balance_80 REAL DEFAULT 0, packing_video_file_id TEXT, vault_msg_id TEXT, tracking_id TEXT, bidding_ends_at INTEGER NOT NULL, created_at INTEGER DEFAULT (strftime('%s', 'now')))"),
-    DB.prepare("CREATE TABLE IF NOT EXISTS order_items (id INTEGER PRIMARY KEY AUTOINCREMENT, order_id INTEGER NOT NULL, brand TEXT, model TEXT, part_name, variant TEXT DEFAULT 'Standard', req_qty INTEGER NOT NULL, fulfilled_qty INTEGER DEFAULT 0, allocated_json TEXT)"),
-    DB.prepare("CREATE TABLE IF NOT EXISTS bids (id INTEGER PRIMARY KEY AUTOINCREMENT, order_id INTEGER NOT NULL, item_id INTEGER NOT NULL, supplier_id INTEGER NOT NULL, price_per_unit REAL, available_qty INTEGER, tg_msg_id INTEGER, status TEXT DEFAULT 'PENDING', created_at INTEGER DEFAULT (strftime('%s', 'now')))"),
-    DB.prepare("CREATE TABLE IF NOT EXISTS payments (id INTEGER PRIMARY KEY AUTOINCREMENT, order_id INTEGER NOT NULL, customer_id TEXT NOT NULL, type TEXT NOT NULL, expected_amount REAL NOT NULL, extracted_utr TEXT UNIQUE, extracted_amount REAL, file_id_or_url TEXT, status TEXT DEFAULT 'PENDING', tg_group_msg_id INTEGER, created_at INTEGER DEFAULT (strftime('%s', 'now')))")
+    DB.prepare("CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY AUTOINCREMENT, customer_id TEXT NOT NULL, master_id TEXT, status TEXT DEFAULT 'BIDDING', dispatch_stage TEXT DEFAULT 'ORDER_RECEIVED', hold_reason TEXT, outsource_region TEXT, supplier_base_total REAL DEFAULT 0, margin_percent REAL DEFAULT 20, delivery_charge REAL DEFAULT 100, final_total REAL DEFAULT 0, advance_20 REAL DEFAULT 0, balance_80 REAL DEFAULT 0, packing_video_file_id TEXT, vault_msg_id TEXT, tracking_id TEXT, force_followup INTEGER DEFAULT 0, bidding_ends_at INTEGER NOT NULL, created_at INTEGER DEFAULT (strftime('%s', 'now')))"),
+    DB.prepare("CREATE TABLE IF NOT EXISTS order_items (id INTEGER PRIMARY KEY AUTOINCREMENT, order_id INTEGER NOT NULL, brand TEXT, model TEXT, part_name TEXT, variant TEXT DEFAULT 'Standard', req_qty INTEGER NOT NULL, fulfilled_qty INTEGER DEFAULT 0, inv_qty INTEGER DEFAULT 0, sup_qty INTEGER DEFAULT 0, qc_status TEXT DEFAULT 'PENDING', allocated_json TEXT)"),
+    DB.prepare("CREATE TABLE IF NOT EXISTS bids (id INTEGER PRIMARY KEY AUTOINCREMENT, order_id INTEGER NOT NULL, item_id INTEGER NOT NULL, supplier_id INTEGER NOT NULL, price_per_unit REAL, available_qty INTEGER, response_sec INTEGER DEFAULT 35, tg_msg_id INTEGER, status TEXT DEFAULT 'PENDING', created_at INTEGER DEFAULT (strftime('%s', 'now')))"),
+    DB.prepare("CREATE TABLE IF NOT EXISTS payments (id INTEGER PRIMARY KEY AUTOINCREMENT, order_id INTEGER NOT NULL, customer_id TEXT NOT NULL, type TEXT NOT NULL, expected_amount REAL NOT NULL, extracted_utr TEXT UNIQUE, extracted_amount REAL, file_id_or_url TEXT, status TEXT DEFAULT 'PENDING', tg_group_msg_id INTEGER, created_at INTEGER DEFAULT (strftime('%s', 'now')))"),
+    DB.prepare("CREATE TABLE IF NOT EXISTS inventory (id INTEGER PRIMARY KEY AUTOINCREMENT, sku TEXT UNIQUE, name TEXT NOT NULL, category TEXT DEFAULT 'Displays', price REAL DEFAULT 0, in_house_cost REAL DEFAULT 0, good_qty INTEGER DEFAULT 0, faulty_qty INTEGER DEFAULT 0, daily_freq REAL DEFAULT 1.5, days_unsold INTEGER DEFAULT 5, updated_at INTEGER DEFAULT (strftime('%s', 'now')))"),
+    DB.prepare("CREATE TABLE IF NOT EXISTS inventory_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, item_name TEXT NOT NULL, action TEXT NOT NULL, qty INTEGER NOT NULL, old_stock INTEGER NOT NULL, new_stock INTEGER NOT NULL, triggered_by TEXT NOT NULL, raw_date TEXT DEFAULT (date('now')), created_at INTEGER DEFAULT (strftime('%s', 'now')))"),
+    DB.prepare("CREATE TABLE IF NOT EXISTS ghost_queries (id INTEGER PRIMARY KEY AUTOINCREMENT, mode TEXT NOT NULL, item_name TEXT NOT NULL, qty INTEGER DEFAULT 1, note TEXT, status TEXT DEFAULT 'WAITING', min_quote REAL DEFAULT 0, max_quote REAL DEFAULT 0, created_at INTEGER DEFAULT (strftime('%s', 'now')))")
   ]);
-  try { await DB.prepare("ALTER TABLE suppliers ADD COLUMN last_panel_msg_id INTEGER").run(); } catch (_) {}
+
+  const invCount = await DB.prepare("SELECT COUNT(*) as c FROM inventory").first();
+  if (!invCount || invCount.c === 0) {
+    await DB.batch([
+      DB.prepare("INSERT OR IGNORE INTO inventory (sku, name, category, price, in_house_cost, good_qty, faulty_qty, daily_freq, days_unsold) VALUES ('SKU-A13-D', 'iPhone 13 OLED Display (Original)', 'Displays', 4200, 3600, 12, 1, 4.2, 8)"),
+      DB.prepare("INSERT OR IGNORE INTO inventory (sku, name, category, price, in_house_cost, good_qty, faulty_qty, daily_freq, days_unsold) VALUES ('SKU-S22-B', 'Samsung S22 Ultra Battery OEM', 'Batteries', 1150, 820, 18, 0, 3.1, 14)"),
+      DB.prepare("INSERT OR IGNORE INTO inventory (sku, name, category, price, in_house_cost, good_qty, faulty_qty, daily_freq, days_unsold) VALUES ('SKU-OP9-C', 'OnePlus 9 Pro Charging Board', 'Charging Ports', 450, 240, 30, 2, 2.5, 6)"),
+      DB.prepare("INSERT OR IGNORE INTO inventory (sku, name, category, price, in_house_cost, good_qty, faulty_qty, daily_freq, days_unsold) VALUES ('SKU-I6S-B', 'iPhone 6s Battery Replacement', 'Batteries', 400, 280, 45, 0, 0.1, 210)"),
+      DB.prepare("INSERT OR IGNORE INTO inventory (sku, name, category, price, in_house_cost, good_qty, faulty_qty, daily_freq, days_unsold) VALUES ('SKU-RN4-D', 'Redmi Note 4 Display Combo', 'Displays', 800, 550, 14, 1, 0.2, 145)"),
+      DB.prepare("INSERT OR IGNORE INTO inventory (sku, name, category, price, in_house_cost, good_qty, faulty_qty, daily_freq, days_unsold) VALUES ('SKU-T7000', 'Mechanic T7000 OCA Glue (50g)', 'Tools & Glue', 150, 85, 60, 0, 5.0, 3)"),
+      DB.prepare("INSERT OR IGNORE INTO inventory_logs (item_name, action, qty, old_stock, new_stock, triggered_by) VALUES ('iPhone 13 OLED Display (Original)', 'ADD', 12, 0, 12, 'Admin (Initial Stock Seed)')")
+    ]);
+  }
+
+  // Safe migrations for existing D1 tables
+  const migrations = [
+    "ALTER TABLE suppliers ADD COLUMN last_panel_msg_id INTEGER",
+    "ALTER TABLE suppliers ADD COLUMN region TEXT DEFAULT 'Odisha'",
+    "ALTER TABLE suppliers ADD COLUMN avg_resp_sec INTEGER DEFAULT 45",
+    "ALTER TABLE suppliers ADD COLUMN orders_freq INTEGER DEFAULT 1",
+    "ALTER TABLE orders ADD COLUMN master_id TEXT",
+    "ALTER TABLE orders ADD COLUMN dispatch_stage TEXT DEFAULT 'ORDER_RECEIVED'",
+    "ALTER TABLE orders ADD COLUMN hold_reason TEXT",
+    "ALTER TABLE orders ADD COLUMN outsource_region TEXT",
+    "ALTER TABLE orders ADD COLUMN force_followup INTEGER DEFAULT 0",
+    "ALTER TABLE order_items ADD COLUMN inv_qty INTEGER DEFAULT 0",
+    "ALTER TABLE order_items ADD COLUMN sup_qty INTEGER DEFAULT 0",
+    "ALTER TABLE order_items ADD COLUMN qc_status TEXT DEFAULT 'PENDING'",
+    "ALTER TABLE bids ADD COLUMN response_sec INTEGER DEFAULT 35"
+  ];
+  for (const m of migrations) {
+    try { await DB.prepare(m).run(); } catch (_) {}
+  }
 }
