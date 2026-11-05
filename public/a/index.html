@@ -29,7 +29,7 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stro
 .ldr-title{font-weight:800;font-size:15px;margin-bottom:4px}
 .ldr-sub{font-size:12px;color:var(--mute);line-height:1.4}
 
-/* Login Screen (Zero-Reload Div Box) */
+/* Login Screen */
 #login{position:fixed;inset:0;display:grid;place-items:center;padding:18px;z-index:100;background:var(--bg);transition:opacity .45s}
 #login.out{opacity:0;pointer-events:none}
 .lbox{width:min(400px,100%);background:var(--cv);border-radius:32px;padding:34px 24px 28px;box-shadow:var(--rz)}
@@ -47,13 +47,13 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stro
 @keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 
 /* App Shell */
-#app{display:none;min-height:100dvh;padding:20px;gap:22px;grid-template-columns:88px minmax(0,1fr)}
+#app{display:none;min-height:100dvh;padding:20px;gap:22px;grid-template-columns:92px minmax(0,1fr)}
 #app.show{display:grid}
-aside{background:var(--cv);border-radius:28px;padding:16px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;position:sticky;top:20px;height:calc(100dvh - 40px);box-shadow:var(--rz);z-index:40}
-aside .av{width:46px;height:46px;border-radius:50%;box-shadow:var(--in);display:grid;place-items:center;font-weight:800;color:var(--deep);margin-bottom:6px;flex:none}
+aside{background:var(--cv);border-radius:28px;padding:16px 8px;display:flex;flex-direction:column;align-items:center;gap:8px;position:sticky;top:20px;height:calc(100dvh - 40px);box-shadow:var(--rz);z-index:40}
+aside .av{width:46px;height:46px;border-radius:50%;box-shadow:var(--in);display:grid;place-items:center;font-weight:800;color:var(--deep);margin-bottom:4px;flex:none}
 nav{display:flex;flex-direction:column;gap:6px;width:100%;overflow-y:auto;scrollbar-width:none;flex:1;padding:2px}
 nav::-webkit-scrollbar{display:none}
-nav button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:16px;font-size:10px;font-weight:700;color:var(--mute);transition:.25s;flex:none}
+nav button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 4px;border-radius:16px;font-size:9.5px;font-weight:700;color:var(--mute);transition:.25s;flex:none;text-align:center}
 nav button.on{color:var(--teal);box-shadow:var(--in)}
 .tools{display:flex;flex-direction:column;gap:10px;padding-top:6px}
 .tools button,.mbtn{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;box-shadow:var(--rs);color:var(--deep);background:var(--cv);flex:none}
@@ -72,7 +72,7 @@ main{min-width:0;width:100%}
 .c3{grid-column:span 3}.c4{grid-column:span 4}.c5{grid-column:span 5}.c6{grid-column:span 6}.c7{grid-column:span 7}.c8{grid-column:span 8}.c12{grid-column:span 12}
 .card{background:var(--cv);border-radius:24px;padding:20px;box-shadow:var(--rz);min-width:0;overflow:hidden}
 .card h3{margin:0 0 14px;font-size:14.5px;font-weight:800;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-.big{font-size:28px;font-weight:800;letter-spacing:-.02em;color:var(--deep)}
+.big{font-size:26px;font-weight:800;letter-spacing:-.02em;color:var(--deep)}
 .mute{color:var(--mute);font-size:12px;line-height:1.45}
 .chip{display:inline-flex;align-items:center;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;box-shadow:var(--in);color:var(--deep);background:var(--bg);white-space:nowrap}
 .chip.r{color:var(--red)}.chip.a{color:var(--amber)}.chip.g{color:var(--green)}
@@ -83,7 +83,7 @@ main{min-width:0;width:100%}
 .row b{display:block;font-size:13.5px}
 
 .inbox{background:var(--bg);box-shadow:var(--in);border:0;border-radius:14px;padding:11px 14px;color:var(--ink);font-size:15px;font-weight:600;outline:0;width:100%;min-width:0}
-.act{padding:10px 16px;border-radius:14px;font-weight:700;font-size:12.5px;color:var(--deep);box-shadow:var(--rs);background:var(--cv);white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px}
+.act{padding:10px 16px;border-radius:14px;font-weight:700;font-size:12.5px;color:var(--deep);box-shadow:var(--rs);background:var(--cv);white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;text-decoration:none}
 .act:active{box-shadow:var(--in)}
 .act.p{background:linear-gradient(145deg,#7db4ff,#4a8af0);color:#fff}
 .act.d{color:var(--red)}
@@ -117,10 +117,10 @@ td{padding:11px 8px;border-bottom:1px solid var(--line)}
 /* 1000% Mobile Responsive Breakpoints */
 @media (max-width:920px){
   #app{grid-template-columns:1fr;padding:12px 12px 104px;gap:14px}
-  aside{position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));top:auto;height:70px;flex-direction:row;padding:6px 8px;border-radius:24px;box-shadow:0 -4px 20px var(--sd),var(--rz)}
+  aside{position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));top:auto;height:72px;flex-direction:row;padding:6px 8px;border-radius:24px;box-shadow:0 -4px 20px var(--sd),var(--rz)}
   aside .av,.tools{display:none}
   nav{flex-direction:row;overflow-x:auto;overflow-y:hidden;gap:6px;align-items:center}
-  nav button{min-width:64px;padding:7px 4px;font-size:9.5px}
+  nav button{min-width:66px;padding:7px 4px;font-size:9px}
   .mbtn{display:grid}
   .top h2{font-size:20px;min-width:120px}
   .search{flex:1 1 100%;order:4}
@@ -128,7 +128,7 @@ td{padding:11px 8px;border-bottom:1px solid var(--line)}
   .c3,.c4,.c5,.c6,.c7,.c8{grid-column:span 12}
   .c3{grid-column:span 6}
   .card{padding:16px;border-radius:20px}
-  .big{font-size:22px}
+  .big{font-size:21px}
 }
 @media (max-width:420px){
   .c3{grid-column:span 6}
@@ -194,7 +194,6 @@ td{padding:11px 8px;border-bottom:1px solid var(--line)}
 <div id="toast"></div>
 
 <script>
-// Global Error Catcher -> Sends any UI crash directly to Logs Bot!
 window.onerror = function(message, source, lineno) {
   fetch("/api/panel/client-error", {
     method: "POST",
@@ -208,6 +207,7 @@ var $ = function(s) { return document.querySelector(s); };
 var STATE = {
   orders: [], payments: [], settings: {}, suppliers: [], items: [],
   bids: [], customers: [], staff_list: [], margin_rules: [],
+  inventory: [], inventory_logs: [], ghost_queries: [],
   curPage: "home", ctrlCat: "pricing"
 };
 
@@ -216,33 +216,35 @@ function showLoader(title, sub) {
   $("#ldrSub").textContent = sub || "Syncing with Cloudflare D1 Engine";
   $("#loader").classList.add("on");
 }
-function hideLoader() {
-  $("#loader").classList.remove("on");
-}
+function hideLoader() { $("#loader").classList.remove("on"); }
 
 var ICONS = {
   home: "<rect x='3' y='3' width='7' height='7' rx='2'/><rect x='14' y='3' width='7' height='7' rx='2'/><rect x='3' y='14' width='7' height='7' rx='2'/><rect x='14' y='14' width='7' height='7' rx='2'/>",
   bidroom: "<circle cx='12' cy='12' r='9'/><path d='M12 7v5l3 3'/>",
-  margins: "<path d='M3 17l6-6 4 4 8-8'/><path d='M14 7h7v7'/>",
+  ops: "<path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/>",
+  qcpack: "<path d='M9 11l3 3L22 4'/><path d='M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11'/>",
+  stock: "<path d='M4 9l1-5h14l1 5'/><path d='M5 12v8h14v-8'/>",
+  intel: "<path d='M3 17l6-6 4 4 8-8'/><path d='M14 7h7v7'/>",
+  crm: "<path d='M4 5h16v11H9l-5 4z'/>",
   sup: "<circle cx='9' cy='8' r='3.5'/><path d='M2 20c1-4 4-6 7-6s6 2 7 6'/><path d='M16 4.5a3.5 3.5 0 010 7M18 14c2 .6 3.4 2.6 4 6'/>",
-  orders: "<path d='M21 8l-9-5-9 5v8l9 5 9-5z'/><path d='M3 8l9 5 9-5M12 13v8'/>",
+  margins: "<circle cx='12' cy='12' r='9'/><path d='M9 9c1-1.5 5-1.5 6 0M9 15c1 1.5 5 1.5 6 0M12 6v12'/>",
   pay: "<rect x='3' y='6' width='18' height='13' rx='3'/><path d='M3 11h18'/>",
-  pack: "<path d='M2 6h12v10H2zM14 10h4l4 3v3h-8'/><circle cx='7' cy='18' r='2'/><circle cx='17' cy='18' r='2'/>",
-  controls: "<line x1='4' y1='21' x2='4' y2='14'/><line x1='4' y1='10' x2='4' y2='3'/><line x1='12' y1='21' x2='12' y2='12'/><line x1='12' y1='8' x2='12' y2='3'/><line x1='20' y1='21' x2='20' y2='16'/><line x1='20' y1='12' x2='20' y2='3'/><line x1='1' y1='14' x2='7' y2='14'/><line x1='9' y1='8' x2='15' y2='8'/><line x1='17' y1='16' x2='23' y2='16'/>",
-  chat: "<path d='M4 5h16v11H9l-5 4z'/>",
+  controls: "<line x1='4' y1='21' x2='4' y2='14'/><line x1='4' y1='10' x2='4' y2='3'/><line x1='12' y1='21' x2='12' y2='12'/><line x1='12' y1='8' x2='12' y2='3'/><line x1='20' y1='21' x2='20' y2='16'/><line x1='20' y1='12' x2='20' y2='3'/>",
   staff: "<path d='M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z'/><path d='M9 12l2 2 4-4'/>"
 };
 
 var NAV = [
   ["home", "Cockpit", "home"],
   ["bidroom", "Bid Room", "bidroom"],
-  ["margins", "Margins", "margins"],
+  ["ops", "Rush & Split", "ops"],
+  ["qcpack", "QC & Barcode", "qcpack"],
+  ["stock", "Stock & Price", "stock"],
+  ["intel", "Hot/Dead/Ghost", "intel"],
+  ["crm", "Follow & Source", "crm"],
   ["sup", "Suppliers", "sup"],
-  ["orders", "Orders", "orders"],
+  ["margins", "Slab Margins", "margins"],
   ["pay", "Payments", "pay"],
-  ["pack", "Packing", "pack"],
   ["controls", "250+ Controls", "controls"],
-  ["chat", "Customers", "chat"],
   ["staff", "Staff & Portals", "staff"]
 ];
 
@@ -265,18 +267,15 @@ async function api(path, body, isLogin) {
   try {
     var r = await fetch("/api/panel/" + path, opt);
     var txt = await r.text();
-    try {
-      return JSON.parse(txt);
-    } catch (parseErr) {
-      return { ok: false, error: "API returned HTML instead of JSON. Open via .workers.dev/a or check Worker route!" };
-    }
+    try { return JSON.parse(txt); }
+    catch (_) { return { ok: false, error: "API returned HTML instead of JSON. Check Worker route!" }; }
   } catch (netErr) {
     return { ok: false, error: "Network error: " + netErr.message };
   }
 }
 
 async function syncAll(silent, isLogin) {
-  if (!silent) showLoader(isLogin ? "Authenticating..." : "Syncing Live Data...", "Fetching orders, bids & security state");
+  if (!silent) showLoader(isLogin ? "Authenticating..." : "Syncing Live Data...", "Fetching orders, stock, bids & security state");
   var d = await api("dashboard", null, isLogin);
   hideLoader();
   if (!d.ok) {
@@ -291,6 +290,9 @@ async function syncAll(silent, isLogin) {
   STATE.customers = d.customers || [];
   STATE.staff_list = d.staff_list || [];
   STATE.margin_rules = d.margin_rules || [];
+  STATE.inventory = d.inventory || [];
+  STATE.inventory_logs = d.inventory_logs || [];
+  STATE.ghost_queries = d.ghost_queries || [];
   STATE.settings = {};
   (d.settings || []).forEach(function(s) { STATE.settings[s.key] = s.value; });
   go(STATE.curPage, true);
@@ -299,13 +301,9 @@ async function syncAll(silent, isLogin) {
 }
 
 async function doLogin() {
-  var u = $("#u").value.trim();
-  var p = $("#p").value.trim();
+  var u = $("#u").value.trim(), p = $("#p").value.trim();
   $("#err").textContent = "";
-  if (!u || !p) {
-    $("#err").textContent = "Please enter both Username/Phone and Token";
-    return;
-  }
+  if (!u || !p) { $("#err").textContent = "Please enter both Username/Phone and Token"; return; }
   localStorage.setItem(KEY, JSON.stringify({ u: u, p: p }));
   var res = await syncAll(false, true);
   if (res && res.ok) {
@@ -320,7 +318,6 @@ async function doLogin() {
   }
 }
 
-// Allow pressing Enter in password input without form reload
 $("#u").addEventListener("keydown", function(e) { if (e.key === "Enter") { e.preventDefault(); $("#p").focus(); } });
 $("#p").addEventListener("keydown", function(e) { if (e.key === "Enter") { e.preventDefault(); doLogin(); } });
 
@@ -329,10 +326,7 @@ $("#theme").onclick = $("#theme2").onclick = function() {
   var r = document.documentElement;
   r.setAttribute("data-theme", r.getAttribute("data-theme") === "dark" ? "light" : "dark");
 };
-$("#lock").onclick = $("#lock2").onclick = function() {
-  localStorage.removeItem(KEY);
-  location.reload();
-};
+$("#lock").onclick = $("#lock2").onclick = function() { localStorage.removeItem(KEY); location.reload(); };
 
 document.addEventListener("click", async function(e) {
   var tg = e.target.closest(".tog[data-k]");
@@ -394,9 +388,10 @@ PAGES.home = function() {
       ${STATE.orders.slice(0, 8).map(function(o) {
         var oItems = STATE.items.filter(function(i) { return i.order_id === o.id; }).map(function(i) { return `${i.brand} ${i.model} ${i.part_name} (${i.fulfilled_qty}/${i.req_qty})`; }).join(", ");
         return `<div class="row">
-          <div class="g1"><b>Order #${o.id} — ${oItems || "Items"}</b><span class="mute">Customer: ${o.customer_id} | Base: ₹${o.supplier_base_total || 0} | Final: ₹${o.final_total || 0}</span></div>
-          <div style="display:flex;gap:8px;align-items:center">
+          <div class="g1"><b>Order #${o.id} — ${oItems || "Items"}</b><span class="mute">Customer: ${o.customer_id} | Stage: ${o.dispatch_stage || o.status} | Final: ₹${o.final_total || 0}</span></div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             ${chip(o.status, o.status === "SHIPPED" ? "g" : o.status === "BIDDING" ? "a" : "")}
+            <button type="button" class="act" onclick="printThermalSlip(${o.id})">🖨️ Slip</button>
             ${o.status === "BIDDING" ? `<button type="button" class="act p" onclick="forceCloseOrd(${o.id})">Quote Now</button>` : ""}
           </div>
         </div>`;
@@ -405,20 +400,44 @@ PAGES.home = function() {
   </div>`;
 };
 
-/* 2. DEDICATED LIVE BID ROOM */
+/* 2. LIVE BID ROOM + SUPPLIER RESPONSE-TIME LEADERBOARD (File 12 & 14) */
 PAGES.bidroom = function() {
   var activeOrds = STATE.orders.filter(function(o) { return o.status === "BIDDING" || o.status === "NO_BIDS" || o.status === "QUOTED"; });
+  var sortedSups = [...STATE.suppliers].sort(function(a, b) { return (a.avg_resp_sec || 45) - (b.avg_resp_sec || 45); });
+  var curLogic = STATE.settings.allocation_logic || "cheapest";
 
   return `<div class="grid">
+    <!-- File 14: Supplier Response Speed Trophy Leaderboard -->
+    <div class="card c7">
+      <h3>🏆 Supplier Speed Leaderboard (Fastest Response Time)</h3>
+      <div class="grid" style="gap:10px">
+        ${sortedSups.slice(0, 3).map(function(s, idx) {
+          return `<div class="c4" style="padding:12px;border-radius:16px;box-shadow:var(--in)">
+            <div style="font-weight:800;color:var(--deep)">#${idx + 1} ${s.name}</div>
+            <div class="mute">Avg Speed: <b>${s.avg_resp_sec || 45}s</b> | Freq: ${s.orders_freq || 1} orders</div>
+          </div>`;
+        }).join("") || `<div class="c12 mute">Add suppliers to view leaderboard.</div>`}
+      </div>
+    </div>
+
+    <!-- File 12: Allocation Logic Selector (Cheapest Price vs Highest Frequency) -->
+    <div class="card c5">
+      <h3>⚖️ Auto-Allocation Logic</h3>
+      <div class="mute" style="margin-bottom:10px">Choose how the 30-min engine picks winning suppliers:</div>
+      <div style="display:flex;gap:8px">
+        <button type="button" class="act ${curLogic === 'cheapest' ? 'p' : ''}" style="flex:1" onclick="setAllocLogic('cheapest')">Cheapest Price</button>
+        <button type="button" class="act ${curLogic === 'frequency' ? 'p' : ''}" style="flex:1" onclick="setAllocLogic('frequency')">Highest Frequency</button>
+      </div>
+    </div>
+
     <div class="card c12">
-      <h3>★ Live Bid Room Radar — Real-Time Supplier Responses ${chip(STATE.bids.filter(function(b) { return b.status === "SUBMITTED"; }).length + " Submitted Bids", "g")}</h3>
-      <div class="mute" style="margin-bottom:14px">Every "✅ Accepted" rate submitted from the Supplier Portal appears here with automatic cheapest/fractional-split calculation.</div>
+      <h3>★ Live Bid Room Radar ${chip(STATE.bids.filter(function(b) { return b.status === "SUBMITTED"; }).length + " Submitted Bids", "g")}</h3>
       ${activeOrds.map(function(o) {
         var ordItems = STATE.items.filter(function(i) { return i.order_id === o.id; });
         var remSecs = Math.max(0, o.bidding_ends_at - Math.floor(Date.now() / 1000));
         return `<div style="padding:16px;border-radius:20px;box-shadow:var(--in);margin-bottom:16px">
           <div class="row" style="border:0;padding-top:0">
-            <div class="g1"><b>Order #${o.id}</b> <span class="mute">Window Left: ${Math.floor(remSecs / 60)}m ${remSecs % 60}s</span></div>
+            <div class="g1"><b>Order #${o.id} (${o.master_id || "Master"})</b> <span class="mute">Closes In: ${Math.floor(remSecs / 60)}m ${remSecs % 60}s</span></div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               ${chip(o.status, o.status === "BIDDING" ? "a" : "g")}
               <button type="button" class="act" onclick="extendOrd(${o.id}, 15)">+15m Window</button>
@@ -433,15 +452,16 @@ PAGES.bidroom = function() {
               <b>→ ${it.brand} ${it.model || ""} — ${it.part_name} (${it.variant}) | Req Qty: ${it.req_qty} pcs</b>
               <div class="scroll" style="margin-top:8px">
                 <table>
-                  <tr><th>Supplier</th><th>Status</th><th>Rate/pc</th><th>Avail Qty</th><th>Selection</th><th>Action</th></tr>
+                  <tr><th>Supplier</th><th>Status</th><th>Speed</th><th>Rate/pc</th><th>Avail Qty</th><th>Selection</th><th>Action</th></tr>
                   ${itemBids.map(function(b) { return `<tr>
                     <td><b>${b.sup_name || "Supplier #" + b.supplier_id}</b></td>
                     <td>${chip(b.status, b.status === "SUBMITTED" ? "g" : b.status === "DECLINED" ? "r" : "a")}</td>
+                    <td>${b.response_sec || 35}s</td>
                     <td><b>${b.price_per_unit ? "₹" + b.price_per_unit : "—"}</b></td>
                     <td>${b.available_qty || "—"} pcs</td>
-                    <td>${b.id === cheapestId ? chip("★ Cheapest Best Pick", "g") : "—"}</td>
+                    <td>${b.id === cheapestId ? chip("★ Best Pick", "g") : "—"}</td>
                     <td>${b.price_per_unit ? `<button type="button" class="act p" onclick="quickPickSup(${o.id},${b.supplier_id},${b.price_per_unit})">Select Winner</button>` : "—"}</td>
-                  </tr>`; }).join("") || `<tr><td colspan="6" class="mute">No supplier bids sent for this item.</td></tr>`}
+                  </tr>`; }).join("") || `<tr><td colspan="7" class="mute">No supplier bids sent for this item.</td></tr>`}
                 </table>
               </div>
             </div>`;
@@ -452,7 +472,393 @@ PAGES.bidroom = function() {
   </div>`;
 };
 
-/* 3. UNLIMITED NON-OVERLAPPING MARGIN SLABS TABLE */
+/* 3. RUSH QUEUE, MASTER BUNDLING & INV vs SUP FULFILLMENT SPLIT (Files 2, 7, 9) */
+PAGES.ops = function() {
+  return `<div class="grid">
+    <div class="card c6">
+      <h3>⏱️ Global Rush Queue & Auto-Bundler ${chip("Master Orders", "a")}</h3>
+      <div class="mute" style="margin-bottom:12px">Pending sub-orders bundle into a Master Order automatically or on 1-tap click:</div>
+      ${STATE.orders.slice(0, 5).map(function(o) {
+        var its = STATE.items.filter(function(i) { return i.order_id === o.id; }).map(function(i) { return i.req_qty + "x " + i.brand + " " + i.part_name; }).join(", ");
+        return `<div class="row">
+          <div class="g1"><b>SO-#${o.id} (${o.master_id || "MO"})</b><span class="mute">${its || "Spare Parts"}</span></div>
+          ${chip(o.status, o.status === "BIDDING" ? "a" : "g")}
+        </div>`;
+      }).join("") || `<div class="mute">Queue clear.</div>`}
+      <div style="margin-top:12px">
+        <button type="button" class="act p" style="width:100%" onclick="forceCloseAll()">[+] Bundle & Finalize Master Orders Now</button>
+      </div>
+    </div>
+
+    <div class="card c6">
+      <h3>🚨 Live Stepper & Unfilled Demand Auto-Flag ${chip("WA + TG Alert", "r")}</h3>
+      <div class="mute" style="margin-bottom:12px">Orders waiting at Quotation stage trigger 1-tap WhatsApp & Telegram follow-up alerts:</div>
+      ${STATE.orders.slice(0, 5).map(function(o) {
+        var waMsg = encodeURIComponent("★ AD PARTSOL Alert: Order #" + o.id + " quotation is ready (Rs." + (o.final_total || 0) + "). Reply to confirm & dispatch!");
+        var cleanPh = String(o.customer_id).replace(/\D/g, "");
+        return `<div class="row">
+          <div class="g1">
+            <b>Order #${o.id} — ${o.dispatch_stage || o.status}</b>
+            <span class="mute">Quoted: ₹${o.final_total || 0} | Customer: ${o.customer_id}</span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <a href="https://wa.me/${cleanPh}?text=${waMsg}" target="_blank" class="act" style="color:var(--green)">WA Alert ↗</a>
+            <button type="button" class="act p" onclick="sendQuickRemind('${o.customer_id}', ${o.id})">Bot Ping</button>
+          </div>
+        </div>`;
+      }).join("") || `<div class="mute">No pending confirmations.</div>`}
+    </div>
+
+    <div class="card c12">
+      <h3>🔀 INV (In-House Stock) vs SUP (Supplier) Fulfillment Split & Verified Barcode Slip</h3>
+      <div class="scroll">
+        <table>
+          <tr><th>Order ID</th><th>Customer</th><th>INV (In-House Stock)</th><th>SUP (Outsourced Suppliers)</th><th>Total Bill</th><th>Fulfillment Slip</th></tr>
+          ${STATE.orders.slice(0, 12).map(function(o) {
+            var oItems = STATE.items.filter(function(i) { return i.order_id === o.id; });
+            var supList = oItems.map(function(i) {
+              var al = JSON.parse(i.allocated_json || "[]").map(function(a) { return a.qty + "x " + i.part_name + " (" + a.name + " @ ₹" + a.price + ")"; }).join(", ");
+              return al || (i.req_qty + "x " + i.part_name + " (Bidding)");
+            }).join("<br>");
+            return `<tr>
+              <td><b>#${o.id}</b></td>
+              <td>${o.customer_id}</td>
+              <td>${chip("Checked", "g")}</td>
+              <td>${supList}</td>
+              <td><b>₹${o.final_total || 0}</b></td>
+              <td><button type="button" class="act p" onclick="printThermalSlip(${o.id})">🖨️ Print Slip / Barcode</button></td>
+            </tr>`;
+          }).join("")}
+        </table>
+      </div>
+    </div>
+  </div>`;
+};
+
+/* 4. 4-STAGE BARCODE SCANNER, QC CHECKLIST (PASS/FAIL/MISSING), ON-HOLD & 80MM SLIP (Files 1, 4, 5) */
+PAGES.qcpack = function() {
+  var onHoldOrds = STATE.orders.filter(function(o) { return o.status === "ON_HOLD" || o.dispatch_stage === "ON_HOLD"; });
+  return `<div class="grid">
+    <div class="card c6">
+      <h3>🔫 4-Stage Barcode Scanner Hub (Collection → Bus Stand)</h3>
+      <div class="mute" style="margin-bottom:12px">Scan or enter 9-Digit Order ID to update live logistics stage & notify customer on WhatsApp/Telegram:</div>
+      <input id="scanOrdId" class="inbox" placeholder="Scan Barcode / Enter Order ID..." value="${STATE.orders[0] ? STATE.orders[0].id : ""}" style="margin-bottom:10px">
+      <div class="grid" style="gap:8px">
+        <div class="c6"><button type="button" class="act" style="width:100%" onclick="scanUpdateStage('COLLECTION_DONE')">1. Mark Collected</button></div>
+        <div class="c6"><button type="button" class="act" style="width:100%" onclick="scanUpdateStage('QC_PASSED')">2. Mark Ready in Hub (QC Pass)</button></div>
+        <div class="c6"><button type="button" class="act" style="width:100%" onclick="scanUpdateStage('DISPATCH_HANDOVER')">3. Hand to Dispatch Boy</button></div>
+        <div class="c6"><button type="button" class="act p" style="width:100%" onclick="scanUpdateStage('BUS_STAND_DROPPED')">4. Dropped at Bus Stand</button></div>
+      </div>
+    </div>
+
+    <div class="card c6">
+      <h3>🛡️ Quality Control (PASS / FAIL / MISSING) & On-Hold Desk ${chip(onHoldOrds.length + " On Hold", "r")}</h3>
+      <div class="mute" style="margin-bottom:10px">If an item fails QC or is missing, put Order On-Hold to auto-reissue Collector Slip:</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <input id="qcOrdId" class="inbox" style="flex:1" placeholder="Order ID" value="${STATE.orders[0] ? STATE.orders[0].id : ""}">
+        <input id="qcReason" class="inbox" style="flex:2" placeholder="Fail/Missing Reason (e.g. Broken Flex / Missing 1x Screen)">
+      </div>
+      <div style="display:flex;gap:8px">
+        <button type="button" class="act p" style="flex:1" onclick="qcDecision('QC_PASSED')">✓ 100% QC Pass → Packing</button>
+        <button type="button" class="act d" style="flex:1" onclick="qcDecision('ON_HOLD')">✕ Fail/Missing → On Hold & Reprint</button>
+      </div>
+      <div style="margin-top:12px">
+        ${onHoldOrds.map(function(o) {
+          return `<div class="row"><div class="g1"><b>#${o.id} (ON HOLD)</b><span class="mute">Reason: ${o.hold_reason || "Failed QC"}</span></div><button type="button" class="act" onclick="printThermalSlip(${o.id}, 'RE-COLLECT SLIP (ON HOLD)')">🖨️ Re-Print Slip</button></div>`;
+        }).join("")}
+      </div>
+    </div>
+
+    <div class="card c12">
+      <h3>📦 Active Packing, 80mm Thermal Collector Slip & Tracking Dispatch</h3>
+      ${STATE.orders.slice(0, 10).map(function(o) {
+        var its = STATE.items.filter(function(i) { return i.order_id === o.id; }).map(function(i) { return i.req_qty + "x " + i.brand + " " + i.part_name; }).join(", ");
+        return `<div class="row">
+          <div class="g1">
+            <b>Order #${o.id} ${chip(o.dispatch_stage || o.status, o.status === "ON_HOLD" ? "r" : "g")}</b>
+            <span class="mute">${its} | Customer: ${o.customer_id}</span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <button type="button" class="act" onclick="printThermalSlip(${o.id})">🖨️ 80mm Collector Slip</button>
+            <input id="trk_${o.id}" class="inbox" style="width:160px" placeholder="AWB / Bus Receipt" value="${o.tracking_id || ""}">
+            <button type="button" class="act p" onclick="shipOrd(${o.id})">Ship Now</button>
+          </div>
+        </div>`;
+      }).join("") || `<div class="mute">No orders yet.</div>`}
+    </div>
+  </div>`;
+};
+
+/* 5. MASTER INVENTORY, CATEGORY BULK PRICE MULTIPLIER, DOA QUARANTINE & AUDIT LOG (Files 3, 10, 12) */
+PAGES.stock = function() {
+  var inv = STATE.inventory || [];
+  var logs = STATE.inventory_logs || [];
+  return `<div class="grid">
+    <div class="card c6">
+      <h3>⚡ Category-Wise Bulk Price Multiplier</h3>
+      <div class="mute" style="margin-bottom:12px">Increase prices across any category or ALL categories by Percentage (%) or Fixed Amount (₹):</div>
+      <div class="grid" style="gap:10px">
+        <div class="c6">
+          <label class="mute">SELECT CATEGORY</label>
+          <select id="bulkCat" class="inbox">
+            <option value="All Categories">⚠️ All Categories (Global Update)</option>
+            <option value="Displays">Displays</option>
+            <option value="Batteries">Batteries</option>
+            <option value="Charging Ports">Charging Ports</option>
+            <option value="Back Panels">Back Panels</option>
+            <option value="Cameras">Cameras</option>
+            <option value="Tools & Glue">Tools & Glue</option>
+          </select>
+        </div>
+        <div class="c6">
+          <label class="mute">MULTIPLIER MODE</label>
+          <select id="bulkMode" class="inbox">
+            <option value="percentage">Percentage (%)</option>
+            <option value="number">Fixed Amount (₹)</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:10px">
+        <input id="bulkVal" type="number" class="inbox" placeholder="Enter Increase Value (e.g. 15)">
+        <button type="button" class="act p" onclick="runBulkMultiplier()">Apply Bulk Update</button>
+      </div>
+    </div>
+
+    <div class="card c6">
+      <h3>📥 Receive Stock & DOA Inspection (Good vs Quarantined)</h3>
+      <div class="grid" style="gap:8px">
+        <div class="c6"><input id="stName" class="inbox" placeholder="Part Name (e.g. iPhone 13 OLED)"></div>
+        <div class="c6">
+          <select id="stCat" class="inbox">
+            <option value="Displays">Displays</option>
+            <option value="Batteries">Batteries</option>
+            <option value="Charging Ports">Charging Ports</option>
+            <option value="Back Panels">Back Panels</option>
+            <option value="Cameras">Cameras</option>
+            <option value="Tools & Glue">Tools & Glue</option>
+          </select>
+        </div>
+        <div class="c4"><input id="stPrice" type="number" class="inbox" placeholder="Sell Price (₹)"></div>
+        <div class="c4"><input id="stGood" type="number" class="inbox" placeholder="+ Good Qty"></div>
+        <div class="c4"><input id="stFaulty" type="number" class="inbox" placeholder="+ Faulty (DOA)"></div>
+      </div>
+      <button type="button" class="act p" style="width:100%;margin-top:10px" onclick="commitStockDOA()">[+] Commit to Master Inventory & Log</button>
+    </div>
+
+    <div class="card c7">
+      <h3>📦 Master Inventory (${inv.length} SKUs)</h3>
+      <div class="scroll">
+        <table>
+          <tr><th>SKU & Part Name</th><th>Category</th><th>Sell Price</th><th>Good Stock</th><th>Quarantined (DOA)</th></tr>
+          ${inv.map(function(i) {
+            return `<tr>
+              <td><b>${i.name}</b><br><span class="mute">${i.sku}</span></td>
+              <td>${chip(i.category)}</td>
+              <td><b>₹${i.price}</b></td>
+              <td>${chip(i.good_qty + " pcs", i.good_qty > 5 ? "g" : "a")}</td>
+              <td>${i.faulty_qty > 0 ? chip(i.faulty_qty + " Faulty", "r") : "0"}</td>
+            </tr>`;
+          }).join("")}
+        </table>
+      </div>
+    </div>
+
+    <div class="card c5">
+      <h3>🕒 Inventory Audit Log (${logs.length})</h3>
+      <div style="max-height:320px;overflow-y:auto">
+        ${logs.map(function(l) {
+          return `<div class="row">
+            <div class="g1"><b>${l.item_name}</b><span class="mute">${l.raw_date} | ${l.triggered_by}</span></div>
+            <div style="text-align:right">
+              ${chip((l.action === "ADD" ? "+" : "-") + l.qty, l.action === "ADD" ? "g" : "r")}
+              <div class="mute">${l.old_stock} → <b>${l.new_stock}</b></div>
+            </div>
+          </div>`;
+        }).join("") || `<div class="mute">No stock logs yet.</div>`}
+      </div>
+    </div>
+  </div>`;
+};
+
+/* 6. HOT vs DEAD STOCK INTELLIGENCE + MARKET vs INTERNAL PRICE + DEMO/GHOST INJECTOR (Files 11, 13) */
+PAGES.intel = function() {
+  var inv = STATE.inventory || [];
+  var dailyPot = 0;
+  inv.forEach(function(i) {
+    var spread = Math.max(150, (Number(i.price) || 1000) - (Number(i.in_house_cost) || 750));
+    dailyPot += spread * (Number(i.daily_freq) || 1.5);
+  });
+  var deadItems = inv.filter(function(i) { return Number(i.days_unsold) >= 90; });
+  var deadCap = deadItems.reduce(function(a, i) { return a + (Number(i.good_qty) * Number(i.price)); }, 0);
+
+  return `<div class="grid">
+    <div class="card c3"><div class="mute">Daily In-House Potential</div><div class="big">₹${Math.round(dailyPot).toLocaleString("en-IN")}</div><div class="mute">Hot Stock Margin</div></div>
+    <div class="card c3"><div class="mute">Weekly Potential</div><div class="big">₹${Math.round(dailyPot * 7).toLocaleString("en-IN")}</div><div class="mute">7-Day Projection</div></div>
+    <div class="card c3"><div class="mute">Yearly Profit Potential</div><div class="big" style="color:var(--green)">₹${Math.round(dailyPot * 365).toLocaleString("en-IN")}</div><div class="mute">If Outsourced → In-House</div></div>
+    <div class="card c3"><div class="mute">Blocked Dead Capital (>90d)</div><div class="big" style="color:var(--red)">₹${deadCap.toLocaleString("en-IN")}</div><div class="mute">${deadItems.length} Unsold SKUs</div></div>
+
+    <div class="card c5">
+      <h3>🧪 Dual-Mode Market & Ghost Query Injector</h3>
+      <div class="mute" style="margin-bottom:10px">Poll live market suppliers directly OR piggyback a Ghost Item onto the next customer order:</div>
+      <select id="ghMode" class="inbox" style="margin-bottom:8px">
+        <option value="direct">Mode 1: Direct Market Supplier Poll</option>
+        <option value="ghost">Mode 2: Ghost Order (Piggyback on Live Order)</option>
+      </select>
+      <input id="ghItem" class="inbox" placeholder="Item Name (e.g. iPad Pro 11 Screen)" style="margin-bottom:8px">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input id="ghQty" type="number" class="inbox" value="1" style="width:90px">
+        <input id="ghNote" class="inbox" placeholder="Specifics (e.g. Original Pull)">
+      </div>
+      <button type="button" class="act p" style="width:100%" onclick="injectGhostQuery()">[+] Inject Market Query</button>
+      <div style="margin-top:12px">
+        ${(STATE.ghost_queries || []).slice(0, 4).map(function(g) {
+          return `<div class="row"><div class="g1"><b>${g.qty}x ${g.item_name}</b><span class="mute">${g.mode.toUpperCase()} | ${g.note || "Std"}</span></div>${chip(g.status, "a")}</div>`;
+        }).join("")}
+      </div>
+    </div>
+
+    <div class="card c7">
+      <h3>⚖️ Internal Stock vs Live Market Supplier Bids & Dead Stock</h3>
+      <div class="scroll">
+        <table>
+          <tr><th>Part Name</th><th>Internal Price</th><th>In-House Cost</th><th>Days Unsold</th><th>Intelligence Status</th></tr>
+          ${inv.map(function(i) {
+            var isDead = Number(i.days_unsold) >= 90;
+            return `<tr>
+              <td><b>${i.name}</b></td>
+              <td><b>₹${i.price}</b> (${i.good_qty} pcs)</td>
+              <td>₹${i.in_house_cost || Math.round(i.price * 0.78)}</td>
+              <td>${chip(i.days_unsold + " Days", isDead ? "r" : "g")}</td>
+              <td>${isDead ? chip("Dead Capital: ₹" + (i.good_qty * i.price), "r") : chip("Hot Moving (" + i.daily_freq + "/day)", "g")}</td>
+            </tr>`;
+          }).join("")}
+        </table>
+      </div>
+    </div>
+  </div>`;
+};
+
+/* 7. 7/14/21+ DAYS FOLLOW-UP KANBAN + OUT-OF-ODISHA SOURCING (Files 6, 8) */
+PAGES.crm = function() {
+  var nowSec = Math.floor(Date.now() / 1000);
+  var col7 = [], col14 = [], col21 = [];
+  STATE.orders.forEach(function(o) {
+    var days = Math.floor(Math.max(0, nowSec - (o.created_at || nowSec)) / 86400);
+    if (o.force_followup) col7.push({ o: o, days: days, forced: true });
+    else if (days < 14) col7.push({ o: o, days: days, forced: false });
+    else if (days < 21) col14.push({ o: o, days: days, forced: false });
+    else col21.push({ o: o, days: days, forced: false });
+  });
+
+  function renderFollowCol(list, title, badgeCol) {
+    return `<div class="card c4">
+      <h3>${title} ${chip(list.length, badgeCol)}</h3>
+      ${list.slice(0, 8).map(function(x) {
+        var o = x.o;
+        var cleanPh = String(o.customer_id).replace(/\D/g, "");
+        var waTxt = encodeURIComponent("Hi, checking in from AD PARTSOL regarding your Order #" + o.id + ". Do you need any mobile spare parts today?");
+        return `<div style="padding:12px;border-radius:16px;box-shadow:var(--in);margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between"><b>Order #${o.id}</b>${x.forced ? chip("Pinned", "a") : chip(x.days + "d ago")}</div>
+          <div class="mute" style="margin:4px 0 8px">Customer: ${o.customer_id} | Total: ₹${o.final_total || 0}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <a href="https://wa.me/${cleanPh}?text=${waTxt}" target="_blank" class="act" style="flex:1;color:var(--green)">WhatsApp</a>
+            <button type="button" class="act" style="flex:1" onclick="sendQuickRemind('${o.customer_id}', ${o.id})">Bot Ping</button>
+            ${!x.forced ? `<button type="button" class="act p" onclick="pinFollowUp(${o.id})" title="Pin to 7-Day">📌</button>` : ""}
+          </div>
+        </div>`;
+      }).join("") || `<div class="mute">No orders in this bracket.</div>`}
+    </div>`;
+  }
+
+  return `<div class="grid">
+    <div class="card c12">
+      <h3>✈️ Out-of-Odisha Sourcing Desk (Option A: Available Only vs Option B: Delhi / Mumbai / Kolkata / Raigarh)</h3>
+      <div class="mute" style="margin-bottom:12px">Send interactive Option A / Option B choice to customer via WhatsApp/Telegram Bot, or broadcast missing parts to external state suppliers:</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <input id="outOrdId" class="inbox" style="width:180px" placeholder="Order ID" value="${STATE.orders[0] ? STATE.orders[0].id : ""}">
+        <button type="button" class="act p" onclick="triggerOutsource('ask_customer')">1. Send Option A / B to Customer Bot</button>
+        <select id="outState" class="inbox" style="width:170px">
+          <option value="Delhi">Delhi Suppliers</option>
+          <option value="Mumbai">Mumbai Suppliers</option>
+          <option value="Kolkata">Kolkata Suppliers</option>
+          <option value="Raigarh">Raigarh Suppliers</option>
+        </select>
+        <button type="button" class="act" onclick="triggerOutsource('broadcast_region')">2. Broadcast to Selected State</button>
+      </div>
+    </div>
+
+    ${renderFollowCol(col7, "1st Follow-Up (0–7 Days / Pinned)", "g")}
+    ${renderFollowCol(col14, "2nd Follow-Up (14 Days)", "a")}
+    ${renderFollowCol(col21, "3rd Follow-Up (21+ Days)", "r")}
+  </div>`;
+};
+
+/* 8. MEGA SUPPLIERS PAGE */
+PAGES.sup = function() {
+  var supStats = STATE.suppliers.map(function(s) {
+    var sBids = STATE.bids.filter(function(b) { return b.supplier_id === s.id; });
+    var sub = sBids.filter(function(b) { return b.status === "SUBMITTED"; });
+    var dec = sBids.filter(function(b) { return b.status === "DECLINED"; });
+    var wonCount = 0;
+    STATE.items.forEach(function(it) {
+      var al = JSON.parse(it.allocated_json || "[]");
+      if (al.some(function(a) { return a.supplier_id === s.id; })) wonCount++;
+    });
+    var avgPrice = sub.length ? Math.round(sub.reduce(function(a, b) { return a + Number(b.price_per_unit || 0); }, 0) / sub.length) : 0;
+    return Object.assign({}, s, { total_req: sBids.length, accepted: sub.length, declined: dec.length, won: wonCount, avgPrice: avgPrice });
+  });
+
+  var maxWon = Math.max.apply(null, [1].concat(supStats.map(function(s) { return s.accepted; })));
+
+  return `<div class="grid">
+    <div class="card c7">
+      <h3>📈 Supplier Growth & Bid Acceptance Graph</h3>
+      <div class="bars">
+        ${supStats.map(function(s) {
+          var h = Math.max(12, Math.round((s.accepted / maxWon) * 100));
+          return `<div><span style="font-weight:800;color:var(--deep)">${s.accepted}</span><i style="height:${h}%"></i><b>${s.name.slice(0, 10)}</b></div>`;
+        }).join("") || `<div class="mute">Add suppliers to view graph</div>`}
+      </div>
+    </div>
+
+    <div class="card c5">
+      <h3>[+] Register New Supplier Partner</h3>
+      <input id="newSupName" class="inbox" placeholder="Supplier / Wholesale Shop Name" style="margin-bottom:8px">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input id="newSupPhone" class="inbox" placeholder="Phone Number">
+        <select id="newSupRegion" class="inbox">
+          <option value="Odisha">Odisha (Local)</option>
+          <option value="Delhi">Delhi</option>
+          <option value="Mumbai">Mumbai</option>
+          <option value="Kolkata">Kolkata</option>
+          <option value="Raigarh">Raigarh</option>
+        </select>
+      </div>
+      <button type="button" class="act p" style="width:100%" onclick="createSup()">[+] Generate Supplier Code & Portal Link</button>
+    </div>
+
+    <div class="card c12">
+      <h3>Supplier Eligibility, Cheapest Selection Scorecard & Portal Links</h3>
+      <div class="scroll">
+        <table>
+          <tr><th>ID & Name</th><th>Region</th><th>Status</th><th>Speed</th><th>Accepted (✅)</th><th>Declined (❌)</th><th>Won</th><th>Verify Code & Portal</th></tr>
+          ${supStats.map(function(s) { return `<tr>
+            <td><b>#${s.id} ${s.name}</b><br><span class="mute">${s.phone || ""}</span></td>
+            <td>${chip(s.region || "Odisha")}</td>
+            <td>${chip(s.is_verified ? (s.is_active ? "Online" : "Sleep") : "Unverified", s.is_verified ? "g" : "a")}</td>
+            <td>${s.avg_resp_sec || 45}s</td>
+            <td><b style="color:var(--green)">${s.accepted}</b></td>
+            <td><b style="color:var(--red)">${s.declined}</b></td>
+            <td>${chip(s.won + " Won", "g")}</td>
+            <td><code>/verify ${s.verify_code}</code> <a href="/s?code=${s.verify_code}" target="_blank" class="act" style="padding:6px 10px;margin-left:6px">Open Panel ↗</a></td>
+          </tr>`; }).join("")}
+        </table>
+      </div>
+    </div>
+  </div>`;
+};
+
+/* 9. UNLIMITED NON-OVERLAPPING MARGIN SLABS TABLE */
 PAGES.margins = function() {
   var s = STATE.settings;
   return `<div class="grid">
@@ -502,86 +908,7 @@ PAGES.margins = function() {
   </div>`;
 };
 
-/* 4. MEGA SUPPLIERS PAGE */
-PAGES.sup = function() {
-  var supStats = STATE.suppliers.map(function(s) {
-    var sBids = STATE.bids.filter(function(b) { return b.supplier_id === s.id; });
-    var sub = sBids.filter(function(b) { return b.status === "SUBMITTED"; });
-    var dec = sBids.filter(function(b) { return b.status === "DECLINED"; });
-    var wonCount = 0;
-    STATE.items.forEach(function(it) {
-      var al = JSON.parse(it.allocated_json || "[]");
-      if (al.some(function(a) { return a.supplier_id === s.id; })) wonCount++;
-    });
-    var avgPrice = sub.length ? Math.round(sub.reduce(function(a, b) { return a + Number(b.price_per_unit || 0); }, 0) / sub.length) : 0;
-    return Object.assign({}, s, { total_req: sBids.length, accepted: sub.length, declined: dec.length, won: wonCount, avgPrice: avgPrice });
-  });
-
-  var maxWon = Math.max.apply(null, [1].concat(supStats.map(function(s) { return s.accepted; })));
-
-  return `<div class="grid">
-    <div class="card c7">
-      <h3>📈 Supplier Growth & Bid Acceptance Graph</h3>
-      <div class="bars">
-        ${supStats.map(function(s) {
-          var h = Math.max(12, Math.round((s.accepted / maxWon) * 100));
-          return `<div><span style="font-weight:800;color:var(--deep)">${s.accepted}</span><i style="height:${h}%"></i><b>${s.name.slice(0, 10)}</b></div>`;
-        }).join("") || `<div class="mute">Add suppliers to view graph</div>`}
-      </div>
-    </div>
-
-    <div class="card c5">
-      <h3>[+] Register New Supplier Partner</h3>
-      <div class="mute" style="margin-bottom:10px">Generates Telegram /verify code & direct 1-tap Supplier Web Panel link:</div>
-      <input id="newSupName" class="inbox" placeholder="Supplier / Wholesale Shop Name" style="margin-bottom:10px">
-      <input id="newSupPhone" class="inbox" placeholder="Supplier Phone Number" style="margin-bottom:12px">
-      <button type="button" class="act p" style="width:100%" onclick="createSup()">[+] Generate Supplier Code & Portal Link</button>
-    </div>
-
-    <div class="card c12">
-      <h3>Supplier Eligibility, Cheapest Selection Scorecard & Portal Links</h3>
-      <div class="scroll">
-        <table>
-          <tr><th>ID & Name</th><th>Status</th><th>Requests</th><th>Accepted (✅)</th><th>Declined (❌)</th><th>Won (Cheapest)</th><th>Avg Bid</th><th>Verify Code & Portal</th></tr>
-          ${supStats.map(function(s) { return `<tr>
-            <td><b>#${s.id} ${s.name}</b><br><span class="mute">${s.phone || ""}</span></td>
-            <td>${chip(s.is_verified ? (s.is_active ? "Online" : "Sleep") : "Unverified", s.is_verified ? "g" : "a")}</td>
-            <td>${s.total_req}</td>
-            <td><b style="color:var(--green)">${s.accepted}</b></td>
-            <td><b style="color:var(--red)">${s.declined}</b></td>
-            <td>${chip(s.won + " Orders Won", "g")}</td>
-            <td>${s.avgPrice ? "₹" + s.avgPrice : "—"}</td>
-            <td><code>/verify ${s.verify_code}</code> <a href="/s?code=${s.verify_code}" target="_blank" class="act" style="padding:6px 10px;margin-left:6px">Open Panel ↗</a></td>
-          </tr>`; }).join("")}
-        </table>
-      </div>
-    </div>
-  </div>`;
-};
-
-/* 5. ORDERS */
-PAGES.orders = function() {
-  return `<div class="grid"><div class="card c12"><h3>All B2B Orders Ledger (${STATE.orders.length})</h3>
-    <div class="scroll"><table>
-      <tr><th>9-Digit Order ID</th><th>Customer</th><th>Parts & Fulfilled Qty</th><th>Status</th><th>Base Cost</th><th>Customer Total</th><th>20% / 80%</th><th>Action</th></tr>
-      ${STATE.orders.map(function(o) {
-        var its = STATE.items.filter(function(i) { return i.order_id === o.id; }).map(function(i) { return `${i.brand} ${i.model} ${i.part_name} (${i.fulfilled_qty}/${i.req_qty})`; }).join("<br>");
-        return `<tr>
-          <td><b>#${o.id}</b></td>
-          <td>${o.customer_id}</td>
-          <td>${its || "—"}</td>
-          <td>${chip(o.status, o.status === "SHIPPED" ? "g" : "a")}</td>
-          <td>₹${o.supplier_base_total || 0}</td>
-          <td><b>₹${o.final_total || 0}</b></td>
-          <td>₹${o.advance_20 || 0} / ₹${o.balance_80 || 0}</td>
-          <td><button type="button" class="act p" onclick="forceCloseOrd(${o.id})">Re-Quote</button></td>
-        </tr>`;
-      }).join("")}
-    </table></div>
-  </div></div>`;
-};
-
-/* 6. PAYMENTS */
+/* 10. PAYMENTS */
 PAGES.pay = function() {
   return `<div class="grid">
     ${STATE.payments.map(function(p) { return `<div class="card c4">
@@ -594,26 +921,7 @@ PAGES.pay = function() {
   </div>`;
 };
 
-/* 7. PACKING */
-PAGES.pack = function() {
-  return `<div class="grid"><div class="card c12"><h3>Packing, Vault Video & Dispatch Desk</h3>
-    ${STATE.orders.map(function(o) {
-      var its = STATE.items.filter(function(i) { return i.order_id === o.id; }).map(function(i) {
-        var al = JSON.parse(i.allocated_json || "[]").map(function(a) { return `${a.name} (${a.qty} pcs @ ₹${a.price})`; }).join(", ");
-        return `${i.brand} ${i.model} ${i.part_name} × ${i.fulfilled_qty} [Pickup: ${al || "Pending"}]`;
-      }).join(" • ");
-      return `<div class="row">
-        <div class="g1"><b>Order #${o.id} ${chip(o.status)}</b><span class="mute">${its}</span></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <input id="trk_${o.id}" class="inbox" style="width:180px" placeholder="Tracking ID" value="${o.tracking_id || ""}">
-          <button type="button" class="act p" onclick="shipOrd(${o.id})">Ship & Notify</button>
-        </div>
-      </div>`;
-    }).join("") || `<div class="mute">No active orders.</div>`}
-  </div></div>`;
-};
-
-/* 8. 250+ GRANULAR FLIGHT CONTROLS MATRIX */
+/* 11. 250+ GRANULAR FLIGHT CONTROLS MATRIX */
 var CTRL_SCHEMA = {
   pricing: {
     title: "1. Pricing, Discounts & Tax Controls (35 Controls)",
@@ -649,7 +957,7 @@ var CTRL_SCHEMA = {
       ["kendrapara_local_delivery", "Kendrapara District Local Delivery (₹)", "50"],
       ["out_state_delivery", "National Out-of-State Delivery Charge (₹)", "140"],
       ["free_delivery_above", "Free Delivery Threshold Amount (₹)", "15000"],
-      ["default_courier_name", "Default Courier Partner Name", "DTDC / India Post"],
+      ["default_courier_name", "Default Courier Partner Name", "DTDC / Bus Service"],
       ["dispatch_cutoff_hour", "Same-Day Dispatch Cutoff Hour (24h)", "16"],
       ["est_delivery_days_local", "Estimated Delivery Days (Odisha)", "2"],
       ["est_delivery_days_nat", "Estimated Delivery Days (National)", "5"]
@@ -665,13 +973,13 @@ var CTRL_SCHEMA = {
     title: "3. Bidding Engine, Fractional Split & SLA Timers (35 Controls)",
     inputs: [
       ["bidding_window_mins", "Supplier Bidding Window Duration (Minutes)", "30"],
-      ["supplier_timeout_sec", "Supplier Input Lock Timeout (Seconds)", "60"],
+      ["rush_window_sec", "Global Rush Order Bundling Window (Seconds)", "60"],
+      ["auto_flag_mins", "Unfilled Demand Auto-Flag Alert Timer (Minutes)", "120"],
       ["max_split_suppliers", "Max Suppliers for Fractional Split per Item", "3"],
       ["early_close_bid_count", "Auto-Close Early if X Suppliers Bid Full Qty", "5"],
       ["inv_accept_sla_sec", "Inventory Accept/Decline SLA Timer (Seconds)", "120"],
       ["admin_select_sla_sec", "Admin Supplier Selection SLA Timer (Seconds)", "300"],
-      ["quote_expiry_hours", "Customer Quotation Validity (Hours)", "12"],
-      ["rebid_extension_mins", "Default Window Extension Duration (Minutes)", "15"]
+      ["quote_expiry_hours", "Customer Quotation Validity (Hours)", "12"]
     ],
     toggles: [
       ["enable_fractional_split", "Enable Multi-Supplier Fractional Stock Split", "1"],
@@ -693,8 +1001,7 @@ var CTRL_SCHEMA = {
       ["payment_remind_mins", "Payment Escalation Alert Interval (Minutes)", "2"],
       ["max_fraud_strikes", "Fake Screenshot Strikes Before Shadow-Ban", "3"],
       ["shadow_ban_hours", "Automatic Shadow-Ban Duration (Hours)", "12"],
-      ["amount_tolerance_rs", "AI OCR Amount Match Tolerance (± ₹)", "5"],
-      ["high_value_2fa_limit", "Require Super Admin Approval Above (₹)", "25000"]
+      ["amount_tolerance_rs", "AI OCR Amount Match Tolerance (± ₹)", "5"]
     ],
     toggles: [
       ["enable_qr_pay", "Enable Dynamic Amount-Locked QR Code", "1"],
@@ -725,47 +1032,20 @@ var CTRL_SCHEMA = {
     ]
   },
   channels: {
-    title: "6. WhatsApp 24h Cost Guard & Telegram Promo (30 Controls)",
+    title: "6. WhatsApp Native Flows & Telegram Promo (30 Controls)",
     inputs: [
+      ["wa_flow_id_setup", "Meta WhatsApp Setup Flow ID (SHOP_SETUP)", ""],
+      ["wa_flow_id_order", "Meta WhatsApp Order Flow ID (PRODUCT_ORDER)", ""],
       ["tg_promo_percent", "Telegram Migration Discount Promo (%)", "25"],
       ["wa_keepalive_hour", "WhatsApp Free Session Keep-Alive Ping Hour", "22"],
-      ["tg_typing_frame_ms", "Telegram Typing Animation Frame Speed (ms)", "150"],
-      ["support_working_hours", "Displayed Support Working Hours", "10AM - 4PM"]
+      ["tg_typing_frame_ms", "Telegram Typing Animation Frame Speed (ms)", "150"]
     ],
     toggles: [
       ["wa_instant_blue_tick", "Send Instant Blue Read-Receipt on WhatsApp", "1"],
       ["wa_zero_paid_templates", "Strict Zero-Cost Mode (Block Paid Utility Templates)", "1"],
       ["tg_typing_loader_on", "Enable Telegram 'T -> Typ -> Typing...' Animation", "1"],
-      ["send_web_form_on_start", "Send Quick Registration Web Form Link on First Message", "1"],
+      ["send_web_form_on_start", "Send Hidden Form Button on First Message", "1"],
       ["send_vip_bridge_pass", "Send Verified Partner Pass Between Setup & Order", "1"]
-    ]
-  },
-  packing: {
-    title: "7. Packing, Video Vault & Inventory Rules (25 Controls)",
-    inputs: [
-      ["vault_group_id_cfg", "Telegram Media Vault Group ID", "-1004388781992"],
-      ["packing_group_id_cfg", "Telegram Packing Team Group ID", "-1004221312474"],
-      ["low_stock_threshold", "Inventory Low-Stock Alert Threshold (pcs)", "5"]
-    ],
-    toggles: [
-      ["mandatory_packing_video", "Require Packing Video Before Sending 80% Balance QR", "1"],
-      ["auto_backup_video_vault", "Automatically Backup Every Packing Video to Vault Group", "1"],
-      ["unlock_ship_only_after_80", "Lock 'Ship Now' Button Until 80% Payment Approved", "1"],
-      ["mask_cust_phone_packing", "Mask Customer Phone Number on Packing Dashboard", "1"]
-    ]
-  },
-  security: {
-    title: "8. Staff Security, Privacy & Audit Controls (30 Controls)",
-    inputs: [
-      ["support_reply_sla_mins", "Human Support Reply SLA (Minutes)", "10"],
-      ["ticket_resolve_sla_hrs", "Support Ticket Resolution SLA (Hours)", "24"],
-      ["undo_window_seconds", "Accidental Tap Undo Window (Seconds)", "30"]
-    ],
-    toggles: [
-      ["mask_phone_default", "Mask Customer Phone by Default Across Staff Panels", "1"],
-      ["log_every_setting_change", "Send Real-Time Alert to Logs Bot on Setting Edit", "1"],
-      ["strict_role_isolation", "Block Buying Price & Margin on Payment/Packing APIs", "1"],
-      ["allow_shift_handover", "Enable Shift Handover Notes Between Staff", "1"]
     ]
   }
 };
@@ -797,33 +1077,7 @@ PAGES.controls = function() {
   </div>`;
 };
 
-/* 9. CUSTOMERS & DIRECT CHAT */
-PAGES.chat = function() {
-  return `<div class="grid">
-    <div class="card c7">
-      <h3>Registered B2B Customers (${STATE.customers.length})</h3>
-      <div class="scroll"><table>
-        <tr><th>Customer ID</th><th>Name & Shop</th><th>Phone</th><th>Address</th><th>Lang</th><th>Chat</th></tr>
-        ${STATE.customers.map(function(c) { return `<tr>
-          <td><b>${c.id}</b></td>
-          <td>${c.full_name || "—"}</td>
-          <td>${c.phone || "—"}</td>
-          <td>${c.address || "—"}</td>
-          <td>${chip(c.lang)}</td>
-          <td><button type="button" class="act" onclick="$('#dmCid').value='${c.id}'">Message</button></td>
-        </tr>`; }).join("")}
-      </table></div>
-    </div>
-    <div class="card c5">
-      <h3>Send Direct Message to Customer</h3>
-      <input id="dmCid" class="inbox" placeholder="Customer ID (tg_... or wa_...)" value="${STATE.customers[0] ? STATE.customers[0].id : ""}" style="margin-bottom:10px">
-      <input id="dmTxt" class="inbox" placeholder="Type message..." style="margin-bottom:12px">
-      <button type="button" class="act p" style="width:100%" onclick="sendDM()">Send Direct Message</button>
-    </div>
-  </div>`;
-};
-
-/* 10. STAFF & DEDICATED ROLE PORTALS */
+/* 12. STAFF & DEDICATED ROLE PORTALS */
 PAGES.staff = function() {
   return `<div class="grid">
     <div class="card c6">
@@ -831,24 +1085,29 @@ PAGES.staff = function() {
       <div class="row"><div class="g1"><b>Super Admin Cockpit</b><span class="mute">/a</span></div><a href="/a" class="act">Open ↗</a></div>
       <div class="row"><div class="g1"><b>Supplier Partner Portal</b><span class="mute">/s (Pending / Accepted / Declined)</span></div><a href="/s" target="_blank" class="act">Open ↗</a></div>
       <div class="row"><div class="g1"><b>Payment Manager Portal</b><span class="mute">/pay (20% & 80% Verification)</span></div><a href="/pay" target="_blank" class="act">Open ↗</a></div>
-      <div class="row"><div class="g1"><b>Packing & Delivery Portal</b><span class="mute">/p (Pickup, Video & Tracking)</span></div><a href="/p" target="_blank" class="act">Open ↗</a></div>
-      <div class="row"><div class="g1"><b>Customer Setup & Order Portal</b><span class="mute">/c (Forms & 9-Digit Tracker)</span></div><a href="/c" target="_blank" class="act">Open ↗</a></div>
+      <div class="row"><div class="g1"><b>Barcode Logistics, QC & Packing Hub</b><span class="mute">/p (Collection, Hub, Dispatch & Bus Stand)</span></div><a href="/p" target="_blank" class="act">Open ↗</a></div>
+      <div class="row"><div class="g1"><b>Customer Setup & Order Portal</b><span class="mute">/c (Standalone Forms & 5-Stage Tracker)</span></div><a href="/c" target="_blank" class="act">Open ↗</a></div>
     </div>
     <div class="card c6">
-      <h3>Generate Staff Login Token</h3>
+      <h3>Generate Staff Login Token (ID & Password Provider)</h3>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <select id="stRole" class="inbox">
-          <option value="order_desk">Order Desk</option>
-          <option value="payment">Payment Manager</option>
-          <option value="packing">Packing Team</option>
-          <option value="inventory">Inventory Manager</option>
-          <option value="support">Support Agent</option>
-          <option value="finance">Accountant</option>
+          <option value="collection">1. Collection Team</option>
+          <option value="hub">2. Checking Hub (QC)</option>
+          <option value="dispatch">3. Dispatch Team</option>
+          <option value="delivery">4. Delivery Team (Bus Stand)</option>
+          <option value="payment">5. Payment Manager</option>
+          <option value="order_desk">6. Order Desk</option>
+          <option value="inventory">7. Inventory Manager</option>
+          <option value="support">8. Support Agent</option>
         </select>
-        <input id="stPhone" class="inbox" placeholder="Staff Phone">
+        <input id="stPhone" class="inbox" placeholder="Username / Phone">
       </div>
-      <button type="button" class="act p" style="width:100%;margin-bottom:16px" onclick="createStaff()">[+] Create Staff Token</button>
-      ${STATE.staff_list.map(function(s) { return `<div class="row"><div class="g1"><b>${s.phone} (${s.role.toUpperCase()})</b><span class="mute">Token: ${s.access_token}</span></div>${chip("Active", "g")}</div>`; }).join("")}
+      <button type="button" class="act p" style="width:100%;margin-bottom:16px" onclick="createStaff()">[+] Create Staff Credentials</button>
+      ${STATE.staff_list.map(function(s) { return `<div class="row">
+        <div class="g1"><b>${s.phone} (${s.role.toUpperCase()})</b><span class="mute">Password Token: ${s.access_token}</span></div>
+        <button type="button" class="act d" onclick="delStaff(${s.id})">Delete</button>
+      </div>`; }).join("")}
       <button type="button" class="stop" style="margin-top:16px" onclick="emergencyStop()">EMERGENCY STOP ALL BOTS</button>
     </div>
   </div>`;
@@ -861,7 +1120,7 @@ function go(p, skipScroll) {
   if (!skipScroll) scrollTo(0, 0);
 }
 
-/* Actions with Loader */
+/* ALL LIVE ACTIONS */
 async function assignSup() {
   var order_id = $("#asgOrd").value.trim(), supplier_id = $("#asgSup").value, unit_price = $("#asgPrice").value.trim();
   if (!order_id || !supplier_id) return toast("Select Order & Supplier");
@@ -873,6 +1132,12 @@ async function quickPickSup(order_id, supplier_id, unit_price) {
   showLoader("Selecting Winner...", "Calculating slab margins & dispatching invoice");
   var r = await api("assign-supplier", { order_id: order_id, supplier_id: supplier_id, unit_price: unit_price });
   hideLoader(); toast(r.msg || "Winner Selected!"); await syncAll(true);
+}
+async function setAllocLogic(logic) {
+  STATE.settings.allocation_logic = logic;
+  await api("save-settings", { allocation_logic: logic });
+  toast("★ Allocation Logic set to: " + logic.toUpperCase());
+  go("bidroom", true);
 }
 async function forceCloseAll() {
   showLoader("Closing Bidding Windows...", "Running fractional split & slab margin engine");
@@ -898,11 +1163,7 @@ async function delMarginSlab(id) {
 }
 async function saveFallbackMargin() {
   showLoader("Saving Delivery & Margin...");
-  await api("save-settings", {
-    delivery_charge: $("#fDeliv").value,
-    margin_percent: $("#fMarg").value,
-    rounding_step: $("#fRound").value
-  });
+  await api("save-settings", { delivery_charge: $("#fDeliv").value, margin_percent: $("#fMarg").value, rounding_step: $("#fRound").value });
   hideLoader(); toast("★ Delivery & Fallback Saved"); await syncAll(true);
 }
 async function saveCtrlInputs() {
@@ -913,10 +1174,10 @@ async function saveCtrlInputs() {
   hideLoader(); toast("★ Category Parameters Saved!"); await syncAll(true);
 }
 async function createSup() {
-  var name = $("#newSupName").value.trim(), phone = $("#newSupPhone").value.trim();
+  var name = $("#newSupName").value.trim(), phone = $("#newSupPhone").value.trim(), region = $("#newSupRegion").value;
   if (!name) return toast("Enter supplier name");
   showLoader("Creating Supplier Code...");
-  var r = await api("add-supplier", { name: name, phone: phone });
+  var r = await api("add-supplier", { name: name, phone: phone, region: region });
   hideLoader(); toast(r.msg); await syncAll(true);
 }
 async function payAct(payment_id, decision) {
@@ -931,19 +1192,93 @@ async function shipOrd(order_id) {
   var r = await api("ship-order", { order_id: order_id, tracking_id: tracking_id });
   hideLoader(); toast(r.msg); await syncAll(true);
 }
-async function sendDM() {
-  var customer_id = $("#dmCid").value.trim(), text = $("#dmTxt").value.trim();
-  if (!customer_id || !text) return toast("Enter Customer ID & Message");
-  showLoader("Sending Message...");
-  var r = await api("send-chat", { customer_id: customer_id, text: text });
-  hideLoader(); $("#dmTxt").value = ""; toast(r.msg);
+async function sendQuickRemind(customer_id, order_id) {
+  showLoader("Sending Bot Follow-Up...");
+  var r = await api("send-chat", { customer_id: customer_id, text: "Reminder regarding your Order #" + order_id + ". Reply here if you need any assistance or wish to confirm your order!" });
+  hideLoader(); toast(r.msg || "Follow-up sent!");
 }
 async function createStaff() {
   var role = $("#stRole").value, phone = $("#stPhone").value.trim();
-  if (!phone) return toast("Enter phone");
+  if (!phone) return toast("Enter username/phone");
   showLoader("Generating Staff Token...");
   var r = await api("add-staff", { role: role, phone: phone });
   hideLoader(); toast(r.msg); await syncAll(true);
+}
+async function delStaff(id) {
+  await api("delete-staff", { id: id }); toast("Staff user removed"); await syncAll(true);
+}
+async function scanUpdateStage(stage) {
+  var id = $("#scanOrdId").value.trim();
+  if (!id) return toast("Scan or enter Order ID first!");
+  showLoader("Updating Logistics Stage...", stage);
+  var r = await api("scan-stage", { order_id: id, stage: stage });
+  hideLoader(); toast(r.msg || r.error); await syncAll(true);
+}
+async function qcDecision(stage) {
+  var id = $("#qcOrdId").value.trim(), reason = $("#qcReason").value.trim();
+  if (!id) return toast("Enter Order ID");
+  showLoader("Submitting QC Report...");
+  var r = await api("scan-stage", { order_id: id, stage: stage, hold_reason: reason });
+  hideLoader(); toast(r.msg || r.error);
+  if (stage === "ON_HOLD") printThermalSlip(id, "RE-COLLECT SLIP (ON HOLD)");
+  await syncAll(true);
+}
+async function runBulkMultiplier() {
+  var cat = $("#bulkCat").value, mode = $("#bulkMode").value, val = $("#bulkVal").value;
+  if (!val) return toast("Enter increase value");
+  if (cat === "All Categories" && !confirm("WARNING: Global Update! Change price of EVERY item in inventory?")) return;
+  showLoader("Applying Bulk Price Multiplier...");
+  var r = await api("bulk-price-update", { category: cat, mode: mode, value: val });
+  hideLoader(); toast(r.msg || r.error); await syncAll(true);
+}
+async function commitStockDOA() {
+  var name = $("#stName").value.trim(), cat = $("#stCat").value, price = $("#stPrice").value, good = $("#stGood").value, faulty = $("#stFaulty").value;
+  if (!name) return toast("Enter Part Name");
+  showLoader("Updating Master Inventory & Audit Log...");
+  var r = await api("adjust-stock", { name: name, category: cat, price: price, good_delta: good, faulty_delta: faulty });
+  hideLoader(); toast(r.msg); await syncAll(true);
+}
+async function injectGhostQuery() {
+  var mode = $("#ghMode").value, item_name = $("#ghItem").value.trim(), qty = $("#ghQty").value, note = $("#ghNote").value.trim();
+  if (!item_name) return toast("Enter item name");
+  showLoader("Injecting Query...", mode.toUpperCase());
+  var r = await api("inject-query", { mode: mode, item_name: item_name, qty: qty, note: note });
+  hideLoader(); toast(r.msg); await syncAll(true);
+}
+async function triggerOutsource(mode) {
+  var order_id = $("#outOrdId").value.trim(), region = $("#outState").value;
+  if (!order_id) return toast("Enter Order ID");
+  showLoader("Processing Outsource Action...");
+  var r = await api("outsource-options", { order_id: order_id, mode: mode, region: region });
+  hideLoader(); toast(r.msg || r.error); await syncAll(true);
+}
+async function pinFollowUp(order_id) {
+  var r = await api("force-followup", { order_id: order_id });
+  toast(r.msg); await syncAll(true);
+}
+function printThermalSlip(orderId, titleOverride) {
+  var o = STATE.orders.find(function(x) { return String(x.id) === String(orderId); }) || { id: orderId, customer_id: "Customer", final_total: 0 };
+  var its = STATE.items.filter(function(i) { return String(i.order_id) === String(orderId); });
+  var itemLines = its.map(function(i) {
+    var al = JSON.parse(i.allocated_json || "[]").map(function(a) { return a.name; }).join(", ");
+    return "<div style='margin:6px 0;border-bottom:1px dashed #ccc;padding-bottom:4px'>[ ] <b>" + i.req_qty + "x " + i.brand + " " + (i.model || "") + " " + i.part_name + "</b> (" + (i.variant || "Std") + ")<br><small>Pickup: " + (al || "Warehouse/Supplier") + "</small></div>";
+  }).join("");
+
+  var w = window.open("", "_blank", "width=380,height=600");
+  w.document.write("<html><head><title>Slip #" + o.id + "</title></head><body style='font-family:monospace;width:78mm;margin:0 auto;padding:10px;color:#000'>" +
+    "<div style='text-align:center;border-bottom:2px dashed #000;padding-bottom:8px;margin-bottom:8px'>" +
+    "<h2 style='margin:0'>AD PARTSOL</h2><div style='font-size:11px'>" + (titleOverride || "COLLECTION & FULFILLMENT SLIP") + "</div>" +
+    "<div style='font-size:11px'>Date: " + new Date().toLocaleString("en-IN") + "</div></div>" +
+    "<div><b>Order ID: #" + o.id + "</b></div><div>Customer: " + o.customer_id + "</div>" +
+    (o.hold_reason ? "<div style='background:#000;color:#fff;padding:4px;margin:6px 0;font-size:11px'>HOLD: " + o.hold_reason + "</div>" : "") +
+    "<div style='margin-top:10px;font-weight:bold;text-decoration:underline'>ITEMS CHECKLIST:</div>" +
+    (itemLines || "<div>[ ] Spare Parts Order #" + o.id + "</div>") +
+    "<div style='margin-top:12px;border-top:2px dashed #000;padding-top:8px;text-align:center'>" +
+    "<div style='font-size:14px;font-weight:bold'>TOTAL: Rs." + (o.final_total || 0) + "</div>" +
+    "<div style='font-size:22px;letter-spacing:3px;margin-top:8px'>*" + o.id + "*</div>" +
+    "<div style='font-size:10px'>VERIFIED BY AD PARTSOL ENGINE</div></div>" +
+    "<script>setTimeout(function(){window.print();},300);<\/script></body></html>");
+  w.document.close();
 }
 async function emergencyStop() {
   if (!confirm("Pause all Bots immediately?")) return;
