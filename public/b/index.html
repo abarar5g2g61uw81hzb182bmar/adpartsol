@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>AD PartSol — Super Admin Cockpit</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   AD PartSol — Minimalist Monochrome Design System
+   Presentation layer only. All IDs, classes, JS hooks preserved.
+   Legacy variable names are kept (remapped) so every inline
+   style rendered by the existing JS picks up the new look.
+   ============================================================ */
+:root{
+  --page:#FFFFFF;          /* primary background */
+  --bg:#F8F8F8;           /* secondary background / inset surfaces */
+  --hi:#F8F8F8;--lo:#F8F8F8;
+  --cv:#FFFFFF;           /* card / panel surface */
+  --ink:#080808;          /* primary text */
+  --mute:#777777;         /* secondary text */
+  --line:#EAEAEA;         /* borders */
+  --hover:#F3F3F3;        /* hover background */
+  --inv:#FFFFFF;          /* text on active (black) elements */
+  --teal:#080808;--teal2:#9A9A9A;--deep:#080808;
+  --amber:#8A6414;--red:#B3261E;--green:#1E7347;
+  --sd:rgba(0,0,0,.10);--sl:transparent;
+  --rz:none;--rs:none;
+  --in:inset 0 0 0 1px var(--line);
+  --r:10px;--rc:14px;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+:root[data-theme="dark"]{
+  --page:#080808;--bg:#121212;--hi:#121212;--lo:#121212;--cv:#0E0E0E;
+  --ink:#F2F2F2;--mute:#8C8C8C;--line:#262626;--hover:#1A1A1A;--inv:#080808;
+  --teal:#F2F2F2;--teal2:#6E6E6E;--deep:#F2F2F2;
+  --amber:#D9A441;--red:#F0716A;--green:#4FC083;
+  --sd:rgba(0,0,0,.5);
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;max-width:100vw;overflow-x:hidden;font-family:"Inter","Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:14px;line-height:1.5;color:var(--ink);background:var(--page);-webkit-font-smoothing:antialiased;letter-spacing:-.005em}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+a{color:inherit}
+code{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11.5px;background:var(--bg);border:1px solid var(--line);padding:2px 6px;border-radius:6px}
+svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+::selection{background:var(--ink);color:var(--inv)}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+input:focus-visible,select:focus-visible{outline:0}
+
+/* ---------- Abstract architectural backdrop (very subtle) ---------- */
+body::before,body::after{content:"";position:fixed;pointer-events:none;z-index:0;border-radius:50%}
+body::before{width:720px;height:720px;right:-260px;top:-340px;background:radial-gradient(circle at 35% 35%,#F6F6F6 0,#F1F1F1 55%,transparent 56%);box-shadow:inset 0 0 0 1px #F0F0F0}
+body::after{width:520px;height:520px;left:-200px;bottom:-300px;background:radial-gradient(circle at 60% 40%,#F7F7F7 0,#F2F2F2 60%,transparent 61%);box-shadow:inset 0 0 0 1px #F0F0F0}
+:root[data-theme="dark"] body::before,:root[data-theme="dark"] body::after{background:radial-gradient(circle,#101010 0,#0C0C0C 60%,transparent 61%);box-shadow:inset 0 0 0 1px #161616}
+
+/* ---------- Loader ---------- */
+#loader{position:fixed;inset:0;z-index:9999;background:rgba(255,255,255,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;place-items:center;padding:24px;transition:opacity .3s ease}
+:root[data-theme="dark"] #loader{background:rgba(8,8,8,.84)}
+#loader.on{display:grid}
+.ldr-card{background:var(--cv);border:1px solid var(--line);border-radius:20px;padding:32px 28px;display:flex;flex-direction:column;align-items:center;text-align:center;max-width:320px;width:100%;animation:popIn .25s var(--ease)}
+@keyframes popIn{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+.orb-wrap{width:84px;height:84px;position:relative;display:grid;place-items:center;margin-bottom:18px}
+.orb-ring1{position:absolute;inset:0;border-radius:50%;border:2px solid var(--line);border-top-color:var(--ink);animation:spinOrb 1s linear infinite}
+.orb-ring2{position:absolute;inset:10px;border-radius:50%;border:2px solid transparent;border-bottom-color:var(--teal2);animation:spinOrb 1.6s linear infinite reverse}
+.orb-core{width:48px;height:48px;border-radius:50%;background:var(--ink);color:var(--inv);display:grid;place-items:center;font-weight:700;font-size:14px;letter-spacing:.04em;animation:pulseCore 1.6s ease-in-out infinite}
+@keyframes spinOrb{to{transform:rotate(360deg)}}
+@keyframes pulseCore{50%{transform:scale(.94);opacity:.85}}
+.ldr-title{font-weight:600;font-size:15px;margin-bottom:4px;letter-spacing:-.01em}
+.ldr-sub{font-size:12px;color:var(--mute);line-height:1.45}
+
+/* ---------- Login ---------- */
+#login{position:fixed;inset:0;display:grid;place-items:center;padding:18px;z-index:100;background:var(--page);transition:opacity .4s;overflow:hidden}
+#login::before{content:"";position:absolute;width:880px;height:880px;border-radius:50%;right:-300px;top:-380px;background:radial-gradient(circle at 30% 30%,#F8F8F8 0,#F0F0F0 60%,transparent 61%);box-shadow:inset 0 0 0 1px #EDEDED}
+#login::after{content:"";position:absolute;width:640px;height:640px;border-radius:50% 50% 0 50%;left:-220px;bottom:-320px;background:linear-gradient(135deg,#F6F6F6,#EEEEEE);box-shadow:inset 0 0 0 1px #EAEAEA}
+:root[data-theme="dark"] #login::before,:root[data-theme="dark"] #login::after{background:#0F0F0F;box-shadow:inset 0 0 0 1px #1A1A1A}
+#login.out{opacity:0;pointer-events:none}
+.lbox{position:relative;z-index:1;width:min(400px,100%);background:var(--cv);border:1px solid var(--line);border-radius:20px;padding:36px 28px 28px}
+.logo{width:56px;height:56px;border-radius:14px;background:var(--ink);color:var(--inv);display:grid;place-items:center;font-weight:700;font-size:18px;letter-spacing:.04em;margin:0 0 22px;position:relative}
+.logo:before{display:none}
+.logo span{position:relative}
+.lbox h1{margin:0;text-align:left;font-size:28px;font-weight:700;letter-spacing:-.035em;line-height:1.1}
+.lbox p{text-align:left;color:var(--mute);margin:8px 0 26px;font-size:13px}
+.fld{display:flex;align-items:center;gap:10px;background:var(--cv);border:1px solid var(--line);border-radius:var(--r);padding:0 14px;margin-bottom:12px;color:var(--mute);transition:border-color .2s,box-shadow .2s}
+.fld:focus-within{border-color:var(--ink);box-shadow:0 0 0 3px rgba(128,128,128,.14)}
+.fld input{flex:1;border:0;background:none;padding:14px 0;outline:0;font-size:16px;color:var(--ink);min-width:0}
+.btn{width:100%;padding:14px;border-radius:var(--r);background:var(--ink);color:var(--inv);font-weight:600;font-size:14.5px;letter-spacing:-.005em;border:1px solid var(--ink);transition:opacity .2s,transform .12s}
+.btn:hover{opacity:.88}
+.btn:active{transform:scale(.985)}
+.err{color:var(--red);font-size:12.5px;text-align:left;min-height:20px;margin-top:12px;font-weight:500}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+/* ---------- App shell ---------- */
+#app{display:none;min-height:100dvh;padding:0;gap:0;grid-template-columns:104px minmax(0,1fr);position:relative;z-index:1}
+#app.show{display:grid}
+aside{background:var(--cv);border-right:1px solid var(--line);border-radius:0;padding:18px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;position:sticky;top:0;height:100dvh;z-index:40}
+aside .av{width:44px;height:44px;border-radius:12px;background:var(--ink);color:var(--inv);display:grid;place-items:center;font-weight:700;font-size:15px;letter-spacing:.04em;margin-bottom:10px;flex:none}
+nav{display:flex;flex-direction:column;gap:4px;width:100%;overflow-y:auto;scrollbar-width:none;flex:1;padding:2px}
+nav::-webkit-scrollbar{display:none}
+nav button{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:var(--r);font-size:9.5px;font-weight:500;letter-spacing:.01em;color:var(--mute);transition:background .2s var(--ease),color .2s var(--ease);flex:none;text-align:center}
+nav button:hover{background:var(--hover);color:var(--ink)}
+nav button.on{background:var(--ink);color:var(--inv);box-shadow:none;font-weight:600}
+.tools{display:flex;flex-direction:column;gap:8px;padding-top:10px;border-top:1px solid var(--line);width:100%;align-items:center}
+.tools button,.mbtn{width:40px;height:40px;border-radius:var(--r);display:grid;place-items:center;border:1px solid var(--line);color:var(--ink);background:var(--cv);flex:none;transition:background .2s,border-color .2s}
+.tools button:hover,.mbtn:hover{background:var(--hover);border-color:#CFCFCF}
+.tools button:active,.mbtn:active{background:var(--ink);color:var(--inv);box-shadow:none}
+.mbtn{display:none}
+
+main{min-width:0;width:100%;padding:30px 40px 48px;position:relative}
+.top{display:flex;gap:12px;align-items:center;margin-bottom:28px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line)}
+.top h2{margin:0;font-size:30px;font-weight:700;letter-spacing:-.035em;line-height:1.1;flex:1;min-width:160px}
+.top h2 small{display:block;font-size:11px;font-weight:500;color:var(--mute);margin-top:8px;letter-spacing:.08em;text-transform:uppercase}
+.search{display:flex;align-items:center;gap:10px;background:var(--cv);border:1px solid var(--line);border-radius:var(--r);padding:0 14px;min-width:240px;flex:1;max-width:460px;color:var(--mute);transition:border-color .2s,box-shadow .2s}
+.search:focus-within{border-color:var(--ink);box-shadow:0 0 0 3px rgba(128,128,128,.14)}
+.search input{border:0;background:none;outline:0;padding:11px 0;width:100%;font-size:14px;color:var(--ink)}
+
+/* ---------- Grid & cards ---------- */
+.grid{display:grid;gap:16px;grid-template-columns:repeat(12,minmax(0,1fr))}
+.c3{grid-column:span 3}.c4{grid-column:span 4}.c5{grid-column:span 5}.c6{grid-column:span 6}.c7{grid-column:span 7}.c8{grid-column:span 8}.c12{grid-column:span 12}
+.card{background:var(--cv);border:1px solid var(--line);border-radius:var(--rc);padding:22px;box-shadow:none;min-width:0;overflow:hidden}
+.card h3{margin:0 0 16px;font-size:14px;font-weight:600;letter-spacing:-.01em;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.card label.mute{display:block;margin-bottom:6px;font-size:10.5px;font-weight:500;letter-spacing:.07em;text-transform:uppercase}
+.big{font-size:30px;font-weight:600;letter-spacing:-.035em;line-height:1.15;color:var(--ink);margin:4px 0}
+.mute{color:var(--mute);font-size:12px;line-height:1.5}
+.chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:500;border:1px solid var(--line);box-shadow:none;color:var(--ink);background:var(--bg);white-space:nowrap}
+.chip.r{color:var(--red);border-color:rgba(179,38,30,.28)}
+.chip.a{color:var(--amber);border-color:rgba(138,100,20,.30)}
+.chip.g{color:var(--green);border-color:rgba(30,115,71,.28)}
+
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.row:last-child{border:0}
+.row .g1{flex:1;min-width:150px}
+.row b{display:block;font-size:13.5px;font-weight:600;letter-spacing:-.01em}
+
+/* ---------- Inputs & buttons ---------- */
+.inbox{background:var(--cv);border:1px solid var(--line);box-shadow:none;border-radius:var(--r);padding:10px 13px;color:var(--ink);font-size:14px;font-weight:400;outline:0;width:100%;min-width:0;transition:border-color .2s,box-shadow .2s}
+.inbox::placeholder,.fld input::placeholder,.search input::placeholder{color:#A5A5A5}
+.inbox:hover{border-color:#CFCFCF}
+.inbox:focus{border-color:var(--ink);box-shadow:0 0 0 3px rgba(128,128,128,.14)}
+select.inbox{appearance:none;-webkit-appearance:none;padding-right:34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23777' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.act{padding:9px 16px;border-radius:var(--r);font-weight:500;font-size:12.5px;color:var(--ink);border:1px solid var(--line);box-shadow:none;background:var(--cv);white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;text-decoration:none;transition:background .2s,border-color .2s,color .2s,transform .1s}
+.act:hover{background:var(--hover);border-color:#B8B8B8}
+.act:active{transform:scale(.98);box-shadow:none}
+.act.p{background:var(--ink);color:var(--inv);border-color:var(--ink)}
+.act.p:hover{opacity:.86;background:var(--ink)}
+.act.d{color:var(--red)}
+.act.d:hover{background:var(--red);border-color:var(--red);color:#fff}
+
+.tog{width:44px;height:24px;border-radius:99px;background:#E4E4E4;box-shadow:none;position:relative;flex:none;cursor:pointer;transition:background .25s var(--ease)}
+:root[data-theme="dark"] .tog{background:#2A2A2A}
+.tog:after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .25s var(--ease),background .25s}
+.tog.on{background:var(--ink)}
+.tog.on:after{transform:translateX(20px);background:var(--inv)}
+
+.tabs{display:flex;gap:6px;margin-bottom:20px;overflow-x:auto;padding:0 0 12px;scrollbar-width:none;-webkit-overflow-scrolling:touch;border-bottom:1px solid var(--line)}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{padding:8px 16px;border-radius:99px;border:1px solid transparent;box-shadow:none;font-weight:500;font-size:11.5px;letter-spacing:.06em;color:var(--mute);background:none;flex:none;white-space:nowrap;transition:background .2s,color .2s}
+.tabs button:hover{background:var(--hover);color:var(--ink)}
+.tabs button.on{box-shadow:none;background:var(--ink);color:var(--inv)}
+
+/* ---------- Charts ---------- */
+.bars{display:flex;align-items:flex-end;gap:12px;height:180px;padding:16px 12px 12px;border-radius:var(--r);border:1px solid var(--line);box-shadow:none;overflow-x:auto;background:var(--bg)}
+.bars div{flex:1;min-width:42px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:10.5px;color:var(--mute);gap:6px;text-align:center}
+.bars i{width:100%;max-width:26px;border-radius:4px 4px 0 0;background:var(--ink);transition:height .8s var(--ease)}
+
+/* ---------- Tables ---------- */
+.scroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--r)}
+table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:520px}
+th{text-align:left;color:var(--mute);font-weight:500;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;padding:10px 10px;border-bottom:1px solid var(--ink);white-space:nowrap}
+td{padding:13px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tr:hover td{background:#FAFAFA}
+:root[data-theme="dark"] tr:hover td{background:#151515}
+
+.shot{height:150px;border-radius:var(--r);border:1px solid var(--line);box-shadow:none;display:grid;place-items:center;margin:10px 0;overflow:hidden;background:var(--bg)}
+.shot img{width:100%;height:100%;object-fit:contain}
+
+/* ---------- Toast & emergency ---------- */
+#toast{position:fixed;left:50%;bottom:48px;transform:translate(-50%,16px);background:var(--ink);color:var(--inv);padding:12px 20px;border-radius:var(--r);font-size:12.5px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s var(--ease);z-index:90;box-shadow:0 10px 30px rgba(0,0,0,.18);border:0;max-width:92vw;text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+.stop{width:100%;padding:14px;border-radius:var(--r);background:var(--cv);color:var(--red);border:1px solid var(--red);font-weight:600;font-size:12.5px;letter-spacing:.1em;box-shadow:none;transition:background .2s,color .2s}
+.stop:hover{background:var(--red);color:#fff}
+
+/* scrollbars */
+*{scrollbar-width:thin;scrollbar-color:#D5D5D5 transparent}
+.scroll::-webkit-scrollbar,.bars::-webkit-scrollbar{height:6px}
+.scroll::-webkit-scrollbar-thumb,.bars::-webkit-scrollbar-thumb{background:#D5D5D5;border-radius:6px}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1180px){
+  main{padding:26px 24px 44px}
+}
+@media (max-width:920px){
+  body::before,body::after{opacity:.6}
+  #app{grid-template-columns:1fr;padding:0 0 92px;gap:0}
+  main{padding:18px 14px 28px}
+  aside{position:fixed;left:0;right:0;bottom:0;top:auto;height:70px;flex-direction:row;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));border-radius:0;border-right:0;border-top:1px solid var(--line);background:var(--cv);box-shadow:none}
+  aside .av,.tools{display:none}
+  nav{flex-direction:row;overflow-x:auto;overflow-y:hidden;gap:4px;align-items:center}
+  nav button{min-width:66px;padding:7px 4px;font-size:9px}
+  .mbtn{display:grid}
+  .top{padding-bottom:16px;margin-bottom:18px}
+  .top h2{font-size:24px;min-width:120px}
+  .search{flex:1 1 100%;order:4;max-width:none}
+  .grid{gap:12px}
+  .c4,.c5,.c6,.c7,.c8{grid-column:span 12}
+  .c3{grid-column:span 6}
+  .card{padding:16px;border-radius:12px}
+  .big{font-size:24px}
+  #toast{bottom:90px}
+}
+@media (max-width:420px){
+  .c3{grid-column:span 6}
+  .row{gap:8px}
+  .act{width:100%}
+  .big{font-size:21px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- PREMIUM ANIMATED LOADER -->
+<div id="loader">
+  <div class="ldr-card">
+    <div class="orb-wrap">
+      <div class="orb-ring1"></div>
+      <div class="orb-ring2"></div>
+      <div class="orb-core">AD</div>
+    </div>
+    <div class="ldr-title" id="ldrTitle">Connecting to Engine...</div>
+    <div class="ldr-sub" id="ldrSub">Verifying credentials & device security</div>
+  </div>
+</div>
+
+<!-- ZERO-RELOAD LOGIN SCREEN -->
+<section id="login">
+  <div class="lbox" id="lbox">
+    <div class="logo"><span>AD</span></div>
+    <h1>AD PartSol</h1>
+    <p>Super Admin & Staff Command Deck</p>
+    <label class="fld"><input id="u" type="text" placeholder="Admin Username / Phone" autocomplete="off"></label>
+    <label class="fld"><input id="p" type="password" placeholder="Secret Password / ADP-Token" autocomplete="off"></label>
+    <button class="btn" type="button" id="loginBtn" onclick="doLogin()">Authenticate & Enter</button>
+    <div class="err" id="err"></div>
+  </div>
+</section>
+
+<div id="app">
+  <aside>
+    <div class="av">AD</div>
+    <nav id="nav"></nav>
+    <div class="tools">
+      <button id="syncBtn" title="Sync"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7M21 3v6h-6"/></svg></button>
+      <button id="theme" title="Theme"><svg class="i" viewBox="0 0 24 24"><path d="M20 14A8 8 0 019.5 4 8 8 0 1020 14z"/></svg></button>
+      <button id="lock" title="Logout"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="3"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></button>
+    </div>
+  </aside>
+
+  <main>
+    <div class="top">
+      <h2 id="ttl">Command Deck<small>Live D1 Engine</small></h2>
+      <button class="mbtn" id="syncBtn2"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7M21 3v6h-6"/></svg></button>
+      <button class="mbtn" id="theme2"><svg class="i" viewBox="0 0 24 24"><path d="M20 14A8 8 0 019.5 4 8 8 0 1020 14z"/></svg></button>
+      <button class="mbtn" id="lock2"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="3"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></button>
+      <label class="search">
+        <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        <input placeholder="Search Order ID, Phone, Part, UTR, Supplier..." oninput="filterRows(this.value)">
+      </label>
+    </div>
+    <div id="view"></div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+window.onerror = function(message, source, lineno) {
+  fetch("/api/panel/client-error", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ page: location.pathname, message: String(message), line: lineno })
+  }).catch(function(){});
+};
+
+var KEY = "adps_master_session";
+var $ = function(s) { return document.querySelector(s); };
+var STATE = {
+  orders: [], payments: [], settings: {}, suppliers: [], items: [],
+  bids: [], customers: [], staff_list: [], margin_rules: [],
+  inventory: [], inventory_logs: [], ghost_queries: [],
+  curPage: "home", ctrlCat: "pricing"
+};
+
+function showLoader(title, sub) {
+  $("#ldrTitle").textContent = title || "Processing...";
+  $("#ldrSub").textContent = sub || "Syncing with Cloudflare D1 Engine";
+  $("#loader").classList.add("on");
+}
+function hideLoader() { $("#loader").classList.remove("on"); }
+
+var ICONS = {
+  home: "<rect x='3' y='3' width='7' height='7' rx='2'/><rect x='14' y='3' width='7' height='7' rx='2'/><rect x='3' y='14' width='7' height='7' rx='2'/><rect x='14' y='14' width='7' height='7' rx='2'/>",
+  bidroom: "<circle cx='12' cy='12' r='9'/><path d='M12 7v5l3 3'/>",
+  ops: "<path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/>",
+  qcpack: "<path d='M9 11l3 3L22 4'/><path d='M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11'/>",
+  stock: "<path d='M4 9l1-5h14l1 5'/><path d='M5 12v8h14v-8'/>",
+  intel: "<path d='M3 17l6-6 4 4 8-8'/><path d='M14 7h7v7'/>",
+  crm: "<path d='M4 5h16v11H9l-5 4z'/>",
+  sup: "<circle cx='9' cy='8' r='3.5'/><path d='M2 20c1-4 4-6 7-6s6 2 7 6'/><path d='M16 4.5a3.5 3.5 0 010 7M18 14c2 .6 3.4 2.6 4 6'/>",
+  margins: "<circle cx='12' cy='12' r='9'/><path d='M9 9c1-1.5 5-1.5 6 0M9 15c1 1.5 5 1.5 6 0M12 6v12'/>",
+  pay: "<rect x='3' y='6' width='18' height='13' rx='3'/><path d='M3 11h18'/>",
+  controls: "<line x1='4' y1='21' x2='4' y2='14'/><line x1='4' y1='10' x2='4' y2='3'/><line x1='12' y1='21' x2='12' y2='12'/><line x1='12' y1='8' x2='12' y2='3'/><line x1='20' y1='21' x2='20' y2='16'/><line x1='20' y1='12' x2='20' y2='3'/>",
+  staff: "<path d='M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z'/><path d='M9 12l2 2 4-4'/>"
+};
+
+var NAV = [
+  ["home", "Cockpit", "home"],
+  ["bidroom", "Bid Room", "bidroom"],
+  ["ops", "Rush & Split", "ops"],
+  ["qcpack", "QC & Barcode", "qcpack"],
+  ["stock", "Stock & Price", "stock"],
+  ["intel", "Hot/Dead/Ghost", "intel"],
+  ["crm", "Follow & Source", "crm"],
+  ["sup", "Suppliers", "sup"],
+  ["margins", "Slab Margins", "margins"],
+  ["pay", "Payments", "pay"],
+  ["controls", "250+ Controls", "controls"],
+  ["staff", "Staff & Portals", "staff"]
+];
+
+$("#nav").innerHTML = NAV.map(function(n) { return "<button type='button' data-p='" + n[0] + "'><svg class='i' viewBox='0 0 24 24'>" + ICONS[n[2]] + "</svg>" + n[1] + "</button>"; }).join("");
+$("#nav").onclick = function(e) { var b = e.target.closest("button"); if (b) go(b.dataset.p); };
+
+function toast(msg) {
+  var t = $("#toast"); t.textContent = msg; t.classList.add("on");
+  clearTimeout(t._tm); t._tm = setTimeout(function() { t.classList.remove("on"); }, 2800);
+}
+
+function getCreds() { try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch (_) { return null; } }
+
+async function api(path, body, isLogin) {
+  var c = getCreds(); if (!c) return { ok: false, error: "Not logged in" };
+  var headers = { "x-staff-phone": c.u, "x-staff-token": c.p };
+  if (isLogin) headers["x-login-attempt"] = "1";
+  var opt = { method: body ? "POST" : "GET", headers: headers };
+  if (body) { opt.headers["Content-Type"] = "application/json"; opt.body = JSON.stringify(body); }
+  try {
+    var r = await fetch("/api/panel/" + path, opt);
+    var txt = await r.text();
+    try { return JSON.parse(txt); }
+    catch (_) { return { ok: false, error: "API returned HTML instead of JSON. Check Worker route!" }; }
+  } catch (netErr) {
+    return { ok: false, error: "Network error: " + netErr.message };
+  }
+}
+
+async function syncAll(silent, isLogin) {
+  if (!silent) showLoader(isLogin ? "Authenticating..." : "Syncing Live Data...", "Fetching orders, stock, bids & security state");
+  var d = await api("dashboard", null, isLogin);
+  hideLoader();
+  if (!d.ok) {
+    if (!silent) toast("× " + (d.error || "Authentication failed"));
+    return d;
+  }
+  STATE.orders = d.orders || [];
+  STATE.payments = d.payments || [];
+  STATE.suppliers = d.suppliers || [];
+  STATE.items = d.items || [];
+  STATE.bids = d.bids || [];
+  STATE.customers = d.customers || [];
+  STATE.staff_list = d.staff_list || [];
+  STATE.margin_rules = d.margin_rules || [];
+  STATE.inventory = d.inventory || [];
+  STATE.inventory_logs = d.inventory_logs || [];
+  STATE.ghost_queries = d.ghost_queries || [];
+  STATE.settings = {};
+  (d.settings || []).forEach(function(s) { STATE.settings[s.key] = s.value; });
+  go(STATE.curPage, true);
+  if (!silent && !isLogin) toast("★ Live Engine Synced");
+  return d;
+}
+
+async function doLogin() {
+  var u = $("#u").value.trim(), p = $("#p").value.trim();
+  $("#err").textContent = "";
+  if (!u || !p) { $("#err").textContent = "Please enter both Username/Phone and Token"; return; }
+  localStorage.setItem(KEY, JSON.stringify({ u: u, p: p }));
+  var res = await syncAll(false, true);
+  if (res && res.ok) {
+    $("#login").classList.add("out");
+    setTimeout(function() { $("#login").style.display = "none"; }, 450);
+    $("#app").classList.add("show");
+    toast("★ Welcome! Login Alert sent to Logs Bot");
+  } else {
+    localStorage.removeItem(KEY);
+    $("#err").textContent = (res && res.error) ? res.error : "Invalid Credentials";
+    var box = $("#lbox"); box.classList.remove("shake"); void box.offsetWidth; box.classList.add("shake");
+  }
+}
+
+$("#u").addEventListener("keydown", function(e) { if (e.key === "Enter") { e.preventDefault(); $("#p").focus(); } });
+$("#p").addEventListener("keydown", function(e) { if (e.key === "Enter") { e.preventDefault(); doLogin(); } });
+
+$("#syncBtn").onclick = $("#syncBtn2").onclick = function() { syncAll(false, false); };
+$("#theme").onclick = $("#theme2").onclick = function() {
+  var r = document.documentElement;
+  r.setAttribute("data-theme", r.getAttribute("data-theme") === "dark" ? "light" : "dark");
+};
+$("#lock").onclick = $("#lock2").onclick = function() { localStorage.removeItem(KEY); location.reload(); };
+
+document.addEventListener("click", async function(e) {
+  var tg = e.target.closest(".tog[data-k]");
+  if (tg) {
+    tg.classList.toggle("on");
+    var k = tg.dataset.k, v = tg.classList.contains("on") ? "1" : "0";
+    STATE.settings[k] = v;
+    var body = {}; body[k] = v;
+    await api("save-settings", body);
+    toast("★ " + k + " = " + (v === "1" ? "ON" : "OFF"));
+  }
+});
+
+function chip(t, c) { return "<span class='chip " + (c || "") + "'>" + t + "</span>"; }
+function tog(k, def) {
+  var val = STATE.settings[k] !== undefined ? STATE.settings[k] : (def || "1");
+  return "<span class='tog " + (val === "1" ? "on" : "") + "' data-k='" + k + "'></span>";
+}
+
+var PAGES = {};
+
+/* 1. HOME COCKPIT */
+PAGES.home = function() {
+  var pendPay = STATE.payments.filter(function(p) { return p.status === "PENDING"; }).length;
+  var bidOrds = STATE.orders.filter(function(o) { return o.status === "BIDDING"; }).length;
+  var rev = STATE.orders.reduce(function(a, o) { return a + (Number(o.final_total) || 0); }, 0);
+  var actSups = STATE.suppliers.filter(function(s) { return s.is_verified && s.is_active; }).length;
+
+  return `<div class="grid">
+    <div class="card c3"><div class="mute">Total Orders</div><div class="big">${STATE.orders.length}</div><div class="mute">${bidOrds} in live bidding</div></div>
+    <div class="card c3"><div class="mute">Gross Volume</div><div class="big">₹${rev.toLocaleString("en-IN")}</div><div class="mute">Itemized invoices</div></div>
+    <div class="card c3"><div class="mute">Pending Payments</div><div class="big">${pendPay}</div><div class="mute">Awaiting approval</div></div>
+    <div class="card c3"><div class="mute">Active Suppliers</div><div class="big">${actSups}/${STATE.suppliers.length}</div><div class="mute">Online partners</div></div>
+
+    <div class="card c7">
+      <h3>Direct Call-to-Supplier Assign (Instant Notice) ${chip("Phone Override", "a")}</h3>
+      <div class="mute" style="margin-bottom:12px">Select any Order ID & Supplier after phone confirmation. Sends itemized invoice to customer & notice to supplier:</div>
+      <div class="grid" style="gap:10px">
+        <div class="c4"><input id="asgOrd" class="inbox" placeholder="Order ID" value="${STATE.orders[0] ? STATE.orders[0].id : ""}"></div>
+        <div class="c4"><select id="asgSup" class="inbox">${STATE.suppliers.map(function(s) { return `<option value="${s.id}">#${s.id} ${s.name}</option>`; }).join("")}</select></div>
+        <div class="c4"><input id="asgPrice" class="inbox" type="number" placeholder="Base Rate (₹/pc)"></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+        <button type="button" class="act p" onclick="assignSup()">[+] Assign & Dispatch Invoice</button>
+        <button type="button" class="act" onclick="forceCloseAll()">⚡ Force Close All Active Bids</button>
+      </div>
+    </div>
+
+    <div class="card c5">
+      <h3>Primary Kill-Switches</h3>
+      <div class="row"><div class="g1"><b>Telegram Bot Engine</b><span class="mute">@AdPartsol_Bot</span></div>${tog("tg_enabled", "1")}</div>
+      <div class="row"><div class="g1"><b>WhatsApp Cloud Engine</b><span class="mute">+91 79928 09027</span></div>${tog("wa_enabled", "1")}</div>
+      <div class="row"><div class="g1"><b>OpenAI 4-Model Brain</b><span class="mute">Luna & Transcribe</span></div>${tog("ai_enabled", "1")}</div>
+      <div class="row"><div class="g1"><b>Manual Quote Approval</b><span class="mute">Hold auto-quotes for review</span></div>${tog("require_admin_approve", "0")}</div>
+    </div>
+
+    <div class="card c12">
+      <h3>Recent Live Orders (${STATE.orders.length})</h3>
+      ${STATE.orders.slice(0, 8).map(function(o) {
+        var oItems = STATE.items.filter(function(i) { return i.order_id === o.id; }).map(function(i) { return `${i.brand} ${i.model} ${i.part_name} (${i.fulfilled_qty}/${i.req_qty})`; }).join(", ");
+        return `<div class="row">
+          <div class="g1"><b>Order #${o.id} — ${oItems || "Items"}</b><span class="mute">Customer: ${o.customer_id} | Stage: ${o.dispatch_stage || o.status} | Final: ₹${o.final_total || 0}</span></div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            ${chip(o.status, o.status === "SHIPPED" ? "g" : o.status === "BIDDING" ? "a" : "")}
+            <button type="button" class="act" onclick="printThermalSlip(${o.id})">🖨️ Slip</button>
+            ${o.status === "BIDDING" ? `<button type="button" class="act p" onclick="forceCloseOrd(${o.id})">Quote Now</button>` : ""}
+          </div>
+        </div>`;
+      }).join("") || `<div class="mute">No orders yet.</div>`}
+    </div>
+  </div>`;
+};
+
+/* 2. LIVE BID ROOM + SUPPLIER RESPONSE-TIME LEADERBOARD (File 12 & 14) */
+PAGES.bidroom = function() {
+  var activeOrds = STATE.orders.filter(function(o) { return o.status === "BIDDING" || o.status === "NO_BIDS" || o.status === "QUOTED"; });
+  var sortedSups = [...STATE.suppliers].sort(function(a, b) { return (a.avg_resp_sec || 45) - (b.avg_resp_sec || 45); });
+  var curLogic = STATE.settings.allocation_logic || "cheapest";
+
+  return `<div class="grid">
+    <!-- File 14: Supplier Response Speed Trophy Leaderboard -->
+    <div class="card c7">
+      <h3>🏆 Supplier Speed Leaderboard (Fastest Response Time)</h3>
+      <div class="grid" style="gap:10px">
+        ${sortedSups.slice(0, 3).map(function(s, idx) {
+          return `<div class="c4" style="padding:12px;border-radius:16px;box-shadow:var(--in)">
+            <div style="font-weight:800;color:var(--deep)">#${idx + 1} ${s.name}</div>
+            <div class="mute">Avg Speed: <b>${s.avg_resp_sec || 45}s</b> | Freq: ${s.orders_freq || 1} orders</div>
+          </div>`;
+        }).join("") || `<div class="c12 mute">Add suppliers to view leaderboard.</div>`}
+      </div>
+    </div>
+
+    <!-- File 12: Allocation Logic Selector (Cheapest Price vs Highest Frequency) -->
+    <div class="card c5">
+      <h3>⚖️ Auto-Allocation Logic</h3>
+      <div class="mute" style="margin-bottom:10px">Choose how the 30-min engine picks winning suppliers:</div>
+      <div style="display:flex;gap:8px">
+        <button type="button" class="act ${curLogic === 'cheapest' ? 'p' : ''}" style="flex:1" onclick="setAllocLogic('cheapest')">Cheapest Price</button>
+        <button type="button" class="act ${curLogic === 'frequency' ? 'p' : ''}" style="flex:1" onclick="setAllocLogic('frequency')">Highest Frequency</button>
+      </div>
+    </div>
+
+    <div class="card c12">
+      <h3>★ Live Bid Room Radar ${chip(STATE.bids.filter(function(b) { return b.status === "SUBMITTED"; }).length + " Submitted Bids", "g")}</h3>
+      ${activeOrds.map(function(o) {
+        var ordItems = STATE.items.filter(function(i) { return i.order_id === o.id; });
+        var remSecs = Math.max(0, o.bidding_ends_at - Math.floor(Date.now() / 1000));
+        return `<div style="padding:16px;border-radius:20px;box-shadow:var(--in);margin-bottom:16px">
+          <div class="row" style="border:0;padding-top:0">
+            <div class="g1"><b>Order #${o.id} (${o.master_id || "Master"})</b> <span class="mute">Closes In: ${Math.floor(remSecs / 60)}m ${remSecs % 60}s</span></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              ${chip(o.status, o.status === "BIDDING" ? "a" : "g")}
+              <button type="button" class="act" onclick="extendOrd(${o.id}, 15)">+15m Window</button>
+              <button type="button" class="act p" onclick="forceCloseOrd(${o.id})">Finalize & Send Invoice</button>
+            </div>
+          </div>
+          ${ordItems.map(function(it) {
+            var itemBids = STATE.bids.filter(function(b) { return b.item_id === it.id; });
+            var subBids = itemBids.filter(function(b) { return b.status === "SUBMITTED"; }).sort(function(a, b) { return a.price_per_unit - b.price_per_unit; });
+            var cheapestId = subBids[0] ? subBids[0].id : null;
+            return `<div style="margin-top:10px;padding:12px;border-radius:14px;background:var(--bg)">
+              <b>→ ${it.brand} ${it.model || ""} — ${it.part_name} (${it.variant}) | Req Qty: ${it.req_qty} pcs</b>
+              <div class="scroll" style="margin-top:8px">
+                <table>
+                  <tr><th>Supplier</th><th>Status</th><th>Speed</th><th>Rate/pc</th><th>Avail Qty</th><th>Selection</th><th>Action</th></tr>
+                  ${itemBids.map(function(b) { return `<tr>
+                    <td><b>${b.sup_name || "Supplier #" + b.supplier_id}</b></td>
+                    <td>${chip(b.status, b.status === "SUBMITTED" ? "g" : b.status === "DECLINED" ? "r" : "a")}</td>
+                    <td>${b.response_sec || 35}s</td>
+                    <td><b>${b.price_per_unit ? "₹" + b.price_per_unit : "—"}</b></td>
+                    <td>${b.available_qty || "—"} pcs</td>
+                    <td>${b.id === cheapestId ? chip("★ Best Pick", "g") : "—"}</td>
+                    <td>${b.price_per_unit ? `<button type="button" class="act p" onclick="quickPickSup(${o.id},${b.supplier_id},${b.price_per_unit})">Select Winner</button>` : "—"}</td>
+                  </tr>`; }).join("") || `<tr><td colspan="7" class="mute">No supplier bids sent for this item.</td></tr>`}
+                </table>
+              </div>
+            </div>`;
+          }).join("")}
+        </div>`;
+      }).join("") || `<div class="mute">No active orders in Bid Room.</div>`}
+    </div>
+  </div>`;
+};
+
+/* 3. RUSH QUEUE, MASTER BUNDLING & INV vs SUP FULFILLMENT SPLIT (Files 2, 7, 9) */
+PAGES.ops = function() {
+  return `<div class="grid">
+    <div class="card c6">
+      <h3>⏱️ Global Rush Queue & Auto-Bundler ${chip("Master Orders", "a")}</h3>
+      <div class="mute" style="margin-bottom:12px">Pending sub-orders bundle into a Master Order automatically or on 1-tap click:</div>
+      ${STATE.orders.slice(0, 5).map(function(o) {
+        var its = STATE.items.filter(function(i) { return i.order_id === o.id; }).map(function(i) { return i.req_qty + "x " + i.brand + " " + i.part_name; }).join(", ");
+        return `<div class="row">
+          <div class="g1"><b>SO-#${o.id} (${o.master_id || "MO"})</b><span class="mute">${its || "Spare Parts"}</span></div>
+          ${chip(o.status, o.status === "BIDDING" ? "a" : "g")}
+        </div>`;
+      }).join("") || `<div class="mute">Queue clear.</div>`}
+      <div style="margin-top:12px">
+        <button type="button" class="act p" style="width:100%" onclick="forceCloseAll()">[+] Bundle & Finalize Master Orders Now</button>
+      </div>
+    </div>
+
+    <div class="card c6">
+      <h3>🚨 Live Stepper & Unfilled Demand Auto-Flag ${chip("WA + TG Alert", "r")}</h3>
+      <div class="mute" style="margin-bottom:12px">Orders waiting at Quotation stage trigger 1-tap WhatsApp & Telegram follow-up alerts:</div>
+      ${STATE.orders.slice(0, 5).map(function(o) {
+        var waMsg = encodeURIComponent("★ AD PARTSOL Alert: Order #" + o.id + " quotation is ready (Rs." + (o.final_total || 0) + "). Reply to confirm & dispatch!");
+        var cleanPh = String(o.customer_id).replace(/\D/g, "");
+        return `<div class="row">
+          <div class="g1">
+            <b>Order #${o.id} — ${o.dispatch_stage || o.status}</b>
+            <span class="mute">Quoted: ₹${o.final_total || 0} | Customer: ${o.customer_id}</span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <a href="https://wa.me/${cleanPh}?text=${waMsg}" target="_blank" class="act" style="color:var(--green)">WA Alert ↗</a>
+            <button type="button" class="act p" onclick="sendQuickRemind('${o.customer_id}', ${o.id})">Bot Ping</button>
+          </div>
+        </div>`;
+      }).join("") || `<div class="mute">No pending confirmations.</div>`}
+    </div>
+
+    <div class="card c12">
+      <h3>🔀 INV (In-House Stock) vs SUP (Supplier) Fulfillment Split & Verified Barcode Slip</h3>
+      <div class="scroll">
+        <table>
+          <tr><th>Order ID</th><th>Customer</th><th>INV (In-House Stock)</th><th>SUP (Outsourced Suppliers)</th><th>Total Bill</th><th>Fulfillment Slip</th></tr>
+          ${STATE.orders.slice(0, 12).map(function(o) {
+            var oItems = STATE.items.filter(function(i) { return i.order_id === o.id; });
+            var supList = oItems.map(function(i) {
+              var al = JSON.parse(i.allocated_json || "[]").map(function(a) { return a.qty + "x " + i.part_name + " (" + a.name + " @ ₹" + a.price + ")"; }).join(", ");
+              return al || (i.req_qty + "x " + i.part_name + " (Bidding)");
+            }).join("<br>");
+            return `<tr>
+              <td><b>#${o.id}</b></td>
+              <td>${o.customer_id}</td>
+              <td>${chip("Checked", "g")}</td>
+              <td>${supList}</td>
+              <td><b>₹${o.final_total || 0}</b></td>
+              <td><button type="button" class="act p" onclick="printThermalSlip(${o.id})">🖨️ Print Slip / Barcode</button></td>
+            </tr>`;
+          }).join("")}
+        </table>
+      </div>
+    </div>
+  </div>`;
+};
+
+/* 4. 4-STAGE BARCODE SCANNER, QC CHECKLIST (PASS/FAIL/MISSING), ON-HOLD & 80MM SLIP (Files 1, 4, 5) */
+PAGES.qcpack = function() {
+  var onHoldOrds = STATE.orders.filter(function(o) { return o.status === "ON_HOLD" || o.dispatch_stage === "ON_HOLD"; });
+  return `<div class="grid">
+    <div class="card c6">
+      <h3>🔫 4-Stage Barcode Scanner Hub (Collection → Bus Stand)</h3>
+      <div class="mute" style="margin-bottom:12px">Scan or enter 9-Digit Order ID to update live logistics stage & notify customer on WhatsApp/Telegram:</div>
+      <input id="scanOrdId" class="inbox" placeholder="Scan Barcode / Enter Order ID..." value="${STATE.orders[0] ? STATE.orders[0].id : ""}" style="margin-bottom:10px">
+      <div class="grid" style="gap:8px">
+        <div class="c6"><button type="button" class="act" style="width:100%" onclick="scanUpdateStage('COLLECTION_DONE')">1. Mark Collected</button></div>
+        <div class="c6"><button type="button" class="act" style="width:100%" onclick="scanUpdateStage('QC_PASSED')">2. Mark Ready in Hub (QC Pass)</button></div>
+        <div class="c6"><button type="button" class="act" style="width:100%" onclick="scanUpdateStage('DISPATCH_HANDOVER')">3. Hand to Dispatch Boy</button></div>
+        <div class="c6"><button type="button" class="act p" style="width:100%" onclick="scanUpdateStage('BUS_STAND_DROPPED')">4. Dropped at Bus Stand</button></div>
+      </div>
+    </div>
+
+    <div class="card c6">
+      <h3>🛡️ Quality Control (PASS / FAIL / MISSING) & On-Hold Desk ${chip(onHoldOrds.length + " On Hold", "r")}</h3>
+      <div class="mute" style="margin-bottom:10px">If an item fails QC or is missing, put Order On-Hold to auto-reissue Collector Slip:</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <input id="qcOrdId" class="inbox" style="flex:1" placeholder="Order ID" value="${STATE.orders[0] ? STATE.orders[0].id : ""}">
+        <input id="qcReason" class="inbox" style="flex:2" placeholder="Fail/Missing Reason (e.g. Broken Flex / Missing 1x Screen)">
+      </div>
+      <div style="display:flex;gap:8px">
+        <button type="button" class="act p" style="flex:1" onclick="qcDecision('QC_PASSED')">✓ 100% QC Pass → Packing</button>
+        <button type="button" class="act d" style="flex:1" onclick="qcDecision('ON_HOLD')">✕ Fail/Missing → On Hold & Reprint</button>
+      </div>
+      <div style="margin-top:12px">
+        ${onHoldOrds.map(function(o) {
+          return `<div class="row"><div class="g1"><b>#${o.id} (ON HOLD)</b><span class="mute">Reason: ${o.hold_reason || "Failed QC"}</span></div><button type="button" class="act" onclick="printThermalSlip(${o.id}, 'RE-COLLECT SLIP (ON HOLD)')">🖨️ Re-Print Slip</button></div>`;
+        }).join("")}
+      </div>
+    </div>
+
+    <div class="card c12">
+      <h3>📦 Active Packing, 80mm Thermal Collector Slip & Tracking Dispatch</h3>
+      ${STATE.orders.slice(0, 10).map(function(o) {
+        var its = STATE.items.filter(function(i) { return i.order_id === o.id; }).map(function(i) { return i.req_qty + "x " + i.brand + " " + i.part_name; }).join(", ");
+        return `<div class="row">
+          <div class="g1">
+            <b>Order #${o.id} ${chip(o.dispatch_stage || o.status, o.status === "ON_HOLD" ? "r" : "g")}</b>
+            <span class="mute">${its} | Customer: ${o.customer_id}</span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <button type="button" class="act" onclick="printThermalSlip(${o.id})">🖨️ 80mm Collector Slip</button>
+            <input id="trk_${o.id}" class="inbox" style="width:160px" placeholder="AWB / Bus Receipt" value="${o.tracking_id || ""}">
+            <button type="button" class="act p" onclick="shipOrd(${o.id})">Ship Now</button>
+          </div>
+        </div>`;
+      }).join("") || `<div class="mute">No orders yet.</div>`}
+    </div>
+  </div>`;
+};
+
+/* 5. MASTER INVENTORY, CATEGORY BULK PRICE MULTIPLIER, DOA QUARANTINE & AUDIT LOG (Files 3, 10, 12) */
+PAGES.stock = function() {
+  var inv = STATE.inventory || [];
+  var logs = STATE.inventory_logs || [];
+  return `<div class="grid">
+    <div class="card c6">
+      <h3>⚡ Category-Wise Bulk Price Multiplier</h3>
+      <div class="mute" style="margin-bottom:12px">Increase prices across any category or ALL categories by Percentage (%) or Fixed Amount (₹):</div>
+      <div class="grid" style="gap:10px">
+        <div class="c6">
+          <label class="mute">SELECT CATEGORY</label>
+          <select id="bulkCat" class="inbox">
+            <option value="All Categories">⚠️ All Categories (Global Update)</option>
+            <option value="Displays">Displays</option>
+            <option value="Batteries">Batteries</option>
+            <option value="Charging Ports">Charging Ports</option>
+            <option value="Back Panels">Back Panels</option>
+            <option value="Cameras">Cameras</option>
+            <option value="Tools & Glue">Tools & Glue</option>
+          </select>
+        </div>
+        <div class="c6">
+          <label class="mute">MULTIPLIER MODE</label>
+          <select id="bulkMode" class="inbox">
+            <option value="percentage">Percentage (%)</option>
+            <option value="number">Fixed Amount (₹)</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:10px">
+        <input id="bulkVal" type="number" class="inbox" placeholder="Enter Increase Value (e.g. 15)">
+        <button type="button" class="act p" onclick="runBulkMultiplier()">Apply Bulk Update</button>
+      </div>
+    </div>
+
+    <div class="card c6">
+      <h3>📥 Receive Stock & DOA Inspection (Good vs Quarantined)</h3>
+      <div class="grid" style="gap:8px">
+        <div class="c6"><input id="stName" class="inbox" placeholder="Part Name (e.g. iPhone 13 OLED)"></div>
+        <div class="c6">
+          <select id="stCat" class="inbox">
+            <option value="Displays">Displays</option>
+            <option value="Batteries">Batteries</option>
+            <option value="Charging Ports">Charging Ports</option>
+            <option value="Back Panels">Back Panels</option>
+            <option value="Cameras">Cameras</option>
+            <option value="Tools & Glue">Tools & Glue</option>
+          </select>
+        </div>
+        <div class="c4"><input id="stPrice" type="number" class="inbox" placeholder="Sell Price (₹)"></div>
+        <div class="c4"><input id="stGood" type="number" class="inbox" placeholder="+ Good Qty"></div>
+        <div class="c4"><input id="stFaulty" type="number" class="inbox" placeholder="+ Faulty (DOA)"></div>
+      </div>
+      <button type="button" class="act p" style="width:100%;margin-top:10px" onclick="commitStockDOA()">[+] Commit to Master Inventory & Log</button>
+    </div>
+
+    <div class="card c7">
+      <h3>📦 Master Inventory (${inv.length} SKUs)</h3>
+      <div class="scroll">
+        <table>
+          <tr><th>SKU & Part Name</th><th>Category</th><th>Sell Price</th><th>Good Stock</th><th>Quarantined (DOA)</th></tr>
+          ${inv.map(function(i) {
+            return `<tr>
+              <td><b>${i.name}</b><br><span class="mute">${i.sku}</span></td>
+              <td>${chip(i.category)}</td>
+              <td><b>₹${i.price}</b></td>
+              <td>${chip(i.good_qty + " pcs", i.good_qty > 5 ? "g" : "a")}</td>
+              <td>${i.faulty_qty > 0 ? chip(i.faulty_qty + " Faulty", "r") : "0"}</td>
+            </tr>`;
+          }).join("")}
+        </table>
+      </div>
+    </div>
+
+    <div class="card c5">
+      <h3>🕒 Inventory Audit Log (${logs.length})</h3>
+      <div style="max-height:320px;overflow-y:auto">
+        ${logs.map(function(l) {
+          return `<div class="row">
+            <div class="g1"><b>${l.item_name}</b><span class="mute">${l.raw_date} | ${l.triggered_by}</span></div>
+            <div style="text-align:right">
+              ${chip((l.action === "ADD" ? "+" : "-") + l.qty, l.action === "ADD" ? "g" : "r")}
+              <div class="mute">${l.old_stock} → <b>${l.new_stock}</b></div>
+            </div>
+          </div>`;
+        }).join("") || `<div class="mute">No stock logs yet.</div>`}
+      </div>
+    </div>
+  </div>`;
+};
+
+/* 6. HOT vs DEAD STOCK INTELLIGENCE + MARKET vs INTERNAL PRICE + DEMO/GHOST INJECTOR (Files 11, 13) */
+PAGES.intel = function() {
+  var inv = STATE.inventory || [];
+  var dailyPot = 0;
+  inv.forEach(function(i) {
+    var spread = Math.max(150, (Number(i.price) || 1000) - (Number(i.in_house_cost) || 750));
+    dailyPot += spread * (Number(i.daily_freq) || 1.5);
+  });
+  var deadItems = inv.filter(function(i) { return Number(i.days_unsold) >= 90; });
+  var deadCap = deadItems.reduce(function(a, i) { return a + (Number(i.good_qty) * Number(i.price)); }, 0);
+
+  return `<div class="grid">
+    <div class="card c3"><div class="mute">Daily In-House Potential</div><div class="big">₹${Math.round(dailyPot).toLocaleString("en-IN")}</div><div class="mute">Hot Stock Margin</div></div>
+    <div class="card c3"><div class="mute">Weekly Potential</div><div class="big">₹${Math.round(dailyPot * 7).toLocaleString("en-IN")}</div><div class="mute">7-Day Projection</div></div>
+    <div class="card c3"><div class="mute">Yearly Profit Potential</div><div class="big" style="color:var(--green)">₹${Math.round(dailyPot * 365).toLocaleString("en-IN")}</div><div class="mute">If Outsourced → In-House</div></div>
+    <div class="card c3"><div class="mute">Blocked Dead Capital (>90d)</div><div class="big" style="color:var(--red)">₹${deadCap.toLocaleString("en-IN")}</div><div class="mute">${deadItems.length} Unsold SKUs</div></div>
+
+    <div class="card c5">
+      <h3>🧪 Dual-Mode Market & Ghost Query Injector</h3>
+      <div class="mute" style="margin-bottom:10px">Poll live market suppliers directly OR piggyback a Ghost Item onto the next customer order:</div>
+      <select id="ghMode" class="inbox" style="margin-bottom:8px">
+        <option value="direct">Mode 1: Direct Market Supplier Poll</option>
+        <option value="ghost">Mode 2: Ghost Order (Piggyback on Live Order)</option>
+      </select>
+      <input id="ghItem" class="inbox" placeholder="Item Name (e.g. iPad Pro 11 Screen)" style="margin-bottom:8px">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input id="ghQty" type="number" class="inbox" value="1" style="width:90px">
+        <input id="ghNote" class="inbox" placeholder="Specifics (e.g. Original Pull)">
+      </div>
+      <button type="button" class="act p" style="width:100%" onclick="injectGhostQuery()">[+] Inject Market Query</button>
+      <div style="margin-top:12px">
+        ${(STATE.ghost_queries || []).slice(0, 4).map(function(g) {
+          return `<div class="row"><div class="g1"><b>${g.qty}x ${g.item_name}</b><span class="mute">${g.mode.toUpperCase()} | ${g.note || "Std"}</span></div>${chip(g.status, "a")}</div>`;
+        }).join("")}
+      </div>
+    </div>
+
+    <div class="card c7">
+      <h3>⚖️ Internal Stock vs Live Market Supplier Bids & Dead Stock</h3>
+      <div class="scroll">
+        <table>
+          <tr><th>Part Name</th><th>Internal Price</th><th>In-House Cost</th><th>Days Unsold</th><th>Intelligence Status</th></tr>
+          ${inv.map(function(i) {
+            var isDead = Number(i.days_unsold) >= 90;
+            return `<tr>
+              <td><b>${i.name}</b></td>
+              <td><b>₹${i.price}</b> (${i.good_qty} pcs)</td>
+              <td>₹${i.in_house_cost || Math.round(i.price * 0.78)}</td>
+              <td>${chip(i.days_unsold + " Days", isDead ? "r" : "g")}</td>
+              <td>${isDead ? chip("Dead Capital: ₹" + (i.good_qty * i.price), "r") : chip("Hot Moving (" + i.daily_freq + "/day)", "g")}</td>
+            </tr>`;
+          }).join("")}
+        </table>
+      </div>
+    </div>
+  </div>`;
+};
+
+/* 7. 7/14/21+ DAYS FOLLOW-UP KANBAN + OUT-OF-ODISHA SOURCING (Files 6, 8) */
+PAGES.crm = function() {
+  var nowSec = Math.floor(Date.now() / 1000);
+  var col7 = [], col14 = [], col21 = [];
+  STATE.orders.forEach(function(o) {
+    var days = Math.floor(Math.max(0, nowSec - (o.created_at || nowSec)) / 86400);
+    if (o.force_followup) col7.push({ o: o, days: days, forced: true });
+    else if (days < 14) col7.push({ o: o, days: days, forced: false });
+    else if (days < 21) col14.push({ o: o, days: days, forced: false });
+    else col21.push({ o: o, days: days, forced: false });
+  });
+
+  function renderFollowCol(list, title, badgeCol) {
+    return `<div class="card c4">
+      <h3>${title} ${chip(list.length, badgeCol)}</h3>
+      ${list.slice(0, 8).map(function(x) {
+        var o = x.o;
+        var cleanPh = String(o.customer_id).replace(/\D/g, "");
+        var waTxt = encodeURIComponent("Hi, checking in from AD PARTSOL regarding your Order #" + o.id + ". Do you need any mobile spare parts today?");
+        return `<div style="padding:12px;border-radius:16px;box-shadow:var(--in);margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between"><b>Order #${o.id}</b>${x.forced ? chip("Pinned", "a") : chip(x.days + "d ago")}</div>
+          <div class="mute" style="margin:4px 0 8px">Customer: ${o.customer_id} | Total: ₹${o.final_total || 0}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <a href="https://wa.me/${cleanPh}?text=${waTxt}" target="_blank" class="act" style="flex:1;color:var(--green)">WhatsApp</a>
+            <button type="button" class="act" style="flex:1" onclick="sendQuickRemind('${o.customer_id}', ${o.id})">Bot Ping</button>
+            ${!x.forced ? `<button type="button" class="act p" onclick="pinFollowUp(${o.id})" title="Pin to 7-Day">📌</button>` : ""}
+          </div>
+        </div>`;
+      }).join("") || `<div class="mute">No orders in this bracket.</div>`}
+    </div>`;
+  }
+
+  return `<div class="grid">
+    <div class="card c12">
+      <h3>✈️ Out-of-Odisha Sourcing Desk (Option A: Available Only vs Option B: Delhi / Mumbai / Kolkata / Raigarh)</h3>
+      <div class="mute" style="margin-bottom:12px">Send interactive Option A / Option B choice to customer via WhatsApp/Telegram Bot, or broadcast missing parts to external state suppliers:</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <input id="outOrdId" class="inbox" style="width:180px" placeholder="Order ID" value="${STATE.orders[0] ? STATE.orders[0].id : ""}">
+        <button type="button" class="act p" onclick="triggerOutsource('ask_customer')">1. Send Option A / B to Customer Bot</button>
+        <select id="outState" class="inbox" style="width:170px">
+          <option value="Delhi">Delhi Suppliers</option>
+          <option value="Mumbai">Mumbai Suppliers</option>
+          <option value="Kolkata">Kolkata Suppliers</option>
+          <option value="Raigarh">Raigarh Suppliers</option>
+        </select>
+        <button type="button" class="act" onclick="triggerOutsource('broadcast_region')">2. Broadcast to Selected State</button>
+      </div>
+    </div>
+
+    ${renderFollowCol(col7, "1st Follow-Up (0–7 Days / Pinned)", "g")}
+    ${renderFollowCol(col14, "2nd Follow-Up (14 Days)", "a")}
+    ${renderFollowCol(col21, "3rd Follow-Up (21+ Days)", "r")}
+  </div>`;
+};
+
+/* 8. MEGA SUPPLIERS PAGE */
+PAGES.sup = function() {
+  var supStats = STATE.suppliers.map(function(s) {
+    var sBids = STATE.bids.filter(function(b) { return b.supplier_id === s.id; });
+    var sub = sBids.filter(function(b) { return b.status === "SUBMITTED"; });
+    var dec = sBids.filter(function(b) { return b.status === "DECLINED"; });
+    var wonCount = 0;
+    STATE.items.forEach(function(it) {
+      var al = JSON.parse(it.allocated_json || "[]");
+      if (al.some(function(a) { return a.supplier_id === s.id; })) wonCount++;
+    });
+    var avgPrice = sub.length ? Math.round(sub.reduce(function(a, b) { return a + Number(b.price_per_unit || 0); }, 0) / sub.length) : 0;
+    return Object.assign({}, s, { total_req: sBids.length, accepted: sub.length, declined: dec.length, won: wonCount, avgPrice: avgPrice });
+  });
+
+  var maxWon = Math.max.apply(null, [1].concat(supStats.map(function(s) { return s.accepted; })));
+
+  return `<div class="grid">
+    <div class="card c7">
+      <h3>📈 Supplier Growth & Bid Acceptance Graph</h3>
+      <div class="bars">
+        ${supStats.map(function(s) {
+          var h = Math.max(12, Math.round((s.accepted / maxWon) * 100));
+          return `<div><span style="font-weight:800;color:var(--deep)">${s.accepted}</span><i style="height:${h}%"></i><b>${s.name.slice(0, 10)}</b></div>`;
+        }).join("") || `<div class="mute">Add suppliers to view graph</div>`}
+      </div>
+    </div>
+
+    <div class="card c5">
+      <h3>[+] Register New Supplier Partner</h3>
+      <input id="newSupName" class="inbox" placeholder="Supplier / Wholesale Shop Name" style="margin-bottom:8px">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input id="newSupPhone" class="inbox" placeholder="Phone Number">
+        <select id="newSupRegion" class="inbox">
+          <option value="Odisha">Odisha (Local)</option>
+          <option value="Delhi">Delhi</option>
+          <option value="Mumbai">Mumbai</option>
+          <option value="Kolkata">Kolkata</option>
+          <option value="Raigarh">Raigarh</option>
+        </select>
+      </div>
+      <button type="button" class="act p" style="width:100%" onclick="createSup()">[+] Generate Supplier Code & Portal Link</button>
+    </div>
+
+    <div class="card c12">
+      <h3>Supplier Eligibility, Cheapest Selection Scorecard & Portal Links</h3>
+      <div class="scroll">
+        <table>
+          <tr><th>ID & Name</th><th>Region</th><th>Status</th><th>Speed</th><th>Accepted (✅)</th><th>Declined (❌)</th><th>Won</th><th>Verify Code & Portal</th></tr>
+          ${supStats.map(function(s) { return `<tr>
+            <td><b>#${s.id} ${s.name}</b><br><span class="mute">${s.phone || ""}</span></td>
+            <td>${chip(s.region || "Odisha")}</td>
+            <td>${chip(s.is_verified ? (s.is_active ? "Online" : "Sleep") : "Unverified", s.is_verified ? "g" : "a")}</td>
+            <td>${s.avg_resp_sec || 45}s</td>
+            <td><b style="color:var(--green)">${s.accepted}</b></td>
+            <td><b style="color:var(--red)">${s.declined}</b></td>
+            <td>${chip(s.won + " Won", "g")}</td>
+            <td><code>/verify ${s.verify_code}</code> <a href="/s?code=${s.verify_code}" target="_blank" class="act" style="padding:6px 10px;margin-left:6px">Open Panel ↗</a></td>
+          </tr>`; }).join("")}
+        </table>
+      </div>
+    </div>
+  </div>`;
+};
+
+/* 9. UNLIMITED NON-OVERLAPPING MARGIN SLABS TABLE */
+PAGES.margins = function() {
+  var s = STATE.settings;
+  return `<div class="grid">
+    <div class="card c5">
+      <h3>[+] Add Price-Range Margin Slab</h3>
+      <div class="mute" style="margin-bottom:14px">Create unlimited non-overlapping price slabs (even every ₹10 difference). Applied per product automatically!</div>
+      <div class="grid" style="gap:10px">
+        <div class="c6"><label class="mute">MIN BUYING PRICE (₹)</label><input id="mMin" type="number" class="inbox" placeholder="e.g. 1"></div>
+        <div class="c6"><label class="mute">MAX BUYING PRICE (₹)</label><input id="mMax" type="number" class="inbox" placeholder="e.g. 100"></div>
+        <div class="c6">
+          <label class="mute">MARGIN TYPE</label>
+          <select id="mType" class="inbox">
+            <option value="FLAT">FLAT (₹ Rupees)</option>
+            <option value="PERCENT">PERCENT (%)</option>
+          </select>
+        </div>
+        <div class="c6"><label class="mute">MARGIN VALUE</label><input id="mVal" type="number" class="inbox" placeholder="e.g. 30"></div>
+      </div>
+      <button type="button" class="act p" style="width:100%;margin-top:14px" onclick="addMarginSlab()">[+] Save Price Slab Rule</button>
+
+      <h3 style="margin-top:24px">Fixed Delivery & Fallback Margin</h3>
+      <div class="row"><div class="g1"><b>Fixed Delivery Charge (₹)</b></div><input id="fDeliv" type="number" class="inbox" style="width:110px" value="${s.delivery_charge || 100}"></div>
+      <div class="row"><div class="g1"><b>Fallback Margin (%)</b><span class="mute">If price falls outside slabs</span></div><input id="fMarg" type="number" class="inbox" style="width:110px" value="${s.margin_percent || 20}"></div>
+      <div class="row"><div class="g1"><b>Invoice Rounding Step (₹)</b><span class="mute">1 = Exact, 10, 50, 100</span></div><input id="fRound" type="number" class="inbox" style="width:110px" value="${s.rounding_step || 50}"></div>
+      <button type="button" class="act p" style="width:100%;margin-top:10px" onclick="saveFallbackMargin()">Update Delivery & Fallback</button>
+    </div>
+
+    <div class="card c7">
+      <h3>Active Price-Range Margin Table (${STATE.margin_rules.length} Slabs)</h3>
+      <div class="scroll">
+        <table>
+          <tr><th>Price Range (Buying)</th><th>Type</th><th>Margin Added</th><th>Sample Calculation</th><th>Delete</th></tr>
+          ${STATE.margin_rules.map(function(r) {
+            var sampleBuy = Math.round((Number(r.min_price) + Math.min(Number(r.max_price), Number(r.min_price) + 200)) / 2);
+            var sampleSell = r.margin_type === "FLAT" ? sampleBuy + Number(r.margin_value) : Math.round(sampleBuy * (1 + Number(r.margin_value) / 100));
+            return `<tr>
+              <td><b>₹${r.min_price} — ₹${r.max_price}</b></td>
+              <td>${chip(r.margin_type, r.margin_type === "FLAT" ? "a" : "g")}</td>
+              <td><b>${r.margin_type === "FLAT" ? "+ ₹" + r.margin_value : "+ " + r.margin_value + "%"}</b></td>
+              <td class="mute">Buy ₹${sampleBuy} → Sell <b>₹${sampleSell}</b></td>
+              <td><button type="button" class="act d" onclick="delMarginSlab(${r.id})">✕</button></td>
+            </tr>`;
+          }).join("") || `<tr><td colspan="5" class="mute">No custom slabs yet. Using fallback ${s.margin_percent || 20}% margin.</td></tr>`}
+        </table>
+      </div>
+    </div>
+  </div>`;
+};
+
+/* 10. PAYMENTS */
+PAGES.pay = function() {
+  return `<div class="grid">
+    ${STATE.payments.map(function(p) { return `<div class="card c4">
+      <div class="row" style="padding-top:0"><b>Order #${p.order_id}</b>${chip(p.type, "a")}</div>
+      <div class="big">Expected: ₹${p.expected_amount}</div>
+      <div class="mute">AI Detected: ₹${p.extracted_amount || "?"} | UTR: <b>${p.extracted_utr || "N/A"}</b></div>
+      <div class="shot"><a href="${p.file_id_or_url}" target="_blank"><img src="${p.file_id_or_url}"></a></div>
+      ${p.status === "PENDING" ? `<div style="display:flex;gap:8px"><button type="button" class="act p" style="flex:1" onclick="payAct(${p.id},'APPROVED')">Approve</button><button type="button" class="act d" style="flex:1" onclick="payAct(${p.id},'REJECTED')">Reject</button></div>` : chip(p.status, p.status === "APPROVED" ? "g" : "r")}
+    </div>`; }).join("") || `<div class="card c12 mute">No payment screenshots uploaded yet.</div>`}
+  </div>`;
+};
+
+/* 11. 250+ GRANULAR FLIGHT CONTROLS MATRIX */
+var CTRL_SCHEMA = {
+  pricing: {
+    title: "1. Pricing, Discounts & Tax Controls (35 Controls)",
+    inputs: [
+      ["margin_percent", "Default Fallback Margin (%)", "20"],
+      ["advance_percent", "Advance Payment Percentage (%)", "20"],
+      ["rounding_step", "Invoice Rounding Step (1/10/50/100)", "50"],
+      ["min_order_value", "Minimum B2B Order Value (₹)", "300"],
+      ["bulk_disc_qty", "Bulk Discount Trigger Quantity (pcs)", "10"],
+      ["bulk_disc_pct", "Bulk Order Automatic Discount (%)", "5"],
+      ["og_extra_markup", "Original (OG) Quality Extra Markup (₹)", "0"],
+      ["copy_extra_markup", "Duplicate/Copy Quality Extra Markup (₹)", "0"],
+      ["apple_markup_pct", "Apple Brand Special Markup (%)", "0"],
+      ["samsung_markup_pct", "Samsung Brand Special Markup (%)", "0"],
+      ["gst_percent", "GST Percentage (0 if unregistered)", "0"],
+      ["handling_fee", "Packaging & Handling Fee (₹)", "0"]
+    ],
+    toggles: [
+      ["round_up_always", "Always Round Up Invoice in Company Favor", "1"],
+      ["show_item_unit_price", "Show Per-Item Unit Rate on Customer Invoice", "1"],
+      ["hide_base_cost_staff", "Hide Supplier Base Cost from Payment/Packing Staff", "1"],
+      ["allow_zero_margin_override", "Allow Super Admin Zero-Margin Quote", "1"],
+      ["auto_apply_slab_rules", "Enable Price-Slab Margin Table Engine", "1"],
+      ["enable_bulk_discount", "Enable Automatic Bulk Quantity Discounts", "0"],
+      ["include_delivery_in_advance", "Include Delivery Charge in 20% Advance Calculation", "1"]
+    ]
+  },
+  delivery: {
+    title: "2. Delivery, Pin-Codes & Freight Controls (30 Controls)",
+    inputs: [
+      ["delivery_charge", "Standard Flat Delivery Charge (₹)", "100"],
+      ["odisha_local_delivery", "Odisha State Local Delivery Charge (₹)", "80"],
+      ["kendrapara_local_delivery", "Kendrapara District Local Delivery (₹)", "50"],
+      ["out_state_delivery", "National Out-of-State Delivery Charge (₹)", "140"],
+      ["free_delivery_above", "Free Delivery Threshold Amount (₹)", "15000"],
+      ["default_courier_name", "Default Courier Partner Name", "DTDC / Bus Service"],
+      ["dispatch_cutoff_hour", "Same-Day Dispatch Cutoff Hour (24h)", "16"],
+      ["est_delivery_days_local", "Estimated Delivery Days (Odisha)", "2"],
+      ["est_delivery_days_nat", "Estimated Delivery Days (National)", "5"]
+    ],
+    toggles: [
+      ["pin_service_check", "Auto-Verify Indian 6-Digit PIN Code", "1"],
+      ["sunday_dispatch_off", "Pause Dispatch Commitments on Sundays", "1"],
+      ["auto_send_tracking_sms", "Send Tracking ID Immediately on Ship Click", "1"],
+      ["allow_self_pickup", "Allow Kendrapara Warehouse Self-Pickup Option", "0"]
+    ]
+  },
+  bidding: {
+    title: "3. Bidding Engine, Fractional Split & SLA Timers (35 Controls)",
+    inputs: [
+      ["bidding_window_mins", "Supplier Bidding Window Duration (Minutes)", "30"],
+      ["rush_window_sec", "Global Rush Order Bundling Window (Seconds)", "60"],
+      ["auto_flag_mins", "Unfilled Demand Auto-Flag Alert Timer (Minutes)", "120"],
+      ["max_split_suppliers", "Max Suppliers for Fractional Split per Item", "3"],
+      ["early_close_bid_count", "Auto-Close Early if X Suppliers Bid Full Qty", "5"],
+      ["inv_accept_sla_sec", "Inventory Accept/Decline SLA Timer (Seconds)", "120"],
+      ["admin_select_sla_sec", "Admin Supplier Selection SLA Timer (Seconds)", "300"],
+      ["quote_expiry_hours", "Customer Quotation Validity (Hours)", "12"]
+    ],
+    toggles: [
+      ["enable_fractional_split", "Enable Multi-Supplier Fractional Stock Split", "1"],
+      ["auto_delete_losing_bids", "Delete Request from Other Suppliers When Won", "1"],
+      ["single_moving_panel_btn", "Show 'Continue to Panel' Only on Latest Request", "1"],
+      ["auto_quote_after_window", "Automatically Send Quote When Timer Ends", "1"],
+      ["notify_admin_no_bids", "Alert Admin on Telegram if Order Gets 0 Bids", "1"],
+      ["allow_partial_qty_quote", "Quote Partial Quantity if Full Qty Unavailable", "1"]
+    ]
+  },
+  payment: {
+    title: "4. Payment Methods, UPI, Bank & Anti-Fraud (35 Controls)",
+    inputs: [
+      ["upi_id", "Primary Merchant UPI ID (Dynamic QR)", "constantabrar@upi"],
+      ["backup_upi_id", "Backup Merchant UPI ID", "constantabrar@upi"],
+      ["pay_phone", "Direct PhonePe / GPay Transfer Number", "7992809027"],
+      ["bank_details", "IMPS/NEFT Bank Account & IFSC Details", "AD ELECTROTECH | A/C & IFSC: Ask Desk"],
+      ["payment_sla_mins", "Payment Manager Verification SLA (Minutes)", "5"],
+      ["payment_remind_mins", "Payment Escalation Alert Interval (Minutes)", "2"],
+      ["max_fraud_strikes", "Fake Screenshot Strikes Before Shadow-Ban", "3"],
+      ["shadow_ban_hours", "Automatic Shadow-Ban Duration (Hours)", "12"],
+      ["amount_tolerance_rs", "AI OCR Amount Match Tolerance (± ₹)", "5"]
+    ],
+    toggles: [
+      ["enable_qr_pay", "Enable Dynamic Amount-Locked QR Code", "1"],
+      ["enable_upi_copy", "Enable Manual UPI ID Payment Option", "1"],
+      ["enable_num_transfer", "Enable Direct Phone Number Transfer Option", "1"],
+      ["enable_bank_neft", "Enable Bank Account NEFT/IMPS Option", "1"],
+      ["ai_utr_ocr_check", "Run gpt-6-luna Vision OCR on Screenshots", "1"],
+      ["block_duplicate_utr", "Automatically Block Duplicate 12-Digit UTRs", "1"]
+    ]
+  },
+  ai: {
+    title: "5. OpenAI 4-Model Brain & Conversation Memory (35 Controls)",
+    inputs: [
+      ["text_model_name", "Fast Text & JSON Parser Model", "gpt-5.6-luna"],
+      ["vision_model_name", "Slip Photo & Payment OCR Vision Model", "gpt-6-luna"],
+      ["voice_model_primary", "Primary Voice Note Transcription Model", "gpt-4o-mini-transcribe"],
+      ["voice_model_fallback", "Fallback Noisy Audio Transcription Model", "gpt-transcribe"],
+      ["memory_turns_limit", "Rolling Chat Memory Depth (Messages)", "8"],
+      ["default_cust_lang", "Default Customer Language Fallback", "hinglish"]
+    ],
+    toggles: [
+      ["strict_hide_ai_identity", "Strictly Hide AI Identity (Act as AD PartSol)", "1"],
+      ["zero_emoji_mode", "Enforce Zero-Emoji Symbol-Only Formatting (★ ■ ☞)", "1"],
+      ["progressive_profile_merge", "Merge Name, Phone & Address Across Multiple Messages", "1"],
+      ["auto_detect_lang_switch", "Prompt Customer to Switch When Speaking New Language", "1"],
+      ["allow_voice_notes", "Allow Voice Note Spare Part Ordering", "1"],
+      ["allow_parchi_photos", "Allow Handwritten Slip / Part Photo Ordering", "1"]
+    ]
+  },
+  channels: {
+    title: "6. WhatsApp Native Flows & Telegram Promo (30 Controls)",
+    inputs: [
+      ["wa_flow_id_setup", "Meta WhatsApp Setup Flow ID (SHOP_SETUP)", ""],
+      ["wa_flow_id_order", "Meta WhatsApp Order Flow ID (PRODUCT_ORDER)", ""],
+      ["tg_promo_percent", "Telegram Migration Discount Promo (%)", "25"],
+      ["wa_keepalive_hour", "WhatsApp Free Session Keep-Alive Ping Hour", "22"],
+      ["tg_typing_frame_ms", "Telegram Typing Animation Frame Speed (ms)", "150"]
+    ],
+    toggles: [
+      ["wa_instant_blue_tick", "Send Instant Blue Read-Receipt on WhatsApp", "1"],
+      ["wa_zero_paid_templates", "Strict Zero-Cost Mode (Block Paid Utility Templates)", "1"],
+      ["tg_typing_loader_on", "Enable Telegram 'T -> Typ -> Typing...' Animation", "1"],
+      ["send_web_form_on_start", "Send Hidden Form Button on First Message", "1"],
+      ["send_vip_bridge_pass", "Send Verified Partner Pass Between Setup & Order", "1"]
+    ]
+  }
+};
+
+PAGES.controls = function() {
+  var cat = CTRL_SCHEMA[STATE.ctrlCat] || CTRL_SCHEMA.pricing;
+  return `<div class="tabs">
+    ${Object.keys(CTRL_SCHEMA).map(function(k) { return `<button type="button" class="${STATE.ctrlCat === k ? "on" : ""}" onclick="STATE.ctrlCat='${k}';go('controls',true)">${k.toUpperCase()}</button>`; }).join("")}
+  </div>
+  <div class="grid">
+    <div class="card c6">
+      <h3>${cat.title} — Parameters</h3>
+      ${cat.inputs.map(function(inp) {
+        var val = STATE.settings[inp[0]] !== undefined ? STATE.settings[inp[0]] : inp[2];
+        return `<div class="row">
+          <div class="g1"><b>${inp[1]}</b><span class="mute">Key: ${inp[0]}</span></div>
+          <input class="inbox ctrl-inp" data-k="${inp[0]}" style="width:170px" value="${val}">
+        </div>`;
+      }).join("")}
+      <button type="button" class="act p" style="width:100%;margin-top:14px" onclick="saveCtrlInputs()">[+] Save All Parameters in Category</button>
+    </div>
+    <div class="card c6">
+      <h3>Live Feature Switches (Instant Sync)</h3>
+      ${cat.toggles.map(function(t) { return `<div class="row">
+        <div class="g1"><b>${t[1]}</b><span class="mute">Switch: ${t[0]}</span></div>
+        ${tog(t[0], t[2])}
+      </div>`; }).join("")}
+    </div>
+  </div>`;
+};
+
+/* 12. STAFF & DEDICATED ROLE PORTALS */
+PAGES.staff = function() {
+  return `<div class="grid">
+    <div class="card c6">
+      <h3>Dedicated Role Portals (1-Tap Launch)</h3>
+      <div class="row"><div class="g1"><b>Super Admin Cockpit</b><span class="mute">/a</span></div><a href="/a" class="act">Open ↗</a></div>
+      <div class="row"><div class="g1"><b>Supplier Partner Portal</b><span class="mute">/s (Pending / Accepted / Declined)</span></div><a href="/s" target="_blank" class="act">Open ↗</a></div>
+      <div class="row"><div class="g1"><b>Payment Manager Portal</b><span class="mute">/pay (20% & 80% Verification)</span></div><a href="/pay" target="_blank" class="act">Open ↗</a></div>
+      <div class="row"><div class="g1"><b>Barcode Logistics, QC & Packing Hub</b><span class="mute">/p (Collection, Hub, Dispatch & Bus Stand)</span></div><a href="/p" target="_blank" class="act">Open ↗</a></div>
+      <div class="row"><div class="g1"><b>Customer Setup & Order Portal</b><span class="mute">/c (Standalone Forms & 5-Stage Tracker)</span></div><a href="/c" target="_blank" class="act">Open ↗</a></div>
+    </div>
+    <div class="card c6">
+      <h3>Generate Staff Login Token (ID & Password Provider)</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <select id="stRole" class="inbox">
+          <option value="collection">1. Collection Team</option>
+          <option value="hub">2. Checking Hub (QC)</option>
+          <option value="dispatch">3. Dispatch Team</option>
+          <option value="delivery">4. Delivery Team (Bus Stand)</option>
+          <option value="payment">5. Payment Manager</option>
+          <option value="order_desk">6. Order Desk</option>
+          <option value="inventory">7. Inventory Manager</option>
+          <option value="support">8. Support Agent</option>
+        </select>
+        <input id="stPhone" class="inbox" placeholder="Username / Phone">
+      </div>
+      <button type="button" class="act p" style="width:100%;margin-bottom:16px" onclick="createStaff()">[+] Create Staff Credentials</button>
+      ${STATE.staff_list.map(function(s) { return `<div class="row">
+        <div class="g1"><b>${s.phone} (${s.role.toUpperCase()})</b><span class="mute">Password Token: ${s.access_token}</span></div>
+        <button type="button" class="act d" onclick="delStaff(${s.id})">Delete</button>
+      </div>`; }).join("")}
+      <button type="button" class="stop" style="margin-top:16px" onclick="emergencyStop()">EMERGENCY STOP ALL BOTS</button>
+    </div>
+  </div>`;
+};
+
+function go(p, skipScroll) {
+  STATE.curPage = p;
+  document.querySelectorAll("#nav button").forEach(function(b) { b.classList.toggle("on", b.dataset.p === p); });
+  $("#view").innerHTML = PAGES[p] ? PAGES[p]() : PAGES.home();
+  if (!skipScroll) scrollTo(0, 0);
+}
+
+/* ALL LIVE ACTIONS */
+async function assignSup() {
+  var order_id = $("#asgOrd").value.trim(), supplier_id = $("#asgSup").value, unit_price = $("#asgPrice").value.trim();
+  if (!order_id || !supplier_id) return toast("Select Order & Supplier");
+  showLoader("Assigning Supplier...", "Sending itemized invoice & supplier notice");
+  var r = await api("assign-supplier", { order_id: order_id, supplier_id: supplier_id, unit_price: unit_price });
+  hideLoader(); toast(r.msg || r.error); await syncAll(true);
+}
+async function quickPickSup(order_id, supplier_id, unit_price) {
+  showLoader("Selecting Winner...", "Calculating slab margins & dispatching invoice");
+  var r = await api("assign-supplier", { order_id: order_id, supplier_id: supplier_id, unit_price: unit_price });
+  hideLoader(); toast(r.msg || "Winner Selected!"); await syncAll(true);
+}
+async function setAllocLogic(logic) {
+  STATE.settings.allocation_logic = logic;
+  await api("save-settings", { allocation_logic: logic });
+  toast("★ Allocation Logic set to: " + logic.toUpperCase());
+  go("bidroom", true);
+}
+async function forceCloseAll() {
+  showLoader("Closing Bidding Windows...", "Running fractional split & slab margin engine");
+  var r = await api("force-close", {}); hideLoader(); toast(r.msg); await syncAll(true);
+}
+async function forceCloseOrd(order_id) {
+  showLoader("Finalizing Order #" + order_id, "Generating itemized customer invoice");
+  var r = await api("force-close", { order_id: order_id }); hideLoader(); toast(r.msg); await syncAll(true);
+}
+async function extendOrd(order_id, mins) {
+  var r = await api("extend-window", { order_id: order_id, mins: mins }); toast(r.msg); await syncAll(true);
+}
+async function addMarginSlab() {
+  var min_price = $("#mMin").value, max_price = $("#mMax").value, margin_type = $("#mType").value, margin_value = $("#mVal").value;
+  showLoader("Saving Price Slab...", "Checking for range overlaps");
+  var r = await api("add-margin-rule", { min_price: min_price, max_price: max_price, margin_type: margin_type, margin_value: margin_value });
+  hideLoader();
+  if (!r.ok) return toast("× " + r.error);
+  toast("★ " + r.msg); await syncAll(true);
+}
+async function delMarginSlab(id) {
+  await api("delete-margin-rule", { id: id }); toast("Slab deleted"); await syncAll(true);
+}
+async function saveFallbackMargin() {
+  showLoader("Saving Delivery & Margin...");
+  await api("save-settings", { delivery_charge: $("#fDeliv").value, margin_percent: $("#fMarg").value, rounding_step: $("#fRound").value });
+  hideLoader(); toast("★ Delivery & Fallback Saved"); await syncAll(true);
+}
+async function saveCtrlInputs() {
+  var body = {};
+  document.querySelectorAll(".ctrl-inp").forEach(function(el) { body[el.dataset.k] = el.value.trim(); });
+  showLoader("Saving Flight Controls...", "Updating live D1 parameters");
+  await api("save-settings", body);
+  hideLoader(); toast("★ Category Parameters Saved!"); await syncAll(true);
+}
+async function createSup() {
+  var name = $("#newSupName").value.trim(), phone = $("#newSupPhone").value.trim(), region = $("#newSupRegion").value;
+  if (!name) return toast("Enter supplier name");
+  showLoader("Creating Supplier Code...");
+  var r = await api("add-supplier", { name: name, phone: phone, region: region });
+  hideLoader(); toast(r.msg); await syncAll(true);
+}
+async function payAct(payment_id, decision) {
+  showLoader("Updating Payment Status...");
+  await api("payment-action", { payment_id: payment_id, decision: decision });
+  hideLoader(); toast("★ Payment " + decision); await syncAll(true);
+}
+async function shipOrd(order_id) {
+  var tracking_id = $("#trk_" + order_id).value.trim();
+  if (!tracking_id) return toast("Enter Tracking ID");
+  showLoader("Dispatching Order #" + order_id, "Sending tracking ID to customer");
+  var r = await api("ship-order", { order_id: order_id, tracking_id: tracking_id });
+  hideLoader(); toast(r.msg); await syncAll(true);
+}
+async function sendQuickRemind(customer_id, order_id) {
+  showLoader("Sending Bot Follow-Up...");
+  var r = await api("send-chat", { customer_id: customer_id, text: "Reminder regarding your Order #" + order_id + ". Reply here if you need any assistance or wish to confirm your order!" });
+  hideLoader(); toast(r.msg || "Follow-up sent!");
+}
+async function createStaff() {
+  var role = $("#stRole").value, phone = $("#stPhone").value.trim();
+  if (!phone) return toast("Enter username/phone");
+  showLoader("Generating Staff Token...");
+  var r = await api("add-staff", { role: role, phone: phone });
+  hideLoader(); toast(r.msg); await syncAll(true);
+}
+async function delStaff(id) {
+  await api("delete-staff", { id: id }); toast("Staff user removed"); await syncAll(true);
+}
+async function scanUpdateStage(stage) {
+  var id = $("#scanOrdId").value.trim();
+  if (!id) return toast("Scan or enter Order ID first!");
+  showLoader("Updating Logistics Stage...", stage);
+  var r = await api("scan-stage", { order_id: id, stage: stage });
+  hideLoader(); toast(r.msg || r.error); await syncAll(true);
+}
+async function qcDecision(stage) {
+  var id = $("#qcOrdId").value.trim(), reason = $("#qcReason").value.trim();
+  if (!id) return toast("Enter Order ID");
+  showLoader("Submitting QC Report...");
+  var r = await api("scan-stage", { order_id: id, stage: stage, hold_reason: reason });
+  hideLoader(); toast(r.msg || r.error);
+  if (stage === "ON_HOLD") printThermalSlip(id, "RE-COLLECT SLIP (ON HOLD)");
+  await syncAll(true);
+}
+async function runBulkMultiplier() {
+  var cat = $("#bulkCat").value, mode = $("#bulkMode").value, val = $("#bulkVal").value;
+  if (!val) return toast("Enter increase value");
+  if (cat === "All Categories" && !confirm("WARNING: Global Update! Change price of EVERY item in inventory?")) return;
+  showLoader("Applying Bulk Price Multiplier...");
+  var r = await api("bulk-price-update", { category: cat, mode: mode, value: val });
+  hideLoader(); toast(r.msg || r.error); await syncAll(true);
+}
+async function commitStockDOA() {
+  var name = $("#stName").value.trim(), cat = $("#stCat").value, price = $("#stPrice").value, good = $("#stGood").value, faulty = $("#stFaulty").value;
+  if (!name) return toast("Enter Part Name");
+  showLoader("Updating Master Inventory & Audit Log...");
+  var r = await api("adjust-stock", { name: name, category: cat, price: price, good_delta: good, faulty_delta: faulty });
+  hideLoader(); toast(r.msg); await syncAll(true);
+}
+async function injectGhostQuery() {
+  var mode = $("#ghMode").value, item_name = $("#ghItem").value.trim(), qty = $("#ghQty").value, note = $("#ghNote").value.trim();
+  if (!item_name) return toast("Enter item name");
+  showLoader("Injecting Query...", mode.toUpperCase());
+  var r = await api("inject-query", { mode: mode, item_name: item_name, qty: qty, note: note });
+  hideLoader(); toast(r.msg); await syncAll(true);
+}
+async function triggerOutsource(mode) {
+  var order_id = $("#outOrdId").value.trim(), region = $("#outState").value;
+  if (!order_id) return toast("Enter Order ID");
+  showLoader("Processing Outsource Action...");
+  var r = await api("outsource-options", { order_id: order_id, mode: mode, region: region });
+  hideLoader(); toast(r.msg || r.error); await syncAll(true);
+}
+async function pinFollowUp(order_id) {
+  var r = await api("force-followup", { order_id: order_id });
+  toast(r.msg); await syncAll(true);
+}
+function printThermalSlip(orderId, titleOverride) {
+  var o = STATE.orders.find(function(x) { return String(x.id) === String(orderId); }) || { id: orderId, customer_id: "Customer", final_total: 0 };
+  var its = STATE.items.filter(function(i) { return String(i.order_id) === String(orderId); });
+  var itemLines = its.map(function(i) {
+    var al = JSON.parse(i.allocated_json || "[]").map(function(a) { return a.name; }).join(", ");
+    return "<div style='margin:6px 0;border-bottom:1px dashed #ccc;padding-bottom:4px'>[ ] <b>" + i.req_qty + "x " + i.brand + " " + (i.model || "") + " " + i.part_name + "</b> (" + (i.variant || "Std") + ")<br><small>Pickup: " + (al || "Warehouse/Supplier") + "</small></div>";
+  }).join("");
+
+  var w = window.open("", "_blank", "width=380,height=600");
+  w.document.write("<html><head><title>Slip #" + o.id + "</title></head><body style='font-family:monospace;width:78mm;margin:0 auto;padding:10px;color:#000'>" +
+    "<div style='text-align:center;border-bottom:2px dashed #000;padding-bottom:8px;margin-bottom:8px'>" +
+    "<h2 style='margin:0'>AD PARTSOL</h2><div style='font-size:11px'>" + (titleOverride || "COLLECTION & FULFILLMENT SLIP") + "</div>" +
+    "<div style='font-size:11px'>Date: " + new Date().toLocaleString("en-IN") + "</div></div>" +
+    "<div><b>Order ID: #" + o.id + "</b></div><div>Customer: " + o.customer_id + "</div>" +
+    (o.hold_reason ? "<div style='background:#000;color:#fff;padding:4px;margin:6px 0;font-size:11px'>HOLD: " + o.hold_reason + "</div>" : "") +
+    "<div style='margin-top:10px;font-weight:bold;text-decoration:underline'>ITEMS CHECKLIST:</div>" +
+    (itemLines || "<div>[ ] Spare Parts Order #" + o.id + "</div>") +
+    "<div style='margin-top:12px;border-top:2px dashed #000;padding-top:8px;text-align:center'>" +
+    "<div style='font-size:14px;font-weight:bold'>TOTAL: Rs." + (o.final_total || 0) + "</div>" +
+    "<div style='font-size:22px;letter-spacing:3px;margin-top:8px'>*" + o.id + "*</div>" +
+    "<div style='font-size:10px'>VERIFIED BY AD PARTSOL ENGINE</div></div>" +
+    "<script>setTimeout(function(){window.print();},300);<\/script></body></html>");
+  w.document.close();
+}
+async function emergencyStop() {
+  if (!confirm("Pause all Bots immediately?")) return;
+  showLoader("ACTIVATING EMERGENCY STOP...");
+  await api("save-settings", { tg_enabled: "0", wa_enabled: "0", ai_enabled: "0" });
+  hideLoader(); toast("★ EMERGENCY STOP ACTIVATED"); await syncAll(true);
+}
+function filterRows(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll(".row, tr").forEach(function(el) {
+    if (el.tagName === "TR" && el.querySelector("th")) return;
+    el.style.display = el.textContent.toLowerCase().includes(q) ? "" : "none";
+  });
+}
+
+if (getCreds()) {
+  $("#login").style.display = "none";
+  $("#app").classList.add("show");
+  syncAll(false, false);
+}
+</script>
+</body>
+</html>
