@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>AD PartSol — Customer Support & Follow-Up Desk</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--page:#FFFFFF;--bg:#F8F8F8;--cv:#FFFFFF;--ink:#080808;--mute:#777777;--line:#EAEAEA;--inv:#FFFFFF;--green:#1E7347;--r:10px;--rc:14px}
+*{box-sizing:border-box}body{margin:0;font-family:"Inter",system-ui,sans-serif;background:var(--page);color:var(--ink);padding:20px 14px 60px;font-size:14px}
+.wrap{max-width:1100px;margin:0 auto}.card{background:var(--cv);border:1px solid var(--line);border-radius:var(--rc);padding:20px;margin-bottom:16px}
+.inbox{background:var(--cv);border:1px solid var(--line);border-radius:var(--r);padding:11px 13px;width:100%;font-size:14px;outline:0;color:var(--ink)}
+.act{padding:10px 16px;border-radius:var(--r);border:1px solid var(--line);background:var(--cv);font-weight:600;font-size:12.5px;cursor:pointer;text-decoration:none;display:inline-block}
+.act.p{background:var(--ink);color:var(--inv);border-color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="loginBox" class="card" style="max-width:400px;margin:50px auto">
+    <h2 style="margin:0 0 8px">Support & Retention Desk</h2>
+    <input id="u" class="inbox" style="margin-bottom:10px" placeholder="Staff Phone">
+    <input id="p" type="password" class="inbox" style="margin-bottom:14px" placeholder="ADP-Token">
+    <button class="act p" style="width:100%" onclick="login()">Enter Support Desk</button>
+  </div>
+  <div id="app" style="display:none">
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+      <h2 style="margin:0;font-size:20px">Customer Inbox, Direct Reply & 24h Window Monitor</h2>
+      <button class="act" onclick="load()">↻ Sync</button>
+    </div>
+    <div class="card">
+      <h3 style="margin:0 0 10px;font-size:14px">✉️ Send Direct Bot Message (WhatsApp / Telegram)</h3>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <input id="cid" class="inbox" style="width:220px" placeholder="Customer ID (wa_... or tg_...)">
+        <input id="msg" class="inbox" style="flex:1" placeholder="Type message to customer...">
+        <button class="act p" onclick="sendMsg()">Send Now</button>
+      </div>
+    </div>
+    <div id="custList"></div>
+  </div>
+</div>
+<script>
+const API_BASE = location.hostname.includes("workers.dev") ? "" : "https://adpartsol.storzen-io.workers.dev";
+let C = JSON.parse(localStorage.getItem("adp_chat_c") || "null");
+if (C) load();
+function login() { C = { u: document.getElementById("u").value.trim(), p: document.getElementById("p").value.trim() }; localStorage.setItem("adp_chat_c", JSON.stringify(C)); load(); }
+async function load() {
+  const r = await fetch(API_BASE + "/api/panel/dashboard", { headers: { "x-staff-phone": C.u, "x-staff-token": C.p } });
+  const d = await r.json();
+  if (!d.ok) { localStorage.removeItem("adp_chat_c"); return alert(d.error); }
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("app").style.display = "block";
+  const now = Math.floor(Date.now() / 1000);
+  document.getElementById("custList").innerHTML = (d.customers || []).map(c => {
+    const hrsLeft = Math.max(0, 24 - Math.floor((now - (c.last_msg_at || 0)) / 3600));
+    return `<div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div>
+        <b>${c.full_name || c.id}</b> (${c.platform.toUpperCase()})
+        <div style="font-size:12px;color:var(--mute)">ID: ${c.id} • Lang: ${c.lang || "Unset"} • 24h Window: <b>${hrsLeft}h left</b></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="act p" onclick="document.getElementById('cid').value='${c.id}';document.getElementById('msg').focus()">Reply in Bot</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+async function sendMsg() {
+  const customer_id = document.getElementById("cid").value.trim();
+  const text = document.getElementById("msg").value.trim();
+  if (!customer_id || !text) return alert("Enter Customer ID and Message");
+  await fetch(API_BASE + "/api/panel/send-chat", { method: "POST", headers: { "Content-Type": "application/json", "x-staff-phone": C.u, "x-staff-token": C.p }, body: JSON.stringify({ customer_id, text }) });
+  document.getElementById("msg").value = "";
+  alert("Sent!");
+}
+</script>
+</body>
+</html>
