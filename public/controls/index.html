@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>AD PartSol — Privacy & AI Governance Vault</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#FFFFFF;--bg:#F8F8F8;--cv:#FFFFFF;--ink:#080808;--mute:#777777;
+  --line:#EAEAEA;--hover:#F3F3F3;--inv:#FFFFFF;--amber:#8A6414;--red:#B3261E;--green:#1E7347;
+  --r:10px;--rc:14px;--ease:cubic-bezier(.2,.7,.2,1);
+}
+:root[data-theme="dark"]{
+  --page:#080808;--bg:#121212;--cv:#0E0E0E;--ink:#F2F2F2;--mute:#8C8C8C;
+  --line:#262626;--hover:#1A1A1A;--inv:#080808;--amber:#D9A441;--red:#F0716A;--green:#4FC083;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;max-width:100vw;overflow-x:hidden;font-family:"Inter",system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.5;color:var(--ink);background:var(--page);-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* Loader */
+#loader{position:fixed;inset:0;z-index:9999;background:rgba(255,255,255,.82);backdrop-filter:blur(8px);display:none;place-items:center;padding:24px}
+:root[data-theme="dark"] #loader{background:rgba(8,8,8,.84)}
+#loader.on{display:grid}
+.ldr-card{background:var(--cv);border:1px solid var(--line);border-radius:20px;padding:30px 26px;display:flex;flex-direction:column;align-items:center;text-align:center;max-width:300px;width:100%}
+.orb-wrap{width:76px;height:76px;position:relative;display:grid;place-items:center;margin-bottom:16px}
+.orb-ring1{position:absolute;inset:0;border-radius:50%;border:2px solid var(--line);border-top-color:var(--ink);animation:spin 1s linear infinite}
+.orb-ring2{position:absolute;inset:9px;border-radius:50%;border:2px solid transparent;border-bottom-color:var(--mute);animation:spin 1.5s linear infinite reverse}
+.orb-core{width:42px;height:42px;border-radius:50%;background:var(--ink);color:var(--inv);display:grid;place-items:center;font-weight:700;font-size:13px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Login */
+#login{position:fixed;inset:0;display:grid;place-items:center;padding:18px;z-index:100;background:var(--page)}
+#login.out{opacity:0;pointer-events:none;display:none}
+.lbox{width:min(400px,100%);background:var(--cv);border:1px solid var(--line);border-radius:20px;padding:36px 28px 28px}
+.logo{width:52px;height:52px;border-radius:14px;background:var(--ink);color:var(--inv);display:grid;place-items:center;font-weight:700;font-size:16px;margin-bottom:20px}
+.lbox h1{margin:0;font-size:26px;font-weight:700;letter-spacing:-.03em}
+.lbox p{color:var(--mute);margin:6px 0 24px;font-size:13px}
+.fld{display:flex;align-items:center;background:var(--cv);border:1px solid var(--line);border-radius:var(--r);padding:0 14px;margin-bottom:12px}
+.fld:focus-within{border-color:var(--ink);box-shadow:0 0 0 3px rgba(128,128,128,.14)}
+.fld input{flex:1;border:0;background:none;padding:14px 0;outline:0;font-size:16px;color:var(--ink)}
+.btn{width:100%;padding:14px;border-radius:var(--r);background:var(--ink);color:var(--inv);font-weight:600;font-size:14px;border:1px solid var(--ink)}
+.err{color:var(--red);font-size:12.5px;min-height:18px;margin-top:10px;font-weight:500}
+
+/* Layout */
+.wrap{max-width:1240px;margin:0 auto;padding:28px 24px 80px;display:none}
+.wrap.show{display:block}
+.top{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding-bottom:20px;border-bottom:1px solid var(--line);margin-bottom:22px}
+.top h1{margin:0;font-size:26px;font-weight:700;letter-spacing:-.03em}
+.top h1 small{display:block;font-size:11px;font-weight:500;color:var(--mute);letter-spacing:.08em;text-transform:uppercase;margin-top:6px}
+.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ibtn{height:38px;padding:0 14px;border-radius:var(--r);border:1px solid var(--line);background:var(--cv);font-size:12.5px;font-weight:500;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.ibtn:hover{background:var(--hover)}
+.ibtn.p{background:var(--ink);color:var(--inv);border-color:var(--ink)}
+
+.search{display:flex;align-items:center;gap:10px;background:var(--cv);border:1px solid var(--line);border-radius:var(--r);padding:0 14px;margin-bottom:20px}
+.search input{border:0;background:none;outline:0;padding:12px 0;width:100%;font-size:14px;color:var(--ink)}
+
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:12px;margin-bottom:22px;border-bottom:1px solid var(--line);scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{padding:8px 16px;border-radius:99px;font-size:11.5px;font-weight:500;letter-spacing:.04em;color:var(--mute);white-space:nowrap}
+.tabs button:hover{background:var(--hover);color:var(--ink)}
+.tabs button.on{background:var(--ink);color:var(--inv)}
+
+.grid{display:grid;gap:16px;grid-template-columns:repeat(12,minmax(0,1fr))}
+.c6{grid-column:span 6}.c12{grid-column:span 12}
+.card{background:var(--cv);border:1px solid var(--line);border-radius:var(--rc);padding:20px}
+.card h3{margin:0 0 14px;font-size:14px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border:0}
+.row .g1{flex:1;min-width:0}
+.row b{display:block;font-size:13.5px;font-weight:600}
+.mute{color:var(--mute);font-size:12px;line-height:1.45}
+.chip{padding:3px 9px;border-radius:99px;font-size:10.5px;font-weight:600;border:1px solid var(--line);background:var(--bg)}
+
+.tog{width:44px;height:24px;border-radius:99px;background:#E4E4E4;position:relative;flex:none;cursor:pointer;transition:background .25s var(--ease)}
+:root[data-theme="dark"] .tog{background:#2A2A2A}
+.tog:after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .25s var(--ease)}
+.tog.on{background:var(--ink)}
+.tog.on:after{transform:translateX(20px);background:var(--inv)}
+
+.inbox{background:var(--cv);border:1px solid var(--line);border-radius:var(--r);padding:9px 12px;color:var(--ink);font-size:13.5px;width:120px;text-align:right}
+#toast{position:fixed;left:50%;bottom:32px;transform:translate(-50%,16px);background:var(--ink);color:var(--inv);padding:11px 18px;border-radius:var(--r);font-size:12.5px;font-weight:500;opacity:0;pointer-events:none;transition:.25s;z-index:99}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:860px){
+  .wrap{padding:18px 14px 60px}
+  .c6{grid-column:span 12}
+}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="ldr-card">
+    <div class="orb-wrap"><div class="orb-ring1"></div><div class="orb-ring2"></div><div class="orb-core">AD</div></div>
+    <div style="font-weight:600;font-size:14px" id="ldrTxt">Verifying Admin Vault...</div>
+  </div>
+</div>
+
+<section id="login">
+  <div class="lbox">
+    <div class="logo">AD</div>
+    <h1>Privacy & Security Vault</h1>
+    <p>Super Admin credentials required to access 48 privacy controls</p>
+    <div class="fld"><input id="u" type="text" placeholder="Super Admin Username" autocomplete="off"></div>
+    <div class="fld"><input id="p" type="password" placeholder="Super Admin Password" autocomplete="off"></div>
+    <button type="button" class="btn" onclick="doLogin()">Unlock Privacy Vault</button>
+    <div class="err" id="err"></div>
+  </div>
+</section>
+
+<div class="wrap" id="app">
+  <div class="top">
+    <h1>Privacy, AI Review & Data Governance<small>48 Granular Security Switches • Live D1 Enforcement</small></h1>
+    <div class="top-actions">
+      <a href="/a" class="ibtn">← Cockpit (/a)</a>
+      <button type="button" class="ibtn" onclick="syncVault()">↻ Sync</button>
+      <button type="button" class="ibtn" onclick="toggleTheme()">◐ Theme</button>
+      <button type="button" class="ibtn p" onclick="saveAllNumeric()">Save Numeric Rules</button>
+      <button type="button" class="ibtn" style="color:var(--red)" onclick="logout()">Lock</button>
+    </div>
+  </div>
+
+  <div class="search">
+    <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+    <input placeholder="Search any privacy control (e.g. AI review, payment screenshot, mask phone, UTR, supplier)..." oninput="filterPriv(this.value)">
+  </div>
+
+  <div class="tabs" id="catTabs"></div>
+  <div class="grid" id="privGrid"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const KEY = "adps_master_session";
+const API_BASE = location.hostname.includes("workers.dev") ? "" : "https://adpartsol.storzen-io.workers.dev";
+let SETTINGS = {};
+let CUR_CAT = "ALL";
+
+const PRIVACY_CATEGORIES = {
+  ai_payment: {
+    title: "1. AI Payment Screenshot Review & Financial Privacy (10 Controls)",
+    toggles: [
+      ["ai_utr_ocr_check", "Require AI Vision Review for Payment Screenshots", "If OFF, screenshots bypass gpt-6-luna OCR and go directly to Payment Manager", "1"],
+      ["priv_auto_reject_invalid_ss", "Auto-Reject Screenshots Failing AI Review", "If OFF, AI only flags suspicious screenshots instead of rejecting them", "1"],
+      ["block_duplicate_utr", "Enforce Strict Duplicate 12-Digit UTR Blocker", "Blocks any payment screenshot whose UTR already exists in D1 database", "1"],
+      ["priv_verify_upi_payee", "Require Payee UPI Match (constantabrar@upi)", "AI checks if the screenshot recipient matches official merchant UPI", "1"],
+      ["priv_blur_ss_non_pay", "Hide Payment Screenshots from Non-Payment Staff", "Blocks Order Desk, Packing & Inventory roles from viewing payment images", "1"],
+      ["priv_strip_ss_exif", "Strip EXIF / GPS Location Metadata from Uploads", "Removes camera/location metadata from customer uploaded images", "1"],
+      ["priv_mask_utr_logs", "Mask Partial UTR Number in Public Channels", "Shows only last 4 digits of UTR outside Payment Manager portal", "0"],
+      ["priv_hide_bank_balance", "Hide Cumulative Revenue Pool from Staff Portals", "Only Super Admin can view total collected advance/balance figures", "1"]
+    ],
+    inputs: [
+      ["amount_tolerance_rs", "AI OCR Amount Match Tolerance (± ₹)", "5"],
+      ["max_fraud_strikes", "Fake Screenshot Strikes Before 12h Shadow-Ban", "3"]
+    ]
+  },
+  customer_pii: {
+    title: "2. Customer PII, Phone & Address Masking (10 Controls)",
+    toggles: [
+      ["mask_phone_default", "Mask Customer Phone Number Across Staff Portals", "Displays 98XXXXXX10 by default; requires reason log to reveal", "1"],
+      ["mask_cust_phone_packing", "Hide Customer Phone on Packing & QC Portal (/p)", "Packing team sees only Order ID and City/PIN until dispatch", "1"],
+      ["priv_hide_addr_bidding", "Hide Customer Address During Bidding Stage", "Customer address is unlocked only after 20% advance is approved", "1"],
+      ["priv_log_pii_reveal", "Send Telegram Alert When Staff Reveals Masked Phone", "Logs staff phone, IP, and timestamp in System Logs Group", "1"],
+      ["priv_redact_email_staff", "Hide Customer Optional Email from All Staff", "Marketing emails remain visible strictly to Super Admin", "1"],
+      ["priv_auto_purge_abandoned", "Auto-Clear Unconfirmed Draft Carts After 24h", "Wipes temporary chat drafts for privacy & clean memory", "1"],
+      ["priv_anonymize_analytics", "Anonymize Customer Names in Stock Intelligence", "Uses Customer IDs instead of shop names in reports", "1"],
+      ["priv_block_cust_export", "Block CSV/PDF Customer List Export for Non-Admin", "Prevents staff from downloading customer phone database", "1"]
+    ],
+    inputs: [
+      ["memory_turns_limit", "Rolling Chat Memory Retention Depth (Messages)", "8"],
+      ["shadow_ban_hours", "Shadow-Ban Restriction Duration (Hours)", "12"]
+    ]
+  },
+  supplier_wall: {
+    title: "3. Supplier Anonymity & Commercial Firewall (10 Controls)",
+    toggles: [
+      ["strict_hide_ai_identity", "White-Label Shield (Customer Sees Only AD PartSol)", "Never reveals suppliers, bidding, or AI assistant identity to buyers", "1"],
+      ["priv_hide_cust_from_sup", "Zero Customer Data Exposure to Suppliers", "Suppliers only see Brand, Model, Part, Quality & Qty — never buyer info", "1"],
+      ["priv_isolate_competing_bids", "Hide Competing Supplier Rates in Supplier Portal (/s)", "Suppliers can never see what other suppliers bid", "1"],
+      ["auto_delete_losing_bids", "Auto-Delete Request Card from Non-Winning Suppliers", "Deletes Telegram message for everyone else once order is allocated", "1"],
+      ["single_moving_panel_btn", "Single Moving 'Continue to Panel' Button", "Automatically strips buttons from older messages in supplier chat", "1"],
+      ["hide_base_cost_staff", "Hide Supplier Buying Price from Payment & Packing Teams", "Prevents staff from seeing AD PartSol's wholesale purchase rate", "1"],
+      ["priv_hide_margin_staff", "Hide Profit Margin Slabs from All Staff Roles", "Only Super Admin can view or edit price-range margin rules", "1"],
+      ["priv_mask_sup_name_slip", "Use Supplier Code Instead of Name on Printed Slips", "Prints #SUP-ID on thermal slips if enabled for trade secrecy", "0"]
+    ],
+    inputs: [
+      ["bidding_window_mins", "Supplier Bid Window Privacy Expiry (Minutes)", "30"],
+      ["supplier_timeout_sec", "Supplier Input Session Lock Timeout (Seconds)", "60"]
+    ]
+  },
+  ai_guard: {
+    title: "4. OpenAI Brain & Prompt Injection Guardrails (9 Controls)",
+    toggles: [
+      ["priv_ai_req_review", "Enable AI Parsing for Customer Part Inquiries", "Uses gpt-5.6-luna / gpt-6-luna to extract Brand, Model, Part & Qty", "1"],
+      ["allow_parchi_photos", "Allow AI Vision Analysis on Handwritten Parchi Photos", "Processes repair slips and spare part images via gpt-6-luna", "1"],
+      ["allow_voice_notes", "Allow AI Voice Note Transcription (Hindi/Odia/Eng)", "Transcribes voice notes via gpt-4o-mini-transcribe", "1"],
+      ["priv_anti_jailbreak", "Enforce Anti-Prompt-Injection & System Prompt Lock", "Blocks users trying to trick AI into revealing internal rules or margins", "1"],
+      ["priv_hide_model_names", "Never Mention OpenAI / GPT Model Names in Chat", "Strictly identifies as AD PartSol Sales Desk", "1"],
+      ["zero_emoji_mode", "Enforce Strict Monochrome Symbol-Only Output (★ ■ ☞)", "Blocks emojis across all automated bot replies", "1"],
+      ["auto_detect_lang_switch", "Ask Confirmation Before Switching Customer Language", "Shows 'Switch to LANG' button only on full-sentence language change", "1"]
+    ],
+    inputs: [
+      ["tg_typing_frame_ms", "Telegram Typing Loader Frame Interval (ms)", "150"],
+      ["wa_keepalive_hour", "WhatsApp 24h Window Privacy Ping Hour", "22"]
+    ]
+  },
+  access_audit: {
+    title: "5. Staff Access, IP Logging & Session Security (9 Controls)",
+    toggles: [
+      ["priv_log_ip_device", "Log Staff IP, City & Device Model on Every Login", "Sends instant security alert to System Logs Telegram Group", "1"],
+      ["priv_alert_failed_login", "Alert Admin on Failed Vault / Cockpit Login Attempts", "Reports wrong username/token attempts with attacker IP", "1"],
+      ["log_every_setting_change", "Audit Log Every Privacy or Control Toggle Change", "Records which staff/admin changed any setting", "1"],
+      ["strict_role_isolation", "Enforce Server-Side Role Data Filtering on APIs", "Blocks unauthorized API fields at Cloudflare Worker level", "1"],
+      ["mandatory_packing_video", "Require Packing Video Upload Before 80% Balance QR", "Ensures visual proof is backed up in Vault Group before final payment", "1"],
+      ["auto_backup_video_vault", "Auto-Archive All Packing Videos to Private Vault Group", "Saves immutable backup in -1004388781992 Vault Group", "1"],
+      ["unlock_ship_only_after_80", "Lock Dispatch/Tracking Until 80% Balance Verified", "Prevents shipping without verified balance payment", "1"]
+    ],
+    inputs: [
+      ["payment_sla_mins", "Payment Verification SLA Alert Timer (Minutes)", "5"],
+      ["high_value_2fa_limit", "High-Value Order Admin Approval Threshold (₹)", "25000"]
+    ]
+  }
+};
+
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("on");
+  clearTimeout(t._tm); t._tm = setTimeout(() => t.classList.remove("on"), 2600);
+}
+function getCreds() { try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch (_) { return null; } }
+function showLdr(txt) { document.getElementById("ldrTxt").textContent = txt || "Loading..."; document.getElementById("loader").classList.add("on"); }
+function hideLdr() { document.getElementById("loader").classList.remove("on"); }
+
+async function api(path, body, isLogin) {
+  const c = getCreds(); if (!c) return { ok: false };
+  const headers = { "x-staff-phone": c.u, "x-staff-token": c.p };
+  if (isLogin) headers["x-login-attempt"] = "1";
+  const opt = { method: body ? "POST" : "GET", headers };
+  if (body) { opt.headers["Content-Type"] = "application/json"; opt.body = JSON.stringify(body); }
+  try {
+    const r = await fetch(API_BASE + "/api/panel/" + path, opt);
+    return await r.json();
+  } catch (e) { return { ok: false, error: e.message }; }
+}
+
+async function doLogin() {
+  const u = document.getElementById("u").value.trim();
+  const p = document.getElementById("p").value.trim();
+  if (!u || !p) return document.getElementById("err").textContent = "Enter Admin Username & Password";
+  localStorage.setItem(KEY, JSON.stringify({ u, p }));
+  await syncVault(true);
+}
+
+async function syncVault(isLogin) {
+  showLdr("Unlocking Privacy Vault...");
+  const d = await api("dashboard", null, isLogin);
+  hideLdr();
+  if (!d.ok || d.role !== "admin") {
+    localStorage.removeItem(KEY);
+    document.getElementById("err").textContent = d.role && d.role !== "admin" ? "Access Denied: Super Admin Only!" : (d.error || "Invalid Admin Credentials");
+    return;
+  }
+  document.getElementById("login").classList.add("out");
+  document.getElementById("app").classList.add("show");
+  SETTINGS = {};
+  (d.settings || []).forEach(s => SETTINGS[s.key] = s.value);
+  renderTabs();
+  renderGrid();
+}
+
+function renderTabs() {
+  const keys = ["ALL", ...Object.keys(PRIVACY_CATEGORIES)];
+  const labels = {
+    ALL: "ALL 48 CONTROLS",
+    ai_payment: "AI & PAYMENT PRIVACY",
+    customer_pii: "CUSTOMER PII MASKING",
+    supplier_wall: "SUPPLIER FIREWALL",
+    ai_guard: "AI GUARDRAILS",
+    access_audit: "ACCESS & AUDIT LOGS"
+  };
+  document.getElementById("catTabs").innerHTML = keys.map(k =>
+    `<button type="button" class="${CUR_CAT === k ? "on" : ""}" onclick="CUR_CAT='${k}';renderTabs();renderGrid()">${labels[k]}</button>`
+  ).join("");
+}
+
+function renderGrid() {
+  const cats = CUR_CAT === "ALL" ? Object.keys(PRIVACY_CATEGORIES) : [CUR_CAT];
+  document.getElementById("privGrid").innerHTML = cats.map(k => {
+    const c = PRIVACY_CATEGORIES[k];
+    const togglesHtml = c.toggles.map(t => {
+      const isOn = (SETTINGS[t[0]] ?? t[3]) === "1";
+      return `<div class="row priv-row">
+        <div class="g1"><b>${t[1]}</b><span class="mute">${t[2]}</span></div>
+        <span class="tog ${isOn ? "on" : ""}" data-k="${t[0]}"></span>
+      </div>`;
+    }).join("");
+
+    const inputsHtml = c.inputs.map(inp => {
+      const val = SETTINGS[inp[0]] ?? inp[2];
+      return `<div class="row priv-row">
+        <div class="g1"><b>${inp[1]}</b><span class="mute">Key: ${inp[0]}</span></div>
+        <input type="number" class="inbox priv-inp" data-k="${inp[0]}" value="${val}">
+      </div>`;
+    }).join("");
+
+    return `<div class="card c6">
+      <h3><span>${c.title}</span><span class="chip">${c.toggles.length + c.inputs.length} Rules</span></h3>
+      ${togglesHtml}
+      ${inputsHtml}
+    </div>`;
+  }).join("");
+}
+
+document.addEventListener("click", async e => {
+  const tg = e.target.closest(".tog[data-k]");
+  if (!tg) return;
+  tg.classList.toggle("on");
+  const k = tg.dataset.k, v = tg.classList.contains("on") ? "1" : "0";
+  SETTINGS[k] = v;
+  await api("save-settings", { [k]: v });
+  toast(`★ Privacy Rule Updated: ${k} = ${v === "1" ? "ON" : "OFF"}`);
+});
+
+async function saveAllNumeric() {
+  const body = {};
+  document.querySelectorAll(".priv-inp").forEach(el => body[el.dataset.k] = el.value.trim());
+  showLdr("Saving Numeric Thresholds...");
+  await api("save-settings", body);
+  hideLdr();
+  toast("★ All Numeric Privacy Thresholds Saved!");
+}
+
+function filterPriv(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll(".priv-row").forEach(r => {
+    r.style.display = r.textContent.toLowerCase().includes(q) ? "" : "none";
+  });
+}
+
+function toggleTheme() {
+  const r = document.documentElement;
+  r.setAttribute("data-theme", r.getAttribute("data-theme") === "dark" ? "light" : "dark");
+}
+function logout() { localStorage.removeItem(KEY); location.reload(); }
+
+if (getCreds()) syncVault(false);
+</script>
+</body>
+</html>
