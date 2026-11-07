@@ -1,84 +1,237 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>AD PARTSOL - Packing & Dispatch</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>AD PartSol — Logistics, QC & Packing Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--page:#FFFFFF;--bg:#F8F8F8;--cv:#FFFFFF;--ink:#080808;--mute:#777777;--line:#EAEAEA;--hover:#F3F3F3;--inv:#FFFFFF;--red:#B3261E;--green:#1E7347;--amber:#8A6414;--r:10px;--rc:14px}
+:root[data-theme="dark"]{--page:#080808;--bg:#121212;--cv:#0E0E0E;--ink:#F2F2F2;--mute:#8C8C8C;--line:#262626;--hover:#1A1A1A;--inv:#080808;--red:#F0716A;--green:#4FC083;--amber:#D9A441;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:"Inter",system-ui,sans-serif;background:var(--page);color:var(--ink);padding:20px 14px 70px;font-size:14px;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+.wrap{max-width:980px;margin:0 auto}
+#loader{position:fixed;inset:0;z-index:999;background:rgba(255,255,255,.82);backdrop-filter:blur(8px);display:none;place-items:center}
+:root[data-theme="dark"] #loader{background:rgba(8,8,8,.84)}
+#loader.on{display:grid}
+.orb{width:52px;height:52px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--ink);animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.card{background:var(--cv);border:1px solid var(--line);border-radius:var(--rc);padding:20px;margin-bottom:16px}
+.inbox{background:var(--cv);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;width:100%;font-size:15px;margin-bottom:12px;outline:0;color:var(--ink)}
+.inbox:focus{border-color:var(--ink)}
+.btn{padding:12px 16px;border-radius:var(--r);border:1px solid var(--ink);font-weight:600;background:var(--ink);color:var(--inv);width:100%;font-size:13.5px}
+.act{padding:8px 14px;border-radius:var(--r);border:1px solid var(--line);background:var(--cv);font-size:12.5px;font-weight:500}
+.act:hover{background:var(--hover)}
+.act.p{background:var(--ink);color:var(--inv);border-color:var(--ink)}
+.act.d{color:var(--red);border-color:rgba(179,38,30,.35)}
+.chip{padding:3px 10px;border-radius:99px;font-size:11px;font-weight:500;border:1px solid var(--line);background:var(--bg)}
+.chip.g{color:var(--green);border-color:rgba(30,115,71,.3)}
+.chip.r{color:var(--red);border-color:rgba(179,38,30,.3)}
+.chip.a{color:var(--amber);border-color:rgba(138,100,20,.3)}
+.tabs{display:flex;gap:6px;overflow-x:auto;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:18px}
+.tabs button{padding:8px 15px;border-radius:99px;color:var(--mute);font-size:12px;font-weight:500;white-space:nowrap}
+.tabs button.on{background:var(--ink);color:var(--inv)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+</style>
 </head>
-<body class="bg-slate-950 text-white min-h-screen p-4">
-  <div id="loginBox" class="max-w-md mx-auto mt-20 bg-slate-900 p-6 rounded-xl border border-slate-800">
-    <h1 class="text-xl font-bold mb-4 text-sky-400">📦 Packing & Delivery Login</h1>
-    <input id="phone" placeholder="Staff Phone Number" class="w-full p-3 mb-3 bg-slate-950 rounded border border-slate-700">
-    <input id="token" type="password" placeholder="Access Token (ADP-...)" class="w-full p-3 mb-4 bg-slate-950 rounded border border-slate-700">
-    <button onclick="login()" class="w-full bg-sky-500 text-black font-bold py-3 rounded">Login</button>
+<body>
+<div id="loader"><div class="orb"></div></div>
+<div class="wrap">
+  <div id="loginBox" class="card" style="max-width:400px;margin:50px auto">
+    <div style="width:48px;height:48px;border-radius:12px;background:var(--ink);color:var(--inv);display:grid;place-items:center;font-weight:700;margin-bottom:18px">AD</div>
+    <h2 style="margin:0 0 6px;font-size:24px;letter-spacing:-.03em">Logistics & QC Hub</h2>
+    <p style="color:var(--mute);font-size:12.5px;margin:0 0 20px">Collection, Checking Hub, Packing & Bus-Stand Dispatch</p>
+    <input id="u" class="inbox" placeholder="Staff Username / Phone">
+    <input id="p" type="password" class="inbox" placeholder="ADP-Token / Password">
+    <select id="dept" class="inbox">
+      <option value="COLLECTION_DONE">1. Collection Team (Pickup from Supplier)</option>
+      <option value="QC_PASSED">2. Checking Hub (QC Verification)</option>
+      <option value="DISPATCH_HANDOVER">3. Dispatch Team (Handover)</option>
+      <option value="BUS_STAND_DROPPED">4. Delivery Team (Drop at Bus Stand)</option>
+    </select>
+    <button type="button" class="btn" onclick="login()">Enter Workspace</button>
   </div>
 
-  <div id="app" class="hidden max-w-5xl mx-auto">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-sky-400">📦 Collection, Packing & Dispatch</h1>
-      <button onclick="loadPacking()" class="bg-slate-800 px-4 py-2 rounded text-sm">🔄 Refresh</button>
+  <div id="app" style="display:none">
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+      <div>
+        <h2 id="deptTitle" style="margin:0;font-size:20px;letter-spacing:-.02em">Logistics & QC Hub</h2>
+        <div style="font-size:12px;color:var(--mute)">Barcode Scanner • Item QC • 80mm Thermal Slip • Bus Stand Dispatch</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" class="act" onclick="toggleTheme()">◐ Theme</button>
+        <button type="button" class="act" onclick="load()">↻ Sync</button>
+        <button type="button" class="act d" onclick="logout()">Logout</button>
+      </div>
     </div>
-    <div id="packList" class="space-y-4"></div>
+
+    <div class="card">
+      <h3 style="margin:0 0 10px;font-size:14px">🔫 Quick Barcode Scanner & Stage Updater</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input id="scanInput" class="inbox" style="flex:1;margin:0;min-width:180px" placeholder="Scan Barcode or Enter 9-Digit Order ID...">
+        <button type="button" class="act" onclick="scanStage('COLLECTION_DONE')">1. Collected</button>
+        <button type="button" class="act" onclick="scanStage('QC_PASSED')">2. QC Pass</button>
+        <button type="button" class="act" onclick="scanStage('DISPATCH_HANDOVER')">3. Dispatched</button>
+        <button type="button" class="act p" onclick="scanStage('BUS_STAND_DROPPED')">4. At Bus Stand</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button type="button" id="tb_ALL" class="on" onclick="setTab('ALL')">All Active Queue</button>
+      <button type="button" id="tb_QC" onclick="setTab('QC')">Checking Queue (QC)</button>
+      <button type="button" id="tb_HOLD" onclick="setTab('HOLD')">On Hold (Re-Collect)</button>
+      <button type="button" id="tb_PACK" onclick="setTab('PACK')">Packing & Dispatch</button>
+      <button type="button" id="tb_DONE" onclick="setTab('DONE')">Shipped History</button>
+    </div>
+
+    <div class="grid" id="list"></div>
   </div>
+</div>
 
-  <script>
-    let creds = JSON.parse(localStorage.getItem('adp_pack') || 'null');
-    if (creds) loadPacking();
+<script>
+const API_BASE = location.hostname.includes("workers.dev") ? "" : "https://adpartsol.storzen-io.workers.dev";
+let C = JSON.parse(localStorage.getItem("adp_pack_c") || "null");
+let ORDERS = [], ITEMS = [], TAB = "ALL";
+if (C) load();
 
-    async function login() {
-      creds = { phone: document.getElementById('phone').value.trim(), token: document.getElementById('token').value.trim() };
-      localStorage.setItem('adp_pack', JSON.stringify(creds));
-      await loadPacking();
-    }
+function login() {
+  const u = document.getElementById("u").value.trim();
+  const p = document.getElementById("p").value.trim();
+  const dept = document.getElementById("dept").value;
+  const deptText = document.getElementById("dept").options[document.getElementById("dept").selectedIndex].text;
+  if (!u || !p) return alert("Enter Username & Token");
+  C = { u, p, dept, deptText };
+  localStorage.setItem("adp_pack_c", JSON.stringify(C));
+  load();
+}
+function logout() { localStorage.removeItem("adp_pack_c"); location.reload(); }
+function toggleTheme() {
+  const r = document.documentElement;
+  r.setAttribute("data-theme", r.getAttribute("data-theme") === "dark" ? "light" : "dark");
+}
+function setTab(t) {
+  TAB = t;
+  ["ALL","QC","HOLD","PACK","DONE"].forEach(k => document.getElementById("tb_"+k).classList.toggle("on", k === t));
+  render();
+}
 
-    async function loadPacking() {
-      const res = await fetch('/api/panel/dashboard', { headers: { 'x-staff-phone': creds.phone, 'x-staff-token': creds.token } });
-      const data = await res.json();
-      if (!data.ok) { alert(data.error); localStorage.removeItem('adp_pack'); return; }
-      document.getElementById('loginBox').classList.add('hidden');
-      document.getElementById('app').classList.remove('hidden');
+async function load() {
+  document.getElementById("loader").classList.add("on");
+  try {
+    const r = await fetch(API_BASE + "/api/panel/dashboard", { headers: { "x-staff-phone": C.u, "x-staff-token": C.p } });
+    const d = await r.json();
+    document.getElementById("loader").classList.remove("on");
+    if (!d.ok) { localStorage.removeItem("adp_pack_c"); return alert(d.error || "Invalid credentials"); }
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    document.getElementById("deptTitle").textContent = C.deptText || "Logistics & QC Hub";
+    ORDERS = d.orders || [];
+    ITEMS = d.items || [];
+    render();
+  } catch (e) {
+    document.getElementById("loader").classList.remove("on");
+  }
+}
 
-      const active = data.orders.filter(o => ['COLLECTING', 'PACKING', 'READY_TO_SHIP'].includes(o.status));
-      if (!active.length) {
-        document.getElementById('packList').innerHTML = `<div class="text-center py-12 text-slate-400">No active orders waiting for collection or shipping.</div>`;
-        return;
-      }
+function render() {
+  let filtered = ORDERS;
+  if (TAB === "QC") filtered = ORDERS.filter(o => o.status === "COLLECTING" || o.dispatch_stage === "COLLECTION_DONE");
+  if (TAB === "HOLD") filtered = ORDERS.filter(o => o.status === "ON_HOLD" || o.dispatch_stage === "ON_HOLD");
+  if (TAB === "PACK") filtered = ORDERS.filter(o => ["PACKING","AWAITING_80_PAYMENT","READY_TO_SHIP"].includes(o.status));
+  if (TAB === "DONE") filtered = ORDERS.filter(o => o.status === "SHIPPED");
 
-      document.getElementById('packList').innerHTML = active.map(o => {
-        const ordItems = data.items.filter(i => i.order_id === o.id);
-        const itemHtml = ordItems.map(it => {
-          const alloc = JSON.parse(it.allocated_json || '[]').map(a => `${a.name} (${a.qty} pcs)`).join(', ');
-          return `<li class="text-sm">• <b>${it.brand} ${it.model} - ${it.part_name}</b> (${it.fulfilled_qty} pcs) 👉 <span class="text-amber-300">Collect from: ${alloc}</span></li>`;
-        }).join('');
+  document.getElementById("list").innerHTML = filtered.map(o => {
+    const oItems = ITEMS.filter(i => i.order_id === o.id).map(i => {
+      const al = JSON.parse(i.allocated_json || "[]").map(a => `${a.name} (${a.qty} pcs)`).join(", ");
+      return `<div style="padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px"><b>${i.req_qty}x ${i.brand} ${i.model || ""} ${i.part_name}</b> (${i.variant || "Std"})<br><span style="color:var(--mute)">Pickup: ${al || "Warehouse"}</span></div>`;
+    }).join("");
 
-        return `
-          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
-            <div class="flex justify-between items-center mb-2">
-              <span class="text-lg font-bold">Order #${o.id}</span>
-              <span class="px-2 py-1 text-xs bg-sky-500/20 text-sky-300 rounded font-bold">${o.status}</span>
-            </div>
-            <ul class="mb-4 space-y-1 text-slate-300">${itemHtml}</ul>
-            ${o.status === 'READY_TO_SHIP' ? `
-              <div class="flex gap-2">
-                <input id="trk_${o.id}" placeholder="Enter Courier & Tracking ID..." class="flex-1 p-2 bg-slate-950 rounded border border-slate-700">
-                <button onclick="shipOrder(${o.id})" class="bg-emerald-500 text-black font-bold px-4 py-2 rounded">🚚 Ship Now</button>
-              </div>
-            ` : `<div class="text-xs text-amber-400">📹 Upload Packing Video in Telegram Packing Group (@delivery_adpartsolbot) to trigger 80% QR automatically.</div>`}
-          </div>
-        `;
-      }).join('');
-    }
+    return `<div class="card" style="margin:0;display:flex;flex-direction:column;justify-content:space-between">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <b style="font-size:16px">Order #${o.id}</b>
+          <span class="chip ${o.status === 'ON_HOLD' ? 'r' : o.status === 'SHIPPED' ? 'g' : 'a'}">${o.dispatch_stage || o.status}</span>
+        </div>
+        ${o.hold_reason ? `<div style="padding:8px;border-radius:8px;background:rgba(179,38,30,.08);color:var(--red);font-size:12px;font-weight:600;margin-bottom:8px">Hold Reason: ${o.hold_reason}</div>` : ""}
+        <div style="margin-bottom:14px">${oItems || "<div style='color:var(--mute)'>Spare Parts</div>"}</div>
+      </div>
+      <div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <button type="button" class="act p" style="flex:1" onclick="updateStage(${o.id}, 'QC_PASSED')">✓ QC Pass</button>
+          <button type="button" class="act d" style="flex:1" onclick="holdOrder(${o.id})">✕ QC Fail / Hold</button>
+          <button type="button" class="act" onclick="printSlip(${o.id})">🖨️ 80mm Slip</button>
+        </div>
+        <div style="display:flex;gap:6px">
+          <input id="trk_${o.id}" class="inbox" style="margin:0;padding:8px 10px;font-size:13px" placeholder="Tracking ID / Bus Receipt" value="${o.tracking_id || ''}">
+          <button type="button" class="act p" onclick="shipNow(${o.id})">Ship</button>
+        </div>
+      </div>
+    </div>`;
+  }).join("") || `<div class="card" style="grid-column:1/-1;color:var(--mute)">No orders in ${TAB} view.</div>`;
+}
 
-    async function shipOrder(orderId) {
-      const tracking_id = document.getElementById('trk_' + orderId).value.trim();
-      if (!tracking_id) return alert('Tracking ID daalo!');
-      await fetch('/api/panel/ship-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-staff-phone': creds.phone, 'x-staff-token': creds.token },
-        body: JSON.stringify({ order_id: orderId, tracking_id })
-      });
-      await loadPacking();
-    }
-  </script>
+async function scanStage(stage) {
+  const id = document.getElementById("scanInput").value.trim().replace(/\D/g, "");
+  if (!id) return alert("Enter or scan 9-Digit Order ID");
+  await updateStage(id, stage);
+  document.getElementById("scanInput").value = "";
+}
+
+async function updateStage(order_id, stage) {
+  document.getElementById("loader").classList.add("on");
+  const r = await fetch(API_BASE + "/api/panel/scan-stage", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-staff-phone": C.u, "x-staff-token": C.p },
+    body: JSON.stringify({ order_id, stage })
+  });
+  const d = await r.json();
+  document.getElementById("loader").classList.remove("on");
+  load();
+}
+
+async function holdOrder(order_id) {
+  const hold_reason = prompt("Enter QC Fail / Missing Item Reason (Re-issues Collector Slip):");
+  if (!hold_reason) return;
+  await fetch(API_BASE + "/api/panel/scan-stage", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-staff-phone": C.u, "x-staff-token": C.p },
+    body: JSON.stringify({ order_id, stage: "ON_HOLD", hold_reason })
+  });
+  printSlip(order_id, "RE-COLLECT SLIP (ON HOLD: " + hold_reason + ")");
+  load();
+}
+
+async function shipNow(order_id) {
+  const tracking_id = document.getElementById("trk_" + order_id).value.trim();
+  if (!tracking_id) return alert("Enter Tracking ID or Bus Stand Receipt");
+  await fetch(API_BASE + "/api/panel/ship-order", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-staff-phone": C.u, "x-staff-token": C.p },
+    body: JSON.stringify({ order_id, tracking_id })
+  });
+  load();
+}
+
+function printSlip(orderId, titleOverride) {
+  const o = ORDERS.find(x => String(x.id) === String(orderId)) || { id: orderId, customer_id: "Customer" };
+  const its = ITEMS.filter(i => String(i.order_id) === String(orderId));
+  const lines = its.map(i => {
+    const al = JSON.parse(i.allocated_json || "[]").map(a => a.name).join(", ");
+    return `<div style="margin:6px 0;border-bottom:1px dashed #999;padding-bottom:4px">[ ] <b>${i.req_qty}x ${i.brand} ${i.part_name}</b> (${i.variant || "Std"})<br><small>Source: ${al || "Warehouse"}</small></div>`;
+  }).join("");
+  const w = window.open("", "_blank", "width=360,height=560");
+  w.document.write(`<html><body style="font-family:monospace;width:76mm;margin:0 auto;padding:8px">
+    <h3 style="text-align:center;margin:0">AD PARTSOL</h3>
+    <div style="text-align:center;font-size:11px;border-bottom:1px dashed #000;padding-bottom:6px;margin-bottom:8px">${titleOverride || "80MM COLLECTION SLIP"}</div>
+    <div><b>Order: #${o.id}</b></div>
+    <div style="margin-top:8px">${lines}</div>
+    <div style="text-align:center;margin-top:14px;border-top:1px dashed #000;padding-top:8px;font-size:18px;letter-spacing:2px">*${o.id}*</div>
+    <script>setTimeout(()=>window.print(),250);<\/script>
+  </body></html>`);
+  w.document.close();
+}
+</script>
 </body>
 </html>
