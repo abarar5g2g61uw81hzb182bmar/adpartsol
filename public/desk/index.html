@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>AD PartSol — Order Desk Console</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--page:#FFFFFF;--bg:#F8F8F8;--cv:#FFFFFF;--ink:#080808;--mute:#777777;--line:#EAEAEA;--inv:#FFFFFF;--green:#1E7347;--red:#B3261E;--amber:#8A6414;--r:10px;--rc:14px}
+:root[data-theme="dark"]{--page:#080808;--bg:#121212;--cv:#0E0E0E;--ink:#F2F2F2;--mute:#8C8C8C;--line:#262626;--inv:#080808;--green:#4FC083;--red:#F0716A;--amber:#D9A441;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;font-family:"Inter",system-ui,sans-serif;background:var(--page);color:var(--ink);padding:20px 14px 60px;font-size:14px}
+.wrap{max-width:1180px;margin:0 auto}.card{background:var(--cv);border:1px solid var(--line);border-radius:var(--rc);padding:20px;margin-bottom:16px}
+.inbox{background:var(--cv);border:1px solid var(--line);border-radius:var(--r);padding:11px 13px;width:100%;font-size:14px;outline:0;color:var(--ink)}
+.act{padding:9px 15px;border-radius:var(--r);border:1px solid var(--line);background:var(--cv);font-weight:500;font-size:12.5px;cursor:pointer}
+.act.p{background:var(--ink);color:var(--inv);border-color:var(--ink)}
+.chip{padding:3px 9px;border-radius:99px;font-size:11px;border:1px solid var(--line);background:var(--bg)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}th,td{padding:11px 8px;border-bottom:1px solid var(--line);text-align:left}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="loginBox" class="card" style="max-width:400px;margin:50px auto">
+    <h2 style="margin:0 0 6px">Order Desk Console</h2>
+    <p style="color:var(--mute);font-size:12.5px;margin:0 0 16px">Sign in with Order Desk credentials</p>
+    <input id="u" class="inbox" style="margin-bottom:10px" placeholder="Staff Phone">
+    <input id="p" type="password" class="inbox" style="margin-bottom:14px" placeholder="ADP-Token">
+    <button class="act p" style="width:100%;padding:13px" onclick="login()">Enter Order Desk</button>
+  </div>
+  <div id="app" style="display:none">
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <h2 style="margin:0;font-size:20px">Order Desk — Live Bid Room & Sourcing</h2>
+      <div style="display:flex;gap:8px">
+        <button class="act" onclick="load()">↻ Sync</button>
+        <button class="act p" onclick="forceCloseAll()">⚡ Finalize All Due Bids</button>
+        <button class="act" onclick="localStorage.removeItem('adp_desk_c');location.reload()">Logout</button>
+      </div>
+    </div>
+    <div id="content"></div>
+  </div>
+</div>
+<script>
+const API_BASE = location.hostname.includes("workers.dev") ? "" : "https://adpartsol.storzen-io.workers.dev";
+let C = JSON.parse(localStorage.getItem("adp_desk_c") || "null");
+if (C) load();
+function login() { C = { u: document.getElementById("u").value.trim(), p: document.getElementById("p").value.trim() }; localStorage.setItem("adp_desk_c", JSON.stringify(C)); load(); }
+async function load() {
+  const r = await fetch(API_BASE + "/api/panel/dashboard", { headers: { "x-staff-phone": C.u, "x-staff-token": C.p } });
+  const d = await r.json();
+  if (!d.ok) { localStorage.removeItem("adp_desk_c"); return alert(d.error); }
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("app").style.display = "block";
+  const ords = d.orders || [], bids = d.bids || [], items = d.items || [];
+  document.getElementById("content").innerHTML = ords.map(o => {
+    const oItems = items.filter(i => i.order_id === o.id).map(i => `${i.req_qty}x ${i.brand} ${i.part_name} (Fulfilled: ${i.fulfilled_qty})`).join(" • ");
+    const oBids = bids.filter(b => b.order_id === o.id && b.status === "SUBMITTED");
+    return `<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+        <b>Order #${o.id} (${o.customer_id})</b>
+        <div style="display:flex;gap:6px">
+          <span class="chip">${o.status}</span>
+          <button class="act" onclick="askOutsource(${o.id})">Send Option A/B (Outsource)</button>
+          <button class="act p" onclick="forceClose(${o.id})">Send Quote Now</button>
+        </div>
+      </div>
+      <div style="font-size:12.5px;color:var(--mute);margin-bottom:10px">${oItems}</div>
+      ${oBids.length ? `<table><tr><th>Supplier</th><th>Part</th><th>Bid Rate</th><th>Avail Qty</th><th>Action</th></tr>
+        ${oBids.map(b => `<tr><td><b>${b.sup_name}</b></td><td>${b.part_name}</td><td>₹${b.price_per_unit}</td><td>${b.available_qty} pcs</td><td><button class="act p" onclick="assign(${o.id},${b.supplier_id},${b.price_per_unit})">Pick Winner</button></td></tr>`).join("")}
+      </table>` : `<div style="font-size:12px;color:var(--mute)">No bids submitted yet.</div>`}
+    </div>`;
+  }).join("");
+}
+async function forceClose(order_id) { await fetch(API_BASE + "/api/panel/force-close", { method: "POST", headers: { "Content-Type": "application/json", "x-staff-phone": C.u, "x-staff-token": C.p }, body: JSON.stringify({ order_id }) }); load(); }
+async function forceCloseAll() { await fetch(API_BASE + "/api/panel/force-close", { method: "POST", headers: { "Content-Type": "application/json", "x-staff-phone": C.u, "x-staff-token": C.p }, body: JSON.stringify({}) }); load(); }
+async function assign(order_id, supplier_id, unit_price) { await fetch(API_BASE + "/api/panel/assign-supplier", { method: "POST", headers: { "Content-Type": "application/json", "x-staff-phone": C.u, "x-staff-token": C.p }, body: JSON.stringify({ order_id, supplier_id, unit_price }) }); load(); }
+async function askOutsource(order_id) { await fetch(API_BASE + "/api/panel/outsource-options", { method: "POST", headers: { "Content-Type": "application/json", "x-staff-phone": C.u, "x-staff-token": C.p }, body: JSON.stringify({ order_id, mode: "ask_customer" }) }); alert("Option A / B sent to customer!"); }
+</script>
+</body>
+</html>
