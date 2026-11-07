@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>AD PartSol — Inventory & DOA Terminal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--page:#FFFFFF;--bg:#F8F8F8;--cv:#FFFFFF;--ink:#080808;--mute:#777777;--line:#EAEAEA;--inv:#FFFFFF;--green:#1E7347;--red:#B3261E;--r:10px;--rc:14px}
+*{box-sizing:border-box}body{margin:0;font-family:"Inter",system-ui,sans-serif;background:var(--page);color:var(--ink);padding:20px 14px 60px;font-size:14px}
+.wrap{max-width:1140px;margin:0 auto}.card{background:var(--cv);border:1px solid var(--line);border-radius:var(--rc);padding:20px;margin-bottom:16px}
+.inbox{background:var(--cv);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;width:100%;font-size:14px;outline:0;color:var(--ink)}
+.act{padding:10px 16px;border-radius:var(--r);border:1px solid var(--line);background:var(--cv);font-weight:600;font-size:12.5px;cursor:pointer}
+.act.p{background:var(--ink);color:var(--inv);border-color:var(--ink)}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:11px 8px;border-bottom:1px solid var(--line);text-align:left}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="loginBox" class="card" style="max-width:400px;margin:50px auto">
+    <h2 style="margin:0 0 8px">Inventory & Stock Terminal</h2>
+    <input id="u" class="inbox" style="margin-bottom:10px" placeholder="Staff Phone">
+    <input id="p" type="password" class="inbox" style="margin-bottom:14px" placeholder="ADP-Token">
+    <button class="act p" style="width:100%" onclick="login()">Enter Inventory Desk</button>
+  </div>
+  <div id="app" style="display:none">
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+      <h2 style="margin:0;font-size:20px">Master Stock, DOA Quarantine & Audit Log</h2>
+      <button class="act" onclick="load()">↻ Sync</button>
+    </div>
+    <div class="card">
+      <h3 style="margin:0 0 12px;font-size:14px">📥 Add / Adjust Stock & DOA Inspection</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+        <input id="stName" class="inbox" placeholder="Part Name">
+        <select id="stCat" class="inbox"><option>Displays</option><option>Batteries</option><option>Charging Ports</option><option>Back Panels</option><option>Cameras</option><option>Tools & Glue</option></select>
+        <input id="stPrice" type="number" class="inbox" placeholder="Price (₹)">
+        <input id="stGood" type="number" class="inbox" placeholder="+/- Good Qty">
+        <input id="stFaulty" type="number" class="inbox" placeholder="+ Faulty DOA">
+        <button class="act p" onclick="addStock()">Commit Stock</button>
+      </div>
+    </div>
+    <div class="card" id="invList"></div>
+    <div class="card" id="logList"></div>
+  </div>
+</div>
+<script>
+const API_BASE = location.hostname.includes("workers.dev") ? "" : "https://adpartsol.storzen-io.workers.dev";
+let C = JSON.parse(localStorage.getItem("adp_inv_c") || "null");
+if (C) load();
+function login() { C = { u: document.getElementById("u").value.trim(), p: document.getElementById("p").value.trim() }; localStorage.setItem("adp_inv_c", JSON.stringify(C)); load(); }
+async function load() {
+  const r = await fetch(API_BASE + "/api/panel/dashboard", { headers: { "x-staff-phone": C.u, "x-staff-token": C.p } });
+  const d = await r.json();
+  if (!d.ok) { localStorage.removeItem("adp_inv_c"); return alert(d.error); }
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("app").style.display = "block";
+  document.getElementById("invList").innerHTML = `<h3 style="margin:0 0 12px">Master Inventory</h3><table><tr><th>SKU</th><th>Part Name</th><th>Category</th><th>Price</th><th>Good Stock</th><th>DOA Faulty</th></tr>` +
+    (d.inventory || []).map(i => `<tr><td>${i.sku}</td><td><b>${i.name}</b></td><td>${i.category}</td><td>₹${i.price}</td><td><b>${i.good_qty} pcs</b></td><td style="color:var(--red)">${i.faulty_qty}</td></tr>`).join("") + `</table>`;
+  document.getElementById("logList").innerHTML = `<h3 style="margin:0 0 12px">Inventory Audit Log</h3><table><tr><th>Date</th><th>Item</th><th>Action</th><th>Change</th><th>Snapshot</th><th>By</th></tr>` +
+    (d.inventory_logs || []).map(l => `<tr><td>${l.raw_date}</td><td><b>${l.item_name}</b></td><td>${l.action}</td><td>${l.action==='ADD'?'+':'-'}${l.qty}</td><td>${l.old_stock} → <b>${l.new_stock}</b></td><td>${l.triggered_by}</td></tr>`).join("") + `</table>`;
+}
+async function addStock() {
+  const name = document.getElementById("stName").value.trim();
+  const category = document.getElementById("stCat").value;
+  const price = document.getElementById("stPrice").value;
+  const good_delta = document.getElementById("stGood").value;
+  const faulty_delta = document.getElementById("stFaulty").value;
+  if (!name) return alert("Enter Part Name");
+  await fetch(API_BASE + "/api/panel/adjust-stock", { method: "POST", headers: { "Content-Type": "application/json", "x-staff-phone": C.u, "x-staff-token": C.p }, body: JSON.stringify({ name, category, price, good_delta, faulty_delta }) });
+  load();
+}
+</script>
+</body>
+</html>
