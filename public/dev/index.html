@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AD PARTSOL Parts Studio | Inside the Handset and the Order Platform</title>
+<meta name="description" content="An interactive look inside a modern handset and the AD PARTSOL order platform. Orbit the assembly, inspect every part layer and watch live system telemetry.">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<meta name="robots" content="noindex">
+<style>
+@font-face{font-family:'Clash Display';src:url(../assets/fonts/clash-500.woff2) format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:'Clash Display';src:url(../assets/fonts/clash-600.woff2) format('woff2');font-weight:600 700;font-display:swap}
+@font-face{font-family:'Satoshi';src:url(../assets/fonts/satoshi-400.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Satoshi';src:url(../assets/fonts/satoshi-500.woff2) format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:'Satoshi';src:url(../assets/fonts/satoshi-700.woff2) format('woff2');font-weight:600 700;font-display:swap}
+h1,h2,h3{font-family:'Clash Display',sans-serif;letter-spacing:-.02em}
+</style>
+<script src="../assets/config.js"></script>
+<script type="importmap">{"imports":{"three":"../assets/vendor/three/three.module.js","three/addons/":"../assets/vendor/three/addons/"}}</script>
+<style>
+:root{--bg:#060606;--panel:rgba(18,18,18,.66);--line:rgba(255,255,255,.09);--line-2:rgba(255,255,255,.16);--fg:#F4F4F4;--fg-2:rgba(244,244,244,.66);--fg-3:rgba(244,244,244,.42);
+--sans:'Satoshi',system-ui,sans-serif;--serif:'Clash Display',sans-serif;--mono:'Satoshi',system-ui,sans-serif;--ease:cubic-bezier(.16,1,.3,1);--pill:999px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg);color:var(--fg);font-family:var(--sans);-webkit-font-smoothing:antialiased;scroll-behavior:smooth;overflow-x:clip}
+body{overflow-x:clip}
+button,input{font:inherit;color:inherit}button{background:none;border:0;cursor:pointer}a{color:inherit;text-decoration:none}
+::selection{background:#fff;color:#000}
+:focus-visible{outline:2px solid #fff;outline-offset:3px;border-radius:6px}
+.serif{font-family:var(--serif);font-weight:500}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:.7rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--fg-3)}
+.eyebrow::before{content:"";width:6px;height:6px;background:#fff}
+.glass{background:var(--panel);backdrop-filter:blur(18px) saturate(1.3);-webkit-backdrop-filter:blur(18px) saturate(1.3);border:1px solid var(--line);box-shadow:0 20px 50px -20px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.06)}
+
+.nav{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:50;width:min(calc(100% - 24px),1180px);display:flex;align-items:center;gap:10px;padding:8px 8px 8px 22px;border-radius:var(--pill)}
+.wordmark{font-weight:700;letter-spacing:.06em;font-size:.9rem;display:flex;align-items:center;gap:10px;margin-right:auto;white-space:nowrap}
+.wordmark i{font-style:normal;color:var(--fg-3);font-weight:500;letter-spacing:.02em}
+.pill{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border-radius:var(--pill);font-size:.74rem;font-weight:600;border:1px solid var(--line-2);transition:background .3s,border-color .3s,transform .5s var(--ease)}
+.pill:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.3)}
+.pill.solid{background:#fff;color:#000;border-color:#fff}
+.dot{width:7px;height:7px;border-radius:50%;background:#fff;position:relative;flex:none}
+.dot.live::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1px solid #fff;animation:ping 2s var(--ease) infinite}
+.dot.off{background:transparent;border:1px solid var(--fg-3)}
+@keyframes ping{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.9);opacity:0}}
+
+.stage{position:relative;height:100vh;height:100svh;min-height:640px;overflow:hidden}
+#lab{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+#lab:active{cursor:grabbing}
+.vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 70% 60% at 50% 45%,transparent 40%,rgba(0,0,0,.65) 100%)}
+.title{position:absolute;z-index:2;left:clamp(18px,3vw,40px);top:110px;max-width:440px;pointer-events:none}
+.title h1{font-size:clamp(2.2rem,1.4rem + 3vw,4.2rem);line-height:.98;letter-spacing:-.045em;font-weight:600;margin:14px 0 14px}
+.title p{color:var(--fg-2);font-size:.95rem;line-height:1.55;max-width:380px}
+.panel{position:absolute;z-index:3;border-radius:22px;padding:16px}
+.controls{left:clamp(18px,3vw,40px);bottom:96px;width:300px;display:flex;flex-direction:column;gap:14px}
+.panel h3{font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:var(--fg-3);font-weight:600;display:flex;justify-content:space-between}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;border-radius:14px;background:rgba(0,0,0,.4);border:1px solid var(--line)}
+.seg button{height:54px;border-radius:10px;font-size:.7rem;font-weight:600;color:var(--fg-2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:background .3s,color .3s}
+.seg button svg{width:16px;height:16px}
+.seg button[aria-pressed="true"]{background:#fff;color:#000}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:.78rem;color:var(--fg-2)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2px;background:var(--line-2);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.12);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:0}
+.tog{position:relative;width:38px;height:22px;border-radius:var(--pill);background:rgba(255,255,255,.12);border:1px solid var(--line-2);transition:background .3s;flex:none}
+.tog::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .4s var(--ease)}
+.tog[aria-checked="true"]{background:rgba(255,255,255,.4)}
+.tog[aria-checked="true"]::after{transform:translateX(16px)}
+.telemetry{right:clamp(18px,3vw,40px);top:110px;width:270px}
+.tl{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-radius:14px;overflow:hidden;margin-top:12px;border:1px solid var(--line)}
+.tl div{background:rgba(8,8,8,.85);padding:10px 12px}
+.tl dt{font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-3);font-weight:600}
+.tl dd{font-family:var(--mono);font-size:.98rem;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums}
+.tl dd small{font-size:.62rem;color:var(--fg-3);font-weight:500;margin-left:3px}
+.spark{display:block;width:100%;height:36px;margin-top:12px}
+.layers-mini{margin-top:12px;display:flex;flex-direction:column;gap:2px;max-height:180px;overflow:auto}
+.layers-mini button{display:flex;justify-content:space-between;padding:7px 10px;border-radius:8px;font-size:.72rem;color:var(--fg-2);text-align:left}
+.layers-mini button:hover{background:rgba(255,255,255,.06);color:#fff}
+.layers-mini button.on{background:rgba(255,255,255,.12);color:#fff}
+.layers-mini span{font-family:var(--mono);color:var(--fg-3);font-size:.64rem}
+.status{position:absolute;z-index:3;left:0;right:0;bottom:0;display:flex;align-items:center;gap:0;border-top:1px solid var(--line);background:rgba(6,6,6,.75);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);overflow-x:auto;scrollbar-width:none}
+.status::-webkit-scrollbar{display:none}
+.st{display:flex;align-items:center;gap:9px;padding:15px 16px;border-right:1px solid var(--line);white-space:nowrap;font-size:.74rem}
+.st b{font-weight:600}
+.st small{color:var(--fg-3);font-family:var(--mono);font-size:.68rem}
+.st.grow{margin-left:auto;border-right:0;border-left:1px solid var(--line);font-family:var(--mono);font-size:.68rem;color:var(--fg-2);gap:16px}
+.st.grow em{font-style:normal;color:var(--fg-3)}
+.focus-tag{position:absolute;pointer-events:none;font-family:var(--mono);font-size:.66rem;letter-spacing:.08em;padding:6px 10px;border-radius:var(--pill);border:1px solid var(--line-2);background:rgba(0,0,0,.55);opacity:0;transition:opacity .4s;white-space:nowrap}
+.reticle{position:absolute;left:50%;top:50%;width:120px;height:120px;margin:-60px 0 0 -60px;pointer-events:none;opacity:0;transition:opacity .6s}
+.reticle.on{opacity:1}
+.reticle::before,.reticle::after{content:"";position:absolute;inset:0;border:1px solid rgba(255,255,255,.5);clip-path:polygon(0 0,22% 0,22% 2px,2px 2px,2px 22%,0 22%,0 0,78% 0,100% 0,100% 22%,calc(100% - 2px) 22%,calc(100% - 2px) 2px,78% 2px,78% 0,100% 78%,100% 100%,78% 100%,78% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 78%,100% 78%,0 78%,2px 78%,2px calc(100% - 2px),22% calc(100% - 2px),22% 100%,0 100%)}
+.reticle::after{border:0}
+.hint{position:absolute;left:50%;bottom:76px;transform:translateX(-50%);font-size:.7rem;color:var(--fg-3);letter-spacing:.06em;pointer-events:none;white-space:nowrap}
+
+/* below fold */
+.sec{padding:clamp(80px,10vw,140px) 0;border-top:1px solid var(--line)}
+.wrap{max-width:1200px;margin:0 auto;padding:0 clamp(18px,4vw,40px)}
+.sec h2{font-size:clamp(2rem,1.3rem + 2.6vw,3.8rem);letter-spacing:-.04em;line-height:1.02;font-weight:600;margin:14px 0 18px;max-width:780px}
+.sec .lede{color:var(--fg-2);max-width:560px}
+.pipe{margin-top:56px;position:relative;display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.pipe svg.track{position:absolute;left:0;right:0;top:38px;width:100%;height:4px;overflow:visible}
+.node{position:relative;padding:18px 16px 20px;border-radius:18px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));display:flex;flex-direction:column;gap:10px;min-height:200px;transition:border-color .4s,background .4s}
+.node:hover,.node.hot{border-color:rgba(255,255,255,.35);background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.02))}
+.node .ix{width:40px;height:40px;border-radius:12px;border:1px solid var(--line-2);display:grid;place-items:center;font-family:var(--mono);font-size:.72rem;background:var(--bg);position:relative;z-index:1;transition:background .4s,color .4s}
+.node.hot .ix{background:#fff;color:#000}
+.node h4{font-size:1rem;letter-spacing:-.02em;font-weight:600;margin-top:auto}
+.node p{font-size:.76rem;color:var(--fg-2);line-height:1.5}
+.node small{font-family:var(--mono);font-size:.62rem;color:var(--fg-3);letter-spacing:.08em}
+.specs3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.spec{padding:26px;border-radius:22px;border:1px solid var(--line);display:flex;flex-direction:column;gap:12px;min-height:230px}
+.spec .big{font-size:2.6rem;letter-spacing:-.04em;font-weight:600;line-height:1}
+.spec .big .serif{font-size:1.1em}
+.spec p{color:var(--fg-2);font-size:.86rem;line-height:1.55;margin-top:auto}
+.spec h4{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--fg-3);font-weight:600}
+.log{margin-top:16px;border-radius:22px;border:1px solid var(--line);background:#0b0b0b;padding:20px 22px;font-family:var(--mono);font-size:.74rem;line-height:1.9;color:var(--fg-2);height:220px;overflow:hidden;position:relative}
+.log::after{content:"";position:absolute;left:0;right:0;top:0;height:60px;background:linear-gradient(#0b0b0b,transparent);pointer-events:none}
+.log b{color:#fff;font-weight:600}
+.log em{font-style:normal;color:var(--fg-3)}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:34px}
+footer{border-top:1px solid var(--line);padding:30px 0;color:var(--fg-3);font-size:.76rem}
+footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+@media (max-width:1280px){.st small{display:none}}
+@media (max-width:1000px){.pipe{grid-template-columns:repeat(3,1fr)}.pipe svg.track{display:none}.specs3{grid-template-columns:1fr}.telemetry{display:none}}
+@media (max-width:720px){
+  .wordmark i{display:none}
+  .stage{height:auto;min-height:0;display:flex;flex-direction:column}
+  .canvas-box{position:relative;height:68svh;min-height:420px}
+  .title{position:relative;top:auto;left:auto;padding:100px 18px 18px;max-width:none}
+  .controls{position:relative;left:auto;bottom:auto;width:auto;margin:0 12px 12px}
+  .status{position:relative}
+  .hint{bottom:12px}
+  .pipe{grid-template-columns:1fr 1fr}
+  .nav .hide-sm{display:none}
+}
+@media (min-width:721px){.canvas-box{position:absolute;inset:0}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+.i{width:14px;height:14px;flex:none;display:inline-block;vertical-align:-2px}.pill{display:inline-flex;align-items:center;gap:6px}
+</style>
+</head>
+<body>
+<header class="nav glass">
+  <a class="wordmark" href="../index.html">AD PARTSOL <i>/ Parts Studio</i></a>
+  <span class="pill hide-sm" id="navStatus"><span class="dot live"></span><span>Systems nominal</span></span>
+  <a class="pill solid" href="../index.html"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12h-15M10.5 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Platform</a>
+</header>
+
+<main>
+<section class="stage" aria-label="Interactive hardware lab">
+  <div class="title">
+    <span class="eyebrow">Hardware lab, live</span>
+    <h1>Precision you can <span class="serif">orbit.</span></h1>
+    <p>Every component we supply, modelled layer by layer. Drag to orbit, switch camera rigs, and separate the assembly to inspect tolerances.</p>
+  </div>
+  <div class="canvas-box">
+    <canvas id="lab" aria-label="3D hardware model. Drag to orbit, scroll or pinch to zoom."></canvas>
+    <div class="vignette"></div>
+    <div class="reticle" id="reticle"></div>
+    <div class="focus-tag" id="focusTag"></div>
+    <div class="hint" id="hint">Drag to orbit, scroll to zoom</div>
+  </div>
+
+  <aside class="panel glass controls" aria-label="Lab controls">
+    <h3><span>Camera rig</span><span class="mono" id="rigName">STUDIO</span></h3>
+    <div class="seg" role="group" aria-label="Camera presets">
+      <button aria-pressed="true" data-rig="orbit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="12" cy="12" rx="9" ry="4"/><circle cx="12" cy="12" r="2.5"/></svg>Studio Orbit</button>
+      <button aria-pressed="false" data-rig="top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 12h16M12 4v16"/></svg>Blueprint Top</button>
+      <button aria-pressed="false" data-rig="macro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>Macro Focus</button>
+    </div>
+    <label class="row" for="explode"><span>Layer separation</span><span class="mono" id="exVal">35%</span></label>
+    <input type="range" id="explode" min="0" max="100" value="35">
+    <div class="row"><span>Blueprint shading</span><button class="tog" role="switch" aria-checked="false" id="bpTog" aria-label="Blueprint shading"></button></div>
+    <div class="row"><span>Auto orbit</span><button class="tog" role="switch" aria-checked="true" id="arTog" aria-label="Auto orbit"></button></div>
+  </aside>
+
+  <aside class="panel glass telemetry" aria-label="Live telemetry">
+    <h3><span>Live telemetry</span><span class="mono" id="clock">--:--:--</span></h3>
+    <dl class="tl">
+      <div><dt>Frame rate</dt><dd id="tFps">--<small>fps</small></dd></div>
+      <div><dt>Frame time</dt><dd id="tMs">--<small>ms</small></dd></div>
+      <div><dt>Draw calls</dt><dd id="tCalls">--</dd></div>
+      <div><dt>Triangles</dt><dd id="tTris">--</dd></div>
+      <div><dt>Azimuth</dt><dd id="tAz">--<small>deg</small></dd></div>
+      <div><dt>Elevation</dt><dd id="tEl">--<small>deg</small></dd></div>
+      <div><dt>Order API</dt><dd id="tRtt">--<small>ms</small></dd></div>
+      <div><dt>Orders logged</dt><dd id="tOrd">--</dd></div>
+    </dl>
+    <canvas class="spark" id="spark" width="240" height="36" aria-hidden="true"></canvas>
+    <h3 style="margin-top:14px"><span>Focus layer</span><span class="mono">09</span></h3>
+    <div class="layers-mini" id="layersMini"></div>
+  </aside>
+
+  <div class="status" aria-label="System status">
+    <div class="st"><span class="dot live" id="sApiDot"></span><b>Order engine</b><small id="sApi">checking</small></div>
+    <div class="st"><span class="dot live" id="sDeskDot"></span><b>WhatsApp desk</b><small id="sDesk">--</small></div>
+    <div class="st"><span class="dot live"></span><b>Telegram bot</b><small>auto-replies on</small></div>
+    <div class="st"><span class="dot live"></span><b>9-digit ID ledger</b><small>synced</small></div>
+    <div class="st"><span class="dot live"></span><b>QC video hub</b><small>Kendrapara</small></div>
+    <div class="st grow"><span><em>ISO</em> <b id="hIso">100</b></span><span><em>F</em> <b id="hF">2.8</b></span><span><em>mm</em> <b id="hMm">50</b></span><span><em>S</em> <b id="hS">1/125</b></span></div>
+  </div>
+</section>
+
+<section class="sec" id="architecture">
+  <div class="wrap">
+    <span class="eyebrow">Platform architecture</span>
+    <h2>From one message to a <span class="serif">sealed parcel.</span></h2>
+    <p class="lede">The same discipline that goes into each component runs the order line. Every stage is logged against your 9-digit Order ID, and every payment passes a human verification gate.</p>
+    <div class="pipe" id="pipe">
+      <svg class="track" viewBox="0 0 1000 4" preserveAspectRatio="none" aria-hidden="true"><line x1="40" y1="2" x2="960" y2="2" stroke="rgba(255,255,255,.14)" stroke-width="1"/><line id="pulse" x1="40" y1="2" x2="140" y2="2" stroke="#fff" stroke-width="1.5"/></svg>
+    </div>
+    <div class="specs3">
+      <div class="spec"><h4>Intake</h4><div class="big">1 <span class="serif">message</span></div><p>Text, part slip photo or voice note on WhatsApp or Telegram. The automated desk turns it into a priced quote with delivery included.</p></div>
+      <div class="spec"><h4>Verification</h4><div class="big">100<span class="serif">%</span></div><p>Every advance and every balance is checked by our own team before the order moves forward. Automation never approves a payment alone.</p></div>
+      <div class="spec"><h4>Proof</h4><div class="big">5 <span class="serif">stages</span></div><p>Quote, collection, QC with packing video, dispatch and shop delivery. Each hand-off is timestamped and visible on the live tracker.</p></div>
+    </div>
+    <div class="log" id="log" aria-label="Order line event stream" aria-live="off"></div>
+    <div class="cta"><a class="pill solid" href="../index.html#parts">Explore parts <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12h15M13.5 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a><a class="pill" href="../index.html#track">Track an order <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8.5 7H17v8.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div>
+  </div>
+</section>
+</main>
+<footer><div class="wrap"><span>© 2026 AD PARTSOL. Madhapur, Kendrapara, Odisha 754211, India.</span><a href="../index.html">Back to platform <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8.5 7H17v8.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div></footer>
+
+<script type="module" src="studio.js"></script>
+</body>
+</html>
