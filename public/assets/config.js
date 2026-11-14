@@ -1,4 +1,4 @@
-const API_BASE = location.hostname.includes("workers.dev") || location.hostname.includes("storzen.io") ? "" : "https://adpartsol.storzen-io.workers.dev";
+const API_BASE = location.hostname.includes("workers.dev") ? "" : "https://adpartsol.storzen-io.workers.dev";
 window.ADP_CONFIG = Object.freeze({
   apiBase: API_BASE,
   endpoints: Object.freeze({

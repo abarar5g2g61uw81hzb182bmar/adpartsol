@@ -17,7 +17,6 @@ handles `/api/*` and `/webhook/*` before falling back to the assets.
 | `public/assets/hero3d.js`, `parts3d.js`, `credit3d.js`, `phone-model.js` | 3D scenes |
 | `public/assets/vendor/three/` | three.js r165, loaded through an import map |
 | `public/assets/fonts/` | Satoshi and Clash Display (Fontshare, free for commercial use) |
-| `functions/api/[[path]].js` | Only used if a Cloudflare Pages project serves this repo: forwards `/api/*` to the Worker |
 
 The site runs straight from `public/`. No build step is needed.
 
@@ -27,7 +26,7 @@ The tracker calls `GET /api/panel/track?order_id=<9 digits>`, which `src/panel_a
 handles. `config.js` chooses the API host:
 
 ```js
-const API_BASE = location.hostname.includes("workers.dev") || location.hostname.includes("storzen.io") ? "" : "https://adpartsol.storzen-io.workers.dev";
+const API_BASE = location.hostname.includes("workers.dev") ? "" : "https://adpartsol.storzen-io.workers.dev";
 ```
 
 Stage mapping, using whichever of `dispatch_stage` or `status` is further along:
@@ -49,14 +48,11 @@ Links like `/?order_id=123456789#track` open with that order already loaded.
 
 ### Custom domain
 
-`adpartsol.storzen.io` currently serves an older copy of the site from a separate Cloudflare
-Pages project, not from this Worker. To make it show this site with working tracking, do one
-of the following:
-
-- Recommended: remove the domain from the Pages project, then add it to this Worker under
-  Workers and Pages > adpartsol > Settings > Domains and Routes > Add > Custom domain.
-- Or keep the Pages project, point it at this repo with output directory `public`, and keep
-  `functions/` at the repo root so `/api/*` is forwarded to the Worker.
+`adpartsol.storzen.io` is served by a Cloudflare Pages project with output directory `public`,
+so it shows these same files. Pages does not run `src/worker.js`, so `/api/*` on that domain
+returns HTML. That is why `config.js` (and every staff panel) sends API calls to
+`https://adpartsol.storzen-io.workers.dev` everywhere except on `workers.dev` itself.
+The Worker sends `Access-Control-Allow-Origin: *`, so this works from any domain.
 
 ### Parts Studio (`/dev/`)
 

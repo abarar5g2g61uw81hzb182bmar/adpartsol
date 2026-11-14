@@ -725,8 +725,8 @@
   } };
   document.dispatchEvent(new CustomEvent("adp-ready"));
   const TRACK_STAGES = [
-    { keys: ["ORDER_RECEIVED", "QUOTED", "BIDDING", "SUBMITTED", "PENDING", "CONFIRMATION_PENDING", "NEEDS_SOURCING_REVIEW", "OUTSOURCE_REVIEW", "PIGGYBACK_QUEUED", "WE_ARE_COLLECTING", "COLLECTING"], label: "Order received", note: "Quote shared and advance verified" },
-    { keys: ["COLLECTION_DONE", "CHECKING_HUB", "PACKING"], label: "Parts collected", note: "Parts collected from stock" },
+    { keys: ["ORDER_RECEIVED", "COLLECTING_PRICES", "QUOTED", "BIDDING", "SUBMITTED", "PENDING", "CONFIRMATION_PENDING", "NEEDS_SOURCING_REVIEW", "OUTSOURCE_REVIEW", "PIGGYBACK_QUEUED", "WE_ARE_COLLECTING", "COLLECTING"], label: "Order received", note: "Quote shared and advance verified" },
+    { keys: ["COLLECTION_DONE", "CHECKING_HUB", "PACKING", "ON_HOLD"], label: "Parts collected", note: "Parts collected from stock" },
     { keys: ["QC_PASSED", "PACKAGED_AND_LABELLED", "AWAITING_80_PAYMENT"], label: "Quality check passed", note: "Checked, packed and packing video sent" },
     { keys: ["DISPATCH_HANDOVER", "READY_TO_SHIP", "OUT_FOR_BUS_STAND"], label: "Handed to dispatch", note: "Balance cleared and parcel handed to dispatch" },
     { keys: ["BUS_STAND_DROPPED", "SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED"], label: "Shipped", note: "Parcel is on its way to your shop" }
@@ -808,7 +808,7 @@
       const closed = TRACK_CLOSED.includes(String(o.status || "").toUpperCase());
       card.innerHTML = `<div class="trk-head"><b>${esc(grp(id))}</b>${placed ? `<span>Placed ${esc(placed)}</span>` : ""}<em class="pill-status">${closed ? "Closed" : esc(TRACK_STAGES[s].label)}</em></div>
 <ol class="stages" style="--prog:${s / LAST}">${TRACK_STAGES.map((st, i) => stageRow(st, i, s)).join("")}</ol>
-<p class="hint">${closed ? "This order is closed. Message the desk to reopen or place a fresh request" : esc(TRACK_STAGES[s].note) + ". Updated by our team at each hand-off"}.</p>${o.hold_reason && !closed ? `<p class="hint trk-hold">On hold: ${esc(o.hold_reason)}</p>` : ""}${summary2(o)}${itemList(items)}`;
+<p class="hint">${closed ? "This order is closed. Message the desk to reopen or place a fresh request" : esc(TRACK_STAGES[s].note) + ". Updated by our team at each hand-off"}.</p>${(o.hold_reason || [o.status, o.dispatch_stage].includes("ON_HOLD")) && !closed ? `<p class="hint trk-hold">On hold${o.hold_reason ? ": " + esc(o.hold_reason) : ", our team will update you shortly"}</p>` : ""}${summary2(o)}${itemList(items)}`;
       card.classList.remove("pop", "shown");
       card.hidden = false;
       void card.offsetWidth;
