@@ -25,3 +25,17 @@ PAYMENT_GROUP_ID = "-1003899231714"
 VAULT_GROUP_ID = "-1004388781992"
 WA_PHONE_ID = "1374252479107736"
 WA_WABA_ID = "1106679415484985"
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+persist = true
+
+[observability.traces]
+enabled = false
+head_sampling_rate = 1
+persist = true
+
+[observability.issue_detection]
+enabled = false
