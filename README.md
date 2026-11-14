@@ -34,11 +34,14 @@ Stage mapping, using whichever of `dispatch_stage` or `status` is further along:
 
 | Step | Values |
 |---|---|
-| 1. Order received | `ORDER_RECEIVED`, `QUOTED` |
-| 2. Parts collected | `COLLECTION_DONE` |
-| 3. Quality check passed | `QC_PASSED` |
-| 4. Handed to dispatch | `DISPATCH_HANDOVER` |
-| 5. Shipped | `BUS_STAND_DROPPED`, `SHIPPED` |
+| 1. Order received | `ORDER_RECEIVED`, `QUOTED`, `BIDDING`, `SUBMITTED`, `PENDING`, `CONFIRMATION_PENDING`, `NEEDS_SOURCING_REVIEW`, `OUTSOURCE_REVIEW`, `PIGGYBACK_QUEUED`, `WE_ARE_COLLECTING`, `COLLECTING` |
+| 2. Parts collected | `COLLECTION_DONE`, `CHECKING_HUB`, `PACKING` |
+| 3. Quality check passed | `QC_PASSED`, `PACKAGED_AND_LABELLED`, `AWAITING_80_PAYMENT` |
+| 4. Handed to dispatch | `DISPATCH_HANDOVER`, `READY_TO_SHIP`, `OUT_FOR_BUS_STAND` |
+| 5. Shipped | `BUS_STAND_DROPPED`, `SHIPPED`, `OUT_FOR_DELIVERY`, `DELIVERED` |
+
+A status of `DECLINED`, `NO_BIDS`, `CANCELLED` or `REJECTED` shows the order as Closed.
+If `hold_reason` is set, it appears under the timeline as "On hold".
 
 A response of `{"ok": false}` or HTTP 404 shows "No order found". A 5xx response, a network
 error or a 12 second timeout shows "Tracking is unreachable" with a retry button.
@@ -55,7 +58,28 @@ of the following:
 - Or keep the Pages project, point it at this repo with output directory `public`, and keep
   `functions/` at the repo root so `/api/*` is forwarded to the Worker.
 
-### Optional
+### Parts Studio (`/dev/`)
 
-`/dev/` pings `GET /api/health` to show the API as live. That route does not exist yet, so
-the page shows "standby".
+The Studio is a JavaScript module page. It only runs when served over HTTP:
+
+- Live: `https://adpartsol.storzen-io.workers.dev/dev/` or `https://adpartsol.storzen.io/dev/` once the domain points at this Worker.
+- Local: `npx wrangler dev`, then open `http://localhost:8787/dev/`.
+
+Opening `public/dev/index.html` by double-clicking it (a `file://` address) blocks the
+modules, so the page shows a notice instead of the 3D model. If
+`public/assets/vendor/three/` or `public/assets/fonts/` is missing, the model and fonts
+fail too. Upload the whole `public/assets/` folder.
+
+`GET /api/health` (in `src/worker.js`) returns `{"ok": true, "orders": <count>}`. The Studio
+uses it for the Order API latency and Orders logged tiles. If the route is not deployed yet,
+it measures latency against the tracker endpoint and shows Orders logged as `--`.
+
+## Deploy steps
+
+1. Merge the `website-live-tracking` branch into `main` (or upload this folder's contents to
+   the repo root, keeping your `.git` folder). Nothing in `src/` changes except the
+   4-line `/api/health` route.
+2. Cloudflare Workers Builds deploys the Worker automatically on push to `main`. No new
+   secrets, bindings or D1 migrations are needed.
+3. Open `https://adpartsol.storzen-io.workers.dev/` and `/dev/` to check, then move the
+   custom domain as described above.

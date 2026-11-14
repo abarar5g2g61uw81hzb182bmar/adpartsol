@@ -63,6 +63,10 @@ export default {
         return new Response("OK", { status: 200 });
       }
 
+      if (path === "/api/health") {
+        const row = await env.DB.prepare("SELECT COUNT(*) AS n FROM orders").first();
+        return jsonRes({ ok: true, orders: row ? row.n : 0 });
+      }
       if (path.startsWith("/api/supplier/")) return await handleSupplierPortalAPI(request, url, env);
       if (path.startsWith("/api/customer/")) return await handleCustomerPortalAPI(request, url, env, baseUrl);
       if (path.startsWith("/api/panel/")) return await handlePanelAPI(request, url, env, baseUrl);

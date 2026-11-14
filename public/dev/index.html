@@ -89,9 +89,10 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .reticle.on{opacity:1}
 .reticle::before,.reticle::after{content:"";position:absolute;inset:0;border:1px solid rgba(255,255,255,.5);clip-path:polygon(0 0,22% 0,22% 2px,2px 2px,2px 22%,0 22%,0 0,78% 0,100% 0,100% 22%,calc(100% - 2px) 22%,calc(100% - 2px) 2px,78% 2px,78% 0,100% 78%,100% 100%,78% 100%,78% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 78%,100% 78%,0 78%,2px 78%,2px calc(100% - 2px),22% calc(100% - 2px),22% 100%,0 100%)}
 .reticle::after{border:0}
+.lab-fail{position:absolute;inset:0;margin:auto;width:min(420px,86%);height:max-content;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:26px 24px;border:1px solid var(--line-2);border-radius:20px;background:rgba(10,10,10,.82);backdrop-filter:blur(10px);z-index:3}.lab-fail[hidden]{display:none}.lab-fail .i{width:26px;height:26px}.lab-fail b{font-size:1rem}.lab-fail p{font-size:.82rem;color:var(--fg-3);line-height:1.5;margin:0}.lab-fail code{font-family:var(--mono);color:var(--fg)}
 .hint{position:absolute;left:50%;bottom:76px;transform:translateX(-50%);font-size:.7rem;color:var(--fg-3);letter-spacing:.06em;pointer-events:none;white-space:nowrap}
 
-/* below fold */
+
 .sec{padding:clamp(80px,10vw,140px) 0;border-top:1px solid var(--line)}
 .wrap{max-width:1200px;margin:0 auto;padding:0 clamp(18px,4vw,40px)}
 .sec h2{font-size:clamp(2rem,1.3rem + 2.6vw,3.8rem);letter-spacing:-.04em;line-height:1.02;font-weight:600;margin:14px 0 18px;max-width:780px}
@@ -139,7 +140,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 <body>
 <header class="nav glass">
   <a class="wordmark" href="../index.html">AD PARTSOL <i>/ Parts Studio</i></a>
-  <span class="pill hide-sm" id="navStatus"><span class="dot live"></span><span>Systems nominal</span></span>
+  <span class="pill hide-sm" id="navStatus"><span class="dot off"></span><span>Connecting</span></span>
   <a class="pill solid" href="../index.html"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12h-15M10.5 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Platform</a>
 </header>
 
@@ -156,6 +157,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
     <div class="reticle" id="reticle"></div>
     <div class="focus-tag" id="focusTag"></div>
     <div class="hint" id="hint">Drag to orbit, scroll to zoom</div>
+    <div class="lab-fail" id="labFail" role="alert" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5v4.5M12 16.2v.1M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><b id="labFailT">3D studio could not start</b><p id="labFailP"></p></div>
   </div>
 
   <aside class="panel glass controls" aria-label="Lab controls">
@@ -218,6 +220,15 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 </main>
 <footer><div class="wrap"><span>© 2026 AD PARTSOL. Madhapur, Kendrapara, Odisha 754211, India.</span><a href="../index.html">Back to platform <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8.5 7H17v8.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div></footer>
 
+<script>
+(function(){
+  var fail=function(msg){var b=document.getElementById('labFail');if(!b||window.ADP_STUDIO_READY)return;document.getElementById('labFailP').innerHTML=msg;b.hidden=false;var h=document.getElementById('hint');if(h)h.hidden=true;};
+  window.ADP_STUDIO_FAIL=fail;
+  if(location.protocol==='file:'){addEventListener('DOMContentLoaded',function(){fail('This page was opened directly from a file, so the browser blocks its modules. Run <code>npm run dev</code> and open <code>http://localhost:5173/dev/</code>, or open the deployed site.');});return;}
+  var c=document.createElement('canvas');if(!(c.getContext('webgl2')||c.getContext('webgl'))){addEventListener('DOMContentLoaded',function(){fail('WebGL is turned off or unsupported in this browser. Enable hardware acceleration or try another browser.');});return;}
+  setTimeout(function(){fail('The 3D engine did not load. Check that <code>assets/vendor/three/</code> was uploaded with the site, then refresh.');},9000);
+})();
+</script>
 <script type="module" src="studio.js"></script>
 </body>
 </html>
