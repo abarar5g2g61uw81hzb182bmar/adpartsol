@@ -58,7 +58,7 @@ The Worker sends `Access-Control-Allow-Origin: *`, so this works from any domain
 
 The Studio is a JavaScript module page. It only runs when served over HTTP:
 
-- Live: `https://adpartsol.storzen-io.workers.dev/dev/` or `https://adpartsol.storzen.io/dev/` once the domain points at this Worker.
+- Live: `https://adpartsol.storzen-io.workers.dev/dev/` or `https://adpartsol.storzen.io/dev/`.
 - Local: `npx wrangler dev`, then open `http://localhost:8787/dev/`.
 
 Opening `public/dev/index.html` by double-clicking it (a `file://` address) blocks the
@@ -77,5 +77,5 @@ it measures latency against the tracker endpoint and shows Orders logged as `--`
    4-line `/api/health` route.
 2. Cloudflare Workers Builds deploys the Worker automatically on push to `main`. No new
    secrets, bindings or D1 migrations are needed.
-3. Open `https://adpartsol.storzen-io.workers.dev/` and `/dev/` to check, then move the
-   custom domain as described above.
+3. The Pages project for `adpartsol.storzen.io` also rebuilds from `main`. Open
+   `https://adpartsol.storzen.io/`, `/dev/` and `/?order_id=<real id>#track` to check.
