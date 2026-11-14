@@ -48,8 +48,9 @@ Links like `/?order_id=123456789#track` open with that order already loaded.
 
 ### Custom domain
 
-`adpartsol.storzen.io` is served by a Cloudflare Pages project with output directory `public`,
-so it shows these same files. Pages does not run `src/worker.js`, so `/api/*` on that domain
+`adpartsol.storzen.io` has a DNS CNAME to `adpartsol-1ix.pages.dev`, the Cloudflare Pages project
+`adpartsol` in the same account, built from this repo with output directory `public`. The Worker
+also lists the domain, but traffic reaches Pages, so the domain shows these same files. Pages does not run `src/worker.js`, so `/api/*` on that domain
 returns HTML. That is why `config.js` (and every staff panel) sends API calls to
 `https://adpartsol.storzen-io.workers.dev` everywhere except on `workers.dev` itself.
 The Worker sends `Access-Control-Allow-Origin: *`, so this works from any domain.
