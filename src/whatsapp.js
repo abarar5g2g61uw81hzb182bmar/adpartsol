@@ -68,6 +68,8 @@ export async function handleWhatsAppUpdate(body, env, baseUrl) {
     cust = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(custId).first();
   } else {
     await env.DB.prepare("UPDATE customers SET last_msg_at = ?, warned_22h = 0 WHERE id = ?").bind(now, cust.id).run();
+    // Keep in-memory object in sync so notifyCustomer 24h window check does not drop the reply
+    cust.last_msg_at = now;
   }
 
   if (cust.banned_until > now) return;
@@ -155,13 +157,15 @@ export async function handleWhatsAppUpdate(body, env, baseUrl) {
   if (msg.type === "text") {
     const t = (msg.text.body || "").trim();
     const cleanWord = t.toLowerCase().replace(/[^\w\s]/g, "").trim();
-    const isGreeting = ["hi", "hello", "start", "hey", "namaste", "hii"].includes(cleanWord);
+    const isGreeting = ["hi", "hello", "start", "hey", "namaste", "hii", "hola", "yo"].includes(cleanWord);
 
-    if (isNew || isGreeting || !cust.lang) {
+    // After reset / new account / no language → always force language + setup path
+    if (isNew || isGreeting || !cust.lang || !cust.full_name) {
       const greet = GREETING_TEMPLATES[Math.floor(Math.random() * GREETING_TEMPLATES.length)];
       const setupFlowId = await getSetting(env.DB, "wa_flow_id_setup", "");
       const orderFlowId = await getSetting(env.DB, "wa_flow_id_order", "");
 
+      // Prefer native Shop Setup flow when available and profile incomplete
       if (!cust.full_name && setupFlowId) {
         return await sendWhatsAppNativeFlow(
           env, from,
@@ -171,7 +175,10 @@ export async function handleWhatsAppUpdate(body, env, baseUrl) {
           "SHOP_SETUP",
           `setup_${cust.id}`
         );
-      } else if (cust.full_name && orderFlowId && isGreeting) {
+      }
+
+      // Returning customer with name → open order flow on pure greeting
+      if (cust.full_name && orderFlowId && isGreeting) {
         return await sendWhatsAppNativeFlow(
           env, from,
           `${greet}\n━━━━━━━━━━━━━━━━━\nWelcome back, ${cust.full_name}!\n☞ Tap below to open the Product Order Form, or send a Voice Note, Photo, or Text:`,
@@ -180,17 +187,18 @@ export async function handleWhatsAppUpdate(body, env, baseUrl) {
           "PRODUCT_ORDER",
           `ord_${cust.id}`
         );
-      } else {
-        return await notifyCustomer(
-          env, cust,
-          `${greet}\n━━━━━━━━━━━━━━━━━\n☞ Please select your preferred language to begin:`,
-          [[
-            { text: "English", callback_data: "lang_english" },
-            { text: "Hindi", callback_data: "lang_hindi" },
-            { text: "Hinglish", callback_data: "lang_hinglish" }
-          ]]
-        );
       }
+
+      // Fallback (and the common post-reset case): language buttons
+      return await notifyCustomer(
+        env, cust,
+        `${greet}\n━━━━━━━━━━━━━━━━━\n☞ Please select your preferred language to begin:`,
+        [[
+          { text: "English", callback_data: "lang_english" },
+          { text: "Hindi", callback_data: "lang_hindi" },
+          { text: "Hinglish", callback_data: "lang_hinglish" }
+        ]]
+      );
     }
 
     return await processCustomerInput(env, cust, t, null, baseUrl);
