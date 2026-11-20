@@ -78,7 +78,7 @@ export async function initDB(DB) {
     DB.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('tg_enabled', '1'), ('wa_enabled', '1'), ('ai_enabled', '1'), ('margin_percent', '20'), ('delivery_charge', '100'), ('rounding_step', '50'), ('advance_percent', '20'), ('auto_flag_mins', '120'), ('rush_window_sec', '60'), ('allocation_logic', 'cheapest')"),
     DB.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('upi_id', 'constantabrar@upi')"),
     DB.prepare("CREATE TABLE IF NOT EXISTS margin_rules (id INTEGER PRIMARY KEY AUTOINCREMENT, min_price REAL NOT NULL, max_price REAL NOT NULL, margin_type TEXT NOT NULL, margin_value REAL NOT NULL, created_at INTEGER DEFAULT (strftime('%s', 'now')))"),
-    DB.prepare("CREATE TABLE IF NOT EXISTS customers (id TEXT PRIMARY KEY, platform TEXT NOT NULL, chat_id TEXT NOT NULL, lang TEXT DEFAULT NULL, full_name TEXT, phone TEXT, address TEXT, state TEXT DEFAULT 'IDLE', temp_data TEXT, fraud_strikes INTEGER DEFAULT 0, banned_until INTEGER DEFAULT 0, last_msg_at INTEGER DEFAULT 0, warned_22h INTEGER DEFAULT 0, force_followup INTEGER DEFAULT 0, created_at INTEGER DEFAULT (strftime('%s', 'now')))"),
+    DB.prepare("CREATE TABLE IF NOT EXISTS customers (id TEXT PRIMARY KEY, platform TEXT NOT NULL, chat_id TEXT NOT NULL, lang TEXT DEFAULT NULL, full_name TEXT, phone TEXT, address TEXT, state TEXT DEFAULT 'IDLE', temp_data TEXT, fraud_strikes INTEGER DEFAULT 0, banned_until INTEGER DEFAULT 0, last_msg_at INTEGER DEFAULT 0, warned_22h INTEGER DEFAULT 0, force_followup INTEGER DEFAULT 0, deleted_at INTEGER DEFAULT 0, account_root TEXT, reset_count INTEGER DEFAULT 0, created_at INTEGER DEFAULT (strftime('%s', 'now')))"),
     DB.prepare("CREATE TABLE IF NOT EXISTS suppliers (id INTEGER PRIMARY KEY AUTOINCREMENT, tg_chat_id TEXT UNIQUE, name TEXT, phone TEXT, region TEXT DEFAULT 'Odisha', verify_code TEXT UNIQUE, is_verified INTEGER DEFAULT 0, is_active INTEGER DEFAULT 1, avg_resp_sec INTEGER DEFAULT 45, orders_freq INTEGER DEFAULT 1, current_bid_item_id INTEGER, bid_step TEXT, bid_started_at INTEGER DEFAULT 0, last_panel_msg_id INTEGER, created_at INTEGER DEFAULT (strftime('%s', 'now')))"),
     DB.prepare("CREATE TABLE IF NOT EXISTS staff_users (id INTEGER PRIMARY KEY AUTOINCREMENT, role TEXT NOT NULL, phone TEXT NOT NULL, access_token TEXT UNIQUE NOT NULL, is_active INTEGER DEFAULT 1, created_at INTEGER DEFAULT (strftime('%s', 'now')))"),
     DB.prepare("CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY AUTOINCREMENT, customer_id TEXT NOT NULL, master_id TEXT, status TEXT DEFAULT 'BIDDING', dispatch_stage TEXT DEFAULT 'ORDER_RECEIVED', hold_reason TEXT, outsource_region TEXT, supplier_base_total REAL DEFAULT 0, margin_percent REAL DEFAULT 20, delivery_charge REAL DEFAULT 100, final_total REAL DEFAULT 0, advance_20 REAL DEFAULT 0, balance_80 REAL DEFAULT 0, packing_video_file_id TEXT, vault_msg_id TEXT, tracking_id TEXT, force_followup INTEGER DEFAULT 0, bidding_ends_at INTEGER NOT NULL, created_at INTEGER DEFAULT (strftime('%s', 'now')))"),
@@ -89,4 +89,55 @@ export async function initDB(DB) {
     DB.prepare("CREATE TABLE IF NOT EXISTS inventory_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, item_name TEXT NOT NULL, action TEXT NOT NULL, qty INTEGER NOT NULL, old_stock INTEGER NOT NULL, new_stock INTEGER NOT NULL, triggered_by TEXT NOT NULL, raw_date TEXT DEFAULT (date('now')), created_at INTEGER DEFAULT (strftime('%s', 'now')))"),
     DB.prepare("CREATE TABLE IF NOT EXISTS ghost_queries (id INTEGER PRIMARY KEY AUTOINCREMENT, mode TEXT NOT NULL, item_name TEXT NOT NULL, qty INTEGER DEFAULT 1, note TEXT, status TEXT DEFAULT 'WAITING', min_quote REAL DEFAULT 0, max_quote REAL DEFAULT 0, created_at INTEGER DEFAULT (strftime('%s', 'now')))")
   ]);
+}
+
+/** Exact phrase that wipes a customer identity and starts a fresh account. */
+export const FORGET_RESET_PHRASE = "FORGET ALL AND RESET";
+
+/** Resolve active (non-deleted) customer for a platform chat. Supports wa_x, wa_x_2, ... */
+export async function resolveActiveCustomer(DB, platform, chatId) {
+  const root = String(chatId);
+  let row = await DB.prepare(
+    "SELECT * FROM customers WHERE platform = ? AND chat_id = ? AND IFNULL(deleted_at, 0) = 0 ORDER BY reset_count DESC, created_at DESC LIMIT 1"
+  ).bind(platform, root).first();
+  if (row) return row;
+  const baseId = platform === "whatsapp" ? `wa_${root}` : `tg_${root}`;
+  row = await DB.prepare(
+    "SELECT * FROM customers WHERE id = ? AND IFNULL(deleted_at, 0) = 0"
+  ).bind(baseId).first();
+  return row || null;
+}
+
+/** Soft-delete customer + orders, create fresh identity with _2 / _3 suffix. */
+export async function forgetAndResetCustomer(env, cust) {
+  const DB = env.DB;
+  const now = Math.floor(Date.now() / 1000);
+  const platform = cust.platform;
+  const chatId = String(cust.chat_id);
+  const root = cust.account_root || chatId;
+  const nextCount = (Number(cust.reset_count) || 0) + 1;
+  const suffix = nextCount + 1; // first reset → _2
+  const newId = platform === "whatsapp" ? `wa_${chatId}_${suffix}` : `tg_${chatId}_${suffix}`;
+
+  await DB.prepare(
+    "UPDATE customers SET state = 'DELETED', deleted_at = ?, full_name = COALESCE(full_name, '') || ' [DELETED]', temp_data = NULL WHERE id = ?"
+  ).bind(now, cust.id).run();
+
+  await DB.prepare(
+    "UPDATE orders SET status = 'DELETED', dispatch_stage = 'CUSTOMER_RESET', hold_reason = 'FORGET ALL AND RESET' WHERE customer_id = ? AND status != 'DELETED'"
+  ).bind(cust.id).run();
+
+  await DB.prepare(
+    "INSERT INTO customers (id, platform, chat_id, phone, lang, last_msg_at, state, deleted_at, account_root, reset_count) VALUES (?, ?, ?, ?, NULL, ?, 'AWAITING_REQ', 0, ?, ?)"
+  ).bind(newId, platform, chatId, platform === "whatsapp" ? chatId : (cust.phone || null), now, root, nextCount).run();
+
+  const fresh = await DB.prepare("SELECT * FROM customers WHERE id = ?").bind(newId).first();
+  await sendLog(env, `★ CUSTOMER HARD RESET\nOld: ${cust.id}\nNew: ${newId}\nRoot: ${root}\nReset #: ${nextCount}`);
+  return fresh;
+}
+
+export async function migrateCustomersSchema(DB) {
+  try { await DB.prepare("ALTER TABLE customers ADD COLUMN deleted_at INTEGER DEFAULT 0").run(); } catch (_) {}
+  try { await DB.prepare("ALTER TABLE customers ADD COLUMN account_root TEXT").run(); } catch (_) {}
+  try { await DB.prepare("ALTER TABLE customers ADD COLUMN reset_count INTEGER DEFAULT 0").run(); } catch (_) {}
 }
