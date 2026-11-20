@@ -169,15 +169,32 @@ async function handleWhatsAppUpdateInner(body, env, baseUrl) {
     const cleanWord = t.toLowerCase().replace(/[^\w\s]/g, "").trim();
     const isGreeting = ["hi", "hello", "start", "hey", "namaste", "hii", "hola", "yo"].includes(cleanWord);
 
-    if (isNew || isGreeting || !cust.lang || !cust.full_name) {
+    // Only force language / setup on: brand new account, no language yet, or pure greeting.
+    // Once lang is set, real order text must reach processCustomerInput even without full_name
+    // (profile is collected later at confirm time).
+    if (isNew || !cust.lang || isGreeting) {
       const greet = GREETING_TEMPLATES[Math.floor(Math.random() * GREETING_TEMPLATES.length)];
       const setupFlowId = await getSetting(env.DB, "wa_flow_id_setup", "");
       const orderFlowId = await getSetting(env.DB, "wa_flow_id_order", "");
 
+      // No language yet → language buttons first
+      if (!cust.lang) {
+        return await notifyCustomer(
+          env, cust,
+          `${greet}\n━━━━━━━━━━━━━━━━━\n☞ Please select your preferred language to begin:`,
+          [[
+            { text: "English", callback_data: "lang_english" },
+            { text: "Hindi", callback_data: "lang_hindi" },
+            { text: "Hinglish", callback_data: "lang_hinglish" }
+          ]]
+        );
+      }
+
+      // Greeting + incomplete profile → offer Shop Setup (optional, not blocking)
       if (!cust.full_name && setupFlowId) {
         return await sendWhatsAppNativeFlow(
           env, from,
-          `${greet}\n━━━━━━━━━━━━━━━━━\n☞ Tap below to complete your 10-second Shop Registration & Language Setup:`,
+          `${greet}\n━━━━━━━━━━━━━━━━━\n☞ Tap below to complete your 10-second Shop Registration, or just type the spare part you need:`,
           "Shop Setup Form",
           setupFlowId,
           "SHOP_SETUP",
@@ -185,7 +202,8 @@ async function handleWhatsAppUpdateInner(body, env, baseUrl) {
         );
       }
 
-      if (cust.full_name && orderFlowId && isGreeting) {
+      // Greeting + has profile → order form
+      if (cust.full_name && orderFlowId) {
         return await sendWhatsAppNativeFlow(
           env, from,
           `${greet}\n━━━━━━━━━━━━━━━━━\nWelcome back, ${cust.full_name}!\n☞ Tap below to open the Product Order Form, or send a Voice Note, Photo, or Text:`,
@@ -196,17 +214,14 @@ async function handleWhatsAppUpdateInner(body, env, baseUrl) {
         );
       }
 
+      // Greeting fallback
       return await notifyCustomer(
         env, cust,
-        `${greet}\n━━━━━━━━━━━━━━━━━\n☞ Please select your preferred language to begin:`,
-        [[
-          { text: "English", callback_data: "lang_english" },
-          { text: "Hindi", callback_data: "lang_hindi" },
-          { text: "Hinglish", callback_data: "lang_hinglish" }
-        ]]
+        `${greet}\n━━━━━━━━━━━━━━━━━\n☞ Tell us what mobile spare parts you need (text, photo, or voice note):`
       );
     }
 
+    // Real order / any non-greeting text → AI parsing
     return await processCustomerInput(env, cust, t, null, baseUrl);
   }
 
