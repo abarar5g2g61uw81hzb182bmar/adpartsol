@@ -1,4 +1,4 @@
-import { initDB, jsonRes, sendLog } from "./db.js";
+import { initDB, jsonRes, sendLog, migrateCustomersSchema } from "./db.js";
 import { setTgWebhook, handleTelegramUpdate } from "./telegram.js";
 import { handleWhatsAppUpdate } from "./whatsapp.js";
 import { handleSupplierPortalAPI, handleCustomerPortalAPI, runAutomatedEngine } from "./supplier_staff.js";
@@ -24,6 +24,7 @@ export default {
     try {
       if (path === "/api/init-db") {
         await initDB(env.DB);
+        await migrateCustomersSchema(env.DB);
         return jsonRes({ ok: true, msg: "Database initialized & verified" });
       }
 
