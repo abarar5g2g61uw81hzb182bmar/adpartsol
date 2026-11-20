@@ -61,7 +61,6 @@ export async function handleWhatsAppUpdate(body, env, baseUrl) {
   let cust = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(custId).first();
   const isNew = !cust;
   if (isNew) {
-    // Notice: lang is NULL until customer explicitly selects a language or fills the Setup Form!
     await env.DB.prepare(
       "INSERT INTO customers (id, platform, chat_id, phone, lang, last_msg_at, state) VALUES (?, 'whatsapp', ?, ?, NULL, ?, 'AWAITING_REQ')"
     ).bind(custId, from, from, now).run();
@@ -81,7 +80,8 @@ export async function handleWhatsAppUpdate(body, env, baseUrl) {
 
     if (msg.interactive?.type === "nfm_reply") {
       const rawJson = msg.interactive.nfm_reply?.response_json || "{}";
-      const formData = JSON.parse(rawJson);
+      let formData = {};
+      try { formData = JSON.parse(rawJson); } catch (_) { formData = {}; }
 
       if (formData.form_type === "setup" || formData.shop_name) {
         const fullName = `${formData.full_name || "Partner"} (${formData.shop_name || "Shop"})`;
@@ -136,11 +136,9 @@ export async function handleWhatsAppUpdate(body, env, baseUrl) {
 
   if (msg.type === "text") {
     const t = (msg.text.body || "").trim();
-    // Strip punctuation so "Hello?", "Hi!", "Start." all match cleanly!
     const cleanWord = t.toLowerCase().replace(/[^\w\s]/g, "").trim();
     const isGreeting = ["hi", "hello", "start", "hey", "namaste", "hii"].includes(cleanWord);
 
-    // If customer is new, sent a greeting, OR hasn't selected a language/setup yet:
     if (isNew || isGreeting || !cust.lang) {
       const greet = GREETING_TEMPLATES[Math.floor(Math.random() * GREETING_TEMPLATES.length)];
       const setupFlowId = await getSetting(env.DB, "wa_flow_id_setup", "");
@@ -194,7 +192,13 @@ export async function handleWhatsAppUpdate(body, env, baseUrl) {
 
     if (msg.type === "image") {
       const buf = await mediaBin.arrayBuffer();
-      const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+      const bytes = new Uint8Array(buf);
+      let binary = "";
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+      }
+      const b64 = btoa(binary);
       const dataUri = `data:${metaJson.mime_type || "image/jpeg"};base64,${b64}`;
       return await processCustomerInput(env, cust, msg.image.caption || "", dataUri, baseUrl);
     } else {
