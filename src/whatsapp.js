@@ -1,4 +1,4 @@
-import { getSetting, parseSessionMemory, formatSummaryBox, GREETING_TEMPLATES } from "./db.js";
+import { getSetting, parseSessionMemory, formatSummaryBox, GREETING_TEMPLATES, FORGET_RESET_PHRASE, resolveActiveCustomer, forgetAndResetCustomer, migrateCustomersSchema } from "./db.js";
 import { transcribeVoice } from "./ai.js";
 import { notifyCustomer, processCustomerAction, processCustomerInput, showCombinedFinalConfirmation } from "./telegram.js";
 
@@ -53,23 +53,41 @@ export async function handleWhatsAppUpdate(body, env, baseUrl) {
 
   const msg = entry.messages[0];
   const from = msg.from;
-  const custId = `wa_${from}`;
   const now = Math.floor(Date.now() / 1000);
+  await migrateCustomersSchema(env.DB);
 
   await markWhatsAppRead(env, msg.id);
 
-  let cust = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(custId).first();
+  let cust = await resolveActiveCustomer(env.DB, "whatsapp", from);
   const isNew = !cust;
   if (isNew) {
+    const custId = `wa_${from}`;
     await env.DB.prepare(
-      "INSERT INTO customers (id, platform, chat_id, phone, lang, last_msg_at, state) VALUES (?, 'whatsapp', ?, ?, NULL, ?, 'AWAITING_REQ')"
-    ).bind(custId, from, from, now).run();
+      "INSERT INTO customers (id, platform, chat_id, phone, lang, last_msg_at, state, account_root, reset_count, deleted_at) VALUES (?, 'whatsapp', ?, ?, NULL, ?, 'AWAITING_REQ', ?, 0, 0)"
+    ).bind(custId, from, from, now, from).run();
     cust = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(custId).first();
   } else {
-    await env.DB.prepare("UPDATE customers SET last_msg_at = ?, warned_22h = 0 WHERE id = ?").bind(now, custId).run();
+    await env.DB.prepare("UPDATE customers SET last_msg_at = ?, warned_22h = 0 WHERE id = ?").bind(now, cust.id).run();
   }
 
   if (cust.banned_until > now) return;
+
+  if (msg.type === "text") {
+    const rawText = (msg.text?.body || "").trim();
+    if (rawText === FORGET_RESET_PHRASE) {
+      const fresh = await forgetAndResetCustomer(env, cust);
+      const greet = GREETING_TEMPLATES[Math.floor(Math.random() * GREETING_TEMPLATES.length)];
+      return await notifyCustomer(
+        env, fresh,
+        `★ Account reset complete.\n━━━━━━━━━━━━━━━━━\n→ Old ID archived as DELETED\n→ New Partner ID: ${fresh.id}\n━━━━━━━━━━━━━━━━━\n${greet}\n☞ Select language or complete Shop Setup to begin again:`,
+        [[
+          { text: "English", callback_data: "lang_english" },
+          { text: "Hindi", callback_data: "lang_hindi" },
+          { text: "Hinglish", callback_data: "lang_hinglish" }
+        ]]
+      );
+    }
+  }
 
   if (msg.type === "interactive") {
     const btnId = msg.interactive?.button_reply?.id;
