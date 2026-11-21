@@ -1,7 +1,8 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/webhook/:path*", "destination": "/api/webhook/:path*" }
+    { "source": "/webhook/whatsapp", "destination": "/api/wa" },
+    { "source": "/webhook/tg/:bot", "destination": "/api/tg/:bot" }
   ],
   "headers": [
     {
