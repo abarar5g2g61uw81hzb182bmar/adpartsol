@@ -1,1 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#080808"/><path d="M14 46 24.6 18h4.8L40 46h-5.6l-2.4-6.6H22l-2.4 6.6H14Zm9.6-11.2h6.8L27 25.4l-3.4 9.4ZM40.5 18h8.2c6.6 0 10.3 4.4 10.3 14s-3.7 14-10.3 14h-8.2V18Zm5.4 4.8v18.4h2.5c3.4 0 5.1-2.8 5.1-9.2s-1.7-9.2-5.1-9.2h-2.5Z" fill="#fff" transform="translate(-4 0)"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="AD Partsol">
+  <rect width="64" height="64" rx="14" fill="#070707"/>
+  <path fill="#f4f2ee" d="M8 50 26 12h5.6L49.6 50h-6.4l-2.8-7.6H17.2L14.4 50H8zm11-13h14.4L27.2 26.4 19 37z"/>
+  <path fill="#f4f2ee" d="M34 12h10c7.2 0 11.2 4.8 11.2 14.4S51.2 41 44 41H34V12zm5.6 5.6v17.6H43c3.6 0 5.6-2.8 5.6-8.8s-2-8.8-5.6-8.8h-3.4z"/>
+</svg>
