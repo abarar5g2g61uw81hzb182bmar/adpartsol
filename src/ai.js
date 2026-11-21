@@ -54,6 +54,11 @@ Output strictly JSON:
 
   const data = await res.json();
   if (!data.choices || !data.choices[0]) {
+    const errDetail = data?.error?.message || data?.error?.code || `HTTP ${res.status}`;
+    try {
+      const { sendLog } = await import("./db.js");
+      await sendLog(env, `★ OPENAI ERROR (analyze)\n${errDetail}`);
+    } catch (_) {}
     return { valid: false, clarify_msg: "ⓘ Could not process right now. Please send again." };
   }
   return safeJsonParse(data.choices[0].message?.content, {
