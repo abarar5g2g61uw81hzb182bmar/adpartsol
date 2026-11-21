@@ -1,7 +1,5 @@
 {
   "version": 2,
-  "buildCommand": null,
-  "outputDirectory": "public",
   "rewrites": [
     { "source": "/webhook/:path*", "destination": "/api/webhook/:path*" }
   ],
@@ -13,12 +11,6 @@
         { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
         { "key": "Access-Control-Allow-Headers", "value": "Content-Type, x-staff-phone, x-staff-token, x-login-attempt, x-supplier-code" }
       ]
-    }
-  ],
-  "crons": [
-    {
-      "path": "/api/cron",
-      "schedule": "0 * * * *"
     }
   ]
 }
