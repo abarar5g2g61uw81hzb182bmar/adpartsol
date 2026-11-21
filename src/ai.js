@@ -10,12 +10,22 @@ function safeJsonParse(text, fallback = {}) {
   }
 }
 
+function modelText(env) {
+  return env.OPENAI_MODEL || env.OPENAI_MODEL_TEXT || "gpt-4o-mini";
+}
+function modelVision(env) {
+  return env.OPENAI_MODEL_VISION || env.OPENAI_MODEL || "gpt-4o";
+}
+function modelTranscribe(env) {
+  return env.OPENAI_MODEL_TRANSCRIBE || "gpt-4o-mini-transcribe";
+}
+
 export async function analyzeCustomerRequirement(env, textInput, imageUrl = null, lang = "hinglish", memoryObj = { items: [], history: [] }) {
   const aiEnabled = await getSetting(env.DB, "ai_enabled", "1");
   if (aiEnabled !== "1") return { valid: false, clarify_msg: "ⓘ System maintenance: Service will resume shortly." };
 
   const activeLang = lang || "hinglish";
-  const model = imageUrl ? "gpt-4o" : "gpt-4o-mini";
+  const model = imageUrl ? modelVision(env) : modelText(env);
   const prevHistory = (memoryObj.history || []).slice(-8).map(h => `${h.r}: ${h.t}`).join("\n");
   const prevDraft = JSON.stringify(memoryObj.items || []);
 
@@ -57,7 +67,7 @@ Output strictly JSON:
     const errDetail = data?.error?.message || data?.error?.code || `HTTP ${res.status}`;
     try {
       const { sendLog } = await import("./db.js");
-      await sendLog(env, `★ OPENAI ERROR (analyze)\n${errDetail}`);
+      await sendLog(env, `★ OPENAI ERROR (analyze)\nModel: ${model}\n${errDetail}`);
     } catch (_) {}
     return { valid: false, clarify_msg: "ⓘ Could not process right now. Please send again." };
   }
@@ -69,11 +79,12 @@ Output strictly JSON:
 
 export async function extractCustomerProfileAI(env, textInput, lang = "hinglish", prevProfile = {}) {
   const activeLang = lang || "hinglish";
+  const model = modelText(env);
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { "Authorization": `Bearer ${env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "gpt-4o-mini",
+      model,
       response_format: { type: "json_object" },
       messages: [
         {
@@ -100,11 +111,12 @@ JSON: {"complete": true/false, "name": "...", "phone": "...", "address": "...", 
 }
 
 export async function analyzePaymentScreenshot(env, imageUrl, expectedAmount, expectedUpi) {
+  const model = modelVision(env);
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { "Authorization": `Bearer ${env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "gpt-4o",
+      model,
       response_format: { type: "json_object" },
       messages: [
         {
@@ -124,7 +136,7 @@ export async function analyzePaymentScreenshot(env, imageUrl, expectedAmount, ex
 export async function transcribeVoice(env, audioBuffer, filename = "voice.ogg") {
   const form = new FormData();
   form.append("file", new Blob([audioBuffer]), filename);
-  form.append("model", "gpt-4o-mini-transcribe");
+  form.append("model", modelTranscribe(env));
 
   let res = await fetch("https://api.openai.com/v1/audio/transcriptions", {
     method: "POST",
